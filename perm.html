@@ -143,7 +143,6 @@
             { q: "5人選3人 排成一列", a: "60", hint: "順序有差用 P ➡ P(5,3) = 5×4×3", level: 2 },
             { q: "5人選3人 組委員會", a: "10", hint: "順序沒差用 C ➡ C(5,3) = C(5,2) = 10", level: 2 },
             { q: "3封不同信 投入2個郵筒", a: "8", hint: "信去選郵筒！ 2 × 2 × 2 = 2³ = 8", level: 2 },
-            { q: "由A到B 走3右2上", a: "10", hint: "捷徑問題 ➡ 5! / (3!2!) 或 C(5,2)", level: 2 },
             
             // Level 3: 條件限制
             { q: "甲乙丙丁4人排，甲乙 相鄰", a: "12", hint: "甲乙綁一起當1人 ➡ 3! × 2! = 12", level: 3 },
@@ -159,6 +158,54 @@
             { q: "x + y + z = 5 的 正整數解", a: "6", hint: "先各發1個，剩2個分給3人 ➡ H(3,2) = C(4,2) = 6", level: 4 },
             { q: "x + y + z = 6 的 正整數解", a: "10", hint: "先各發1個，剩3個分給3人 ➡ H(3,3) = C(5,3) = 10", level: 4 }
         ];
+
+        // ✨ 自動生成 n*m 捷徑圖形題庫的引擎
+        function generateGridQuestions() {
+            // 計算組合數 C(n, k)
+            function C(n, k) {
+                if (k < 0 || k > n) return 0;
+                if (k === 0 || k === n) return 1;
+                let res = 1;
+                for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i;
+                return res;
+            }
+            
+            // 產生 1x2 到 5x5 的所有網格
+            for (let n = 1; n <= 5; n++) {
+                for (let m = 1; m <= 5; m++) {
+                    if (n === 1 && m === 1) continue; // 1x1 太簡單，跳過
+                    
+                    let ans = C(n + m, n);
+                    let lvl = (n + m <= 5) ? 2 : 3; // 依據格子大小分類難度
+                    
+                    let s = 30; // 每個格子的邊長像素
+                    let w = n * s;
+                    let h = m * s;
+                    let pathD = "";
+                    
+                    // 畫出橫線與直線
+                    for (let i = 0; i <= m; i++) pathD += `M0,${i*s} H${w} `;
+                    for (let i = 0; i <= n; i++) pathD += `M${i*s},0 V${h} `;
+                    
+                    // 組合 SVG
+                    let svgStr = `<svg viewBox='-25 -25 ${w + 50} ${h + 50}' style='margin: 10px auto 0; display: block; max-height: 16vh; max-width: 90%;'>` +
+                        `<path d='${pathD}' stroke='#34495e' stroke-width='3' fill='none'/>` +
+                        `<circle cx='0' cy='${h}' r='6' fill='#e74c3c'/>` +
+                        `<text x='-20' y='${h + 20}' fill='#e74c3c' font-weight='bold' font-size='20'>A</text>` +
+                        `<circle cx='${w}' cy='0' r='6' fill='#27ae60'/>` +
+                        `<text x='${w + 8}' y='-6' fill='#27ae60' font-weight='bold' font-size='20'>B</text>` +
+                        `</svg>`;
+                        
+                    permQuestions.push({
+                        q: `由 A 到 B 取捷徑<br>${svgStr}`,
+                        a: ans.toString(),
+                        hint: `${n}右${m}上 ➡ ${(n+m)}! / (${n}!${m}!) = ${ans}`,
+                        level: lvl
+                    });
+                }
+            }
+        }
+        generateGridQuestions(); // 執行生成
 
         let score = 0, combo = 0, consecutiveWrong = 0;
         let targetAns = "", userInput = "", currentQuestionStr = "", currentHint = "";
@@ -233,33 +280,46 @@
             }
         }
 
+        // ✨ 答錯只給鼓勵，不給答案
         function triggerErrorEffect() {
             playWrong(); combo = 0; consecutiveWrong++; 
-            errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: currentHint });
+            let h = typeof currentHint !== 'undefined' ? currentHint : "";
+            
+            // 💡 暫存在錯題本，沒答對才會印出來
+            errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
             
             if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
-                activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: currentHint });
+                activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
             }
 
             const area = document.getElementById('display-area'); area.classList.remove('shake-animation'); void area.offsetWidth; area.classList.add('shake-animation');
             currentQuestionErrors++; score -= (currentQuestionErrors * 5 * currentMultiplier); 
             document.getElementById('input-box').classList.add('error-text'); flashScoreRed(); updateUI();
+            
             showToast(`❌ 答錯囉！再仔細想想！`, 1200); checkDeath(); 
         }
 
+        // ✨ 靠自己答對，消除業障
         function submitAnswer() {
             if (userInput === "") return; 
             const box = document.getElementById('input-box');
             
             if (userInput === targetAns) {
-                correctQuestionsSet.add(currentQuestionStr);
+                // 如果是一次答對，才加進白名單不再出
+                if (currentQuestionErrors === 0) {
+                    correctQuestionsSet.add(currentQuestionStr);
+                }
+                
                 activeWrongPool = activeWrongPool.filter(item => item.q !== currentQuestionStr);
+                
+                // 消除結算畫面的錯題業障
+                errorLogMap.delete(currentQuestionStr); 
 
                 spawnComboParticle(); consecutiveWrong = 0; 
                 if (combo >= 9) { playFeverCorrect(); } else { playCorrect(); }
                 box.classList.add('correct-flash'); score += (10 + (combo * 2)) * currentMultiplier; combo++;
                 
-                // ✨ 漸進式震動機制
+                // 漸進式震動機制
                 if (combo >= 5) { 
                     const body = document.body; 
                     let intensity = Math.min(2 + (combo - 5), 10);
@@ -272,10 +332,24 @@
             } else { triggerErrorEffect(); }
         }
 
+        // ✨ 跳過才給正確答案，並永遠鎖死在錯題本裡
         function skipQuestion() {
             if (!document.getElementById('overlay').classList.contains('hidden')) return; 
-            triggerErrorEffect(); score -= (20 * currentMultiplier) - (currentQuestionErrors * 5 * currentMultiplier); 
-            updateUI(); checkDeath(); setTimeout(getNewQuestion, 450); 
+            
+            let h = typeof currentHint !== 'undefined' ? currentHint : "";
+            errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
+            
+            if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
+                activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
+            }
+
+            playWrong(); combo = 0; consecutiveWrong++;
+            currentQuestionErrors++; 
+            score -= (20 * currentMultiplier) - (currentQuestionErrors * 5 * currentMultiplier); 
+            updateUI(); 
+            
+            showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500); 
+            checkDeath(); setTimeout(getNewQuestion, 450); 
         }
 
         function updateUI() { 
