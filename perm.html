@@ -11,7 +11,7 @@
             --bg-main: #e8f8f5; --text-dark: #1c2833; --text-gray: #7f8c8d; --color-gold: #16a085; 
             --btn-white: #ffffff; --btn-del-bg: #fae5e5; --btn-del-text: #c0392b; 
             --btn-enter-bg: #16a085; --btn-enter-text: #ffffff;
-            --shake-intensity: 2px; /* 漸進式震動初始值 */
+            --shake-intensity: 2px; 
         }
         
         /* ✨ 強制覆蓋全域 CSS，打造完美電話型數字鍵盤 */
@@ -24,14 +24,14 @@
         .key { font-size: 26px; }
         .key-del { 
             font-size: 22px; 
-            grid-column: span 1 !important; /* 強制只佔1格 */
+            grid-column: span 1 !important; 
             background-color: var(--btn-del-bg) !important;
             color: var(--btn-del-text) !important;
         }
         .key-enter { 
             font-size: 22px; 
             font-weight: bold; 
-            grid-column: 1 / -1 !important; /* 強制橫跨全部 3 格 */
+            grid-column: 1 / -1 !important; 
             background-color: var(--btn-enter-bg) !important;
             color: var(--btn-enter-text) !important;
         }
@@ -129,7 +129,6 @@
 
     <script src="common.js"></script>
     <script>
-        // ✨ 江老師專屬：排列組合題庫與神級提示
         const permQuestions = [
             // Level 1: 符號暖身
             { q: "4!", a: "24", hint: "4 × 3 × 2 × 1", level: 1 },
@@ -159,7 +158,7 @@
             { q: "x + y + z = 6 的 正整數解", a: "10", hint: "先各發1個，剩3個分給3人 ➡ H(3,3) = C(5,3) = 10", level: 4 }
         ];
 
-        // ✨ 自動生成 n*m 捷徑圖形題庫的引擎 (防重疊修正版)
+        // ✨ 自動生成 n*m 捷徑圖形題庫的引擎 (高度絕對鎖死版)
         function generateGridQuestions() {
             function C(n, k) {
                 if (k < 0 || k > n) return 0;
@@ -169,10 +168,9 @@
                 return res;
             }
             
-            // 產生 1x1 到 5x5 的所有網格
             for (let n = 1; n <= 5; n++) {
                 for (let m = 1; m <= 5; m++) {
-                    if (n === 1 && m === 1) continue; // 1x1 太簡單，跳過
+                    if (n === 1 && m === 1) continue; 
                     
                     let ans = C(n + m, n);
                     let lvl = (n + m <= 5) ? 2 : 3; 
@@ -185,9 +183,9 @@
                     for (let i = 0; i <= m; i++) pathD += `M0,${i*s} H${w} `;
                     for (let i = 0; i <= n; i++) pathD += `M${i*s},0 V${h} `;
                     
-                    // 防護罩：限制高度，絕對不會壓到文字
-                    let svgStr = `<div style='height: clamp(100px, 16vh, 140px); margin: 10px auto; display: flex; justify-content: center; align-items: center;'>` +
-                        `<svg viewBox='-25 -25 ${w + 50} ${h + 50}' style='max-height: 100%; max-width: 100%; width: auto; height: auto;'>` +
+                    // ✨ 核心修改：直接對 SVG 本身下達絕對指令「height: 90px; max-height: 12vh;」，杜絕任何自動放大的可能。
+                    let svgStr = `<div style='text-align: center; margin: 8px 0;'>` +
+                        `<svg viewBox='-25 -25 ${w + 50} ${h + 50}' style='height: 90px; max-height: 12vh; width: auto; max-width: 100%;'>` +
                         `<path d='${pathD}' stroke='#34495e' stroke-width='3' fill='none'/>` +
                         `<circle cx='0' cy='${h}' r='6' fill='#e74c3c'/>` +
                         `<text x='-20' y='${h + 20}' fill='#e74c3c' font-weight='bold' font-size='20'>A</text>` +
@@ -204,7 +202,7 @@
                 }
             }
         }
-        generateGridQuestions(); // 執行生成
+        generateGridQuestions();
 
         let score = 0, combo = 0, consecutiveWrong = 0;
         let targetAns = "", userInput = "", currentQuestionStr = "", currentHint = "";
@@ -279,7 +277,6 @@
             }
         }
 
-        // ✨ 修改：答錯只提示，不給答案
         function triggerErrorEffect() {
             playWrong(); combo = 0; consecutiveWrong++; 
             let h = typeof currentHint !== 'undefined' ? currentHint : "";
@@ -297,7 +294,6 @@
             showToast(`❌ 答錯囉！再仔細想想！`, 1200); checkDeath(); 
         }
 
-        // ✨ 修改：答對消除錯題本紀錄，並加入漸進式震動
         function submitAnswer() {
             if (userInput === "") return; 
             const box = document.getElementById('input-box');
@@ -326,7 +322,6 @@
             } else { triggerErrorEffect(); }
         }
 
-        // ✨ 修改：跳過才給正確答案
         function skipQuestion() {
             if (!document.getElementById('overlay').classList.contains('hidden')) return; 
             
