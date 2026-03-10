@@ -14,7 +14,6 @@
             --shake-intensity: 2px; 
         }
         
-        /* ✨ 完全對齊其他遊戲的直排 4 欄配置，建立完美肌肉記憶！ */
         #keypad {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
@@ -26,12 +25,11 @@
         .key:active { transform: scale(0.95); }
         
         .key-del { 
-            grid-row: span 2; /* 佔兩格高度 */
+            grid-row: span 2; 
             background-color: var(--btn-del-bg) !important; 
             color: var(--btn-del-text) !important; 
             font-size: 28px; 
         }
-        /* 排列組合雖然用不到，但維持版面整齊的裝飾按鍵 */
         .key-sqrt { 
             background-color: #e8f6f3 !important; 
             color: #16a085 !important; 
@@ -45,13 +43,12 @@
         .key-enter { 
             font-size: 20px; 
             font-weight: bold; 
-            grid-column: 1 / -1 !important; /* 橫跨 4 格 */
+            grid-column: 1 / -1 !important; 
             background-color: var(--btn-enter-bg) !important;
             color: var(--btn-enter-text) !important;
             letter-spacing: 2px;
         }
 
-        /* ✨ 漸進式震動特效 */
         @keyframes progressiveShake {
             0% { transform: translate(var(--shake-intensity), var(--shake-intensity)) rotate(0deg); }
             25% { transform: translate(calc(var(--shake-intensity) * -1), 0) rotate(1deg); }
@@ -374,11 +371,41 @@
             }, 50); 
         }
 
+        // ✨ 結算時將成績自動上傳至 Google 表單！
         function endGame() {
-            document.getElementById('overlay').classList.remove('hidden'); document.getElementById('final-score-text').classList.remove('hidden');
-            document.getElementById('final-score-text').innerText = `最終得分: ${score}`; document.getElementById('rules-box').classList.add('hidden'); 
-            const endLog = document.getElementById('end-error-log'); endLog.innerHTML = generateErrorLogHTML(); endLog.classList.remove('hidden');
+            document.getElementById('overlay').classList.remove('hidden'); 
+            document.getElementById('final-score-text').classList.remove('hidden');
+            document.getElementById('final-score-text').innerText = `最終得分: ${score}`; 
+            document.getElementById('rules-box').classList.add('hidden'); 
+            const endLog = document.getElementById('end-error-log'); 
+            endLog.innerHTML = generateErrorLogHTML(); 
+            endLog.classList.remove('hidden');
             window.scrollTo(0, 0);
+            
+            // --- 表單傳送邏輯 ---
+            let playerName = document.getElementById('ui-name').innerText;
+            if (playerName !== "---" && playerName !== "Guest" && score > 0) {
+                // 如果是無錯題，在名字後面加上標記，方便老師看
+                let errorSuffix = errorLogMap.size === 0 ? " (全對🌟)" : ` (錯題:${errorLogMap.size})`;
+                let finalName = playerName + errorSuffix;
+
+                const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfRSPseTLbHFqY9IfR5BSWAwEoNTZQYSL4IQa3eYXAOF93UEw/formResponse";
+                const formData = new FormData();
+                // 放入老師提供的 Entry ID
+                formData.append("entry.2030485553", finalName);
+                formData.append("entry.1761371672", score);
+
+                fetch(formUrl, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: formData
+                }).then(() => {
+                    console.log("排列學霸成績已送出！");
+                }).catch((e) => {
+                    console.error("成績送出失敗", e);
+                });
+            }
+            
             document.getElementById('player-name').value = "練習結束！這是你的錯題本 👉"; 
         }
     </script>
