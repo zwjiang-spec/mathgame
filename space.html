@@ -318,16 +318,16 @@
                 currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (全難度解禁, 分數 x2)"; 
                 allowedLevels = [1, 2, 3]; document.getElementById('phase-indicator').style.color = "#c0392b";
             } else if (consecutiveWrong >= 2) {
-                currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎三角)"; 
+                currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎)"; 
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
             } else if (score >= 120) {
-                currentMultiplier = 1; phaseStr = "⚡ 最終階段 (高角度與特殊角考驗)"; 
+                currentMultiplier = 1; phaseStr = "⚡ 最終階段 (進階空間距離)"; 
                 allowedLevels = [3]; document.getElementById('phase-indicator').style.color = "#8e44ad";
             } else if (combo >= 3 || score >= 50) {
-                currentMultiplier = 1; phaseStr = "⚡ 進階階段 (情境與多象限練習)"; 
+                currentMultiplier = 1; phaseStr = "⚡ 進階階段 (對稱點與距離)"; 
                 allowedLevels = [2, 3]; document.getElementById('phase-indicator').style.color = "#d68910";
             } else {
-                currentMultiplier = 1; phaseStr = `🌱 基礎階段 (連對3題解鎖進階)`; 
+                currentMultiplier = 1; phaseStr = `🌱 基礎階段`; 
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
             }
 
@@ -341,18 +341,18 @@
                 let qData = availableWrong[idx];
                 currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
                 document.getElementById('phase-indicator').innerText = phaseStr;
-                document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr);
+                document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr); 
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
             // ✨ 3. 正常抽題：排除「已答對的」以及「上一題」
-            let pool = trigQuestions.filter(q => allowedLevels.includes(q.level) && !correctQuestionsSet.has(q.q) && q.q !== lastQ);
+            let pool = spaceQuestions.filter(q => allowedLevels.includes(q.level) && !correctQuestionsSet.has(q.q) && q.q !== lastQ);
             
             // 題庫見底時的保底機制 (依序放寬條件，但優先排除上一題)
-            if (pool.length === 0) pool = trigQuestions.filter(q => allowedLevels.includes(q.level) && q.q !== lastQ); 
-            if (pool.length === 0) pool = trigQuestions.filter(q => !correctQuestionsSet.has(q.q) && q.q !== lastQ);
-            if (pool.length === 0) pool = trigQuestions.filter(q => q.q !== lastQ);
-            if (pool.length === 0) pool = trigQuestions; // 最終防呆
+            if (pool.length === 0) pool = spaceQuestions.filter(q => allowedLevels.includes(q.level) && q.q !== lastQ); 
+            if (pool.length === 0) pool = spaceQuestions.filter(q => !correctQuestionsSet.has(q.q) && q.q !== lastQ);
+            if (pool.length === 0) pool = spaceQuestions.filter(q => q.q !== lastQ);
+            if (pool.length === 0) pool = spaceQuestions; // 最終防呆
 
             let selectedQ = pool[Math.floor(Math.random() * pool.length)];
             currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; currentHint = selectedQ.hint;
