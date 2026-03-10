@@ -11,6 +11,7 @@
             --btn-white: #ffffff; --btn-del-bg: #fae5e5; --btn-del-text: #c0392b; 
             --btn-enter-bg: #2ecc71; --btn-enter-text: #ffffff;
             --shake-intensity: 2px; 
+            --fever-color: #e74c3c; /* ✨ 統一紅色 FEVER 顏色 */
         }
         
         #keypad {
@@ -37,27 +38,27 @@
         }
         .progressive-shake { animation: progressiveShake 0.4s ease-in-out; }
 
-        /* ✨ 狂熱特效 (確保量表會一直閃爍) */
-        @keyframes feverBg {
-            0%, 100% { background-color: #f1c40f; box-shadow: 0 0 15px rgba(241, 196, 15, 0.8); }
-            50% { background-color: #e74c3c; box-shadow: 0 0 25px rgba(231, 76, 60, 0.9); }
+        /* ✨ 統一紅色 FEVER 閃爍特效 */
+        @keyframes feverBgRed {
+            0%, 100% { background-color: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); }
+            50% { background-color: #c0392b; box-shadow: 0 0 25px rgba(192, 57, 43, 0.9); }
         }
         .fever-fill {
-            animation: feverBg 0.4s infinite !important;
+            animation: feverBgRed 0.4s infinite !important;
         }
-        @keyframes pop {
+        @keyframes popRed {
             from { transform: scale(1); }
-            to { transform: scale(1.15); color: #e74c3c; }
+            to { transform: scale(1.15); color: #c0392b; }
         }
         .fever-text {
-            animation: pop 0.3s infinite alternate;
-            color: #f1c40f !important;
-            font-weight: 900;
+            animation: popRed 0.3s infinite alternate;
+            color: var(--fever-color) !important; /* 紅色 */
+            font-weight: 900; /* 粗體 */
             display: inline-block;
         }
         .fever-box {
-            border-color: #f1c40f !important;
-            box-shadow: 0 0 15px rgba(241, 196, 15, 0.4) !important;
+            border-color: var(--fever-color) !important;
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.4) !important;
         }
     </style>
 </head>
@@ -131,7 +132,7 @@
             <div class="key" onclick="input('3')">3</div>
             
             <div class="key key-sqrt" onclick="input('√')" style="display: flex; align-items: center; justify-content: center;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 13h2l3.5 7 4.5-14h7" />
                 </svg>
             </div>
@@ -171,17 +172,17 @@
         let errorLogMap = new Map(); 
         let activeWrongPool = [];
 
-        // ✨ 1. SVG 動態繪圖引擎：完美還原截圖裡的根號包覆數字效果！
+        // ✨ 1. SVG 動態繪圖引擎：完美還原截圖裡的根號包覆數字效果，並修正橫線粗細！
         function formatMath(str) {
             if (!str) return "";
             return String(str).replace(/√(\d*)/g, function(match, inner) {
                 if (!inner) {
-                    return `<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em;"><path d="M3 13h2l3.5 7 4.5-14h7" /></svg>`;
+                    return `<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em;"><path d="M3 13h2l3.5 7 4.5-14h7" /></svg>`;
                 }
-                // 根據數字長度自動延伸上方橫線，並將數字繪製在 SVG 內部
+                // ✨ 修正粗細，stroke-width 設為 1.5，並讓橫線寬度更精準
                 let w = inner.length * 9;
                 let totalW = 15 + w + 2;
-                return `<svg width="${(totalW / 24) * 1.2}em" height="1.2em" viewBox="0 0 ${totalW} 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em; margin: 0 0.05em;">
+                return `<svg width="${(totalW / 24) * 1.2}em" height="1.2em" viewBox="0 0 ${totalW} 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em; margin: 0 0.05em;">
                             <path d="M3 13h2l3.5 7 4.5-14h${w + 2}" />
                             <text x="14" y="19" fill="currentColor" stroke="none" font-size="16" font-family="system-ui, sans-serif" font-weight="bold">${inner}</text>
                         </svg>`;
@@ -265,7 +266,7 @@
 
         function renderInput() {
             const box = document.getElementById('input-box'); 
-            box.innerHTML = formatMath(userInput); // ✨ 動態繪製完美根號
+            box.innerHTML = formatMath(userInput); 
             box.classList.remove('error-text', 'correct-flash');
         }
         function input(val) { if (val === 'DEL') userInput = userInput.slice(0, -1); else userInput += val; renderInput(); }
@@ -372,6 +373,7 @@
                 comboText.style.color = "#27ae60"; 
                 comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box');
             } else { 
+                // ✨ 統一紅色 FEVER
                 comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`; 
                 comboFill.classList.add('fever-fill'); inputBox.classList.add('fever-box'); 
             }
