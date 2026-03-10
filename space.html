@@ -60,6 +60,36 @@
             border-color: var(--fever-color) !important;
             box-shadow: 0 0 15px rgba(231, 76, 60, 0.4) !important;
         }
+
+        /* ✨ 原版遊戲規則樣式 */
+        .rules-container {
+            border: 2px dashed #d4af37; 
+            border-radius: 12px; 
+            padding: 15px 20px; 
+            text-align: left; 
+            background: #fffcf5; 
+            margin-bottom: 20px;
+        }
+        .rules-title {
+            color: #d4af37; 
+            text-align: center; 
+            margin-top: 0; 
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .rules-divider {
+            border: 0; 
+            height: 1px; 
+            background: #f1e5bc; 
+            margin-bottom: 12px;
+        }
+        .rules-list {
+            color: #555; 
+            font-size: 15px; 
+            line-height: 1.8; 
+            padding-left: 20px; 
+            margin-bottom: 0;
+        }
     </style>
 </head>
 <body>
@@ -68,23 +98,34 @@
         <h1>💀 你已經死了</h1>
         <p>分數過低 (-20分)，失去挑戰資格</p>
         <div id="death-error-log" style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px; color: black; max-width: 90%; margin-top: 15px;"></div>
-        <button class="action-btn" onclick="location.reload()" style="margin-top: 20px; background: #555;">重新開始</button>
-        <a href="index.html" style="color: #ccc; margin-top: 15px;">🏠 回到數學天地主選單</a>
+        
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+            <button class="action-btn" onclick="location.reload()" style="background: #555; padding: 10px 20px;">重新開始</button>
+            <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pubhtml" target="_blank" style="background: #f39c12; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; line-height: 1.5;">🏆 排行榜</a>
+        </div>
+        <a href="index.html" style="color: #ccc; margin-top: 20px; display: block;">🏠 回到數學天地主選單</a>
     </div>
 
     <div id="overlay">
-        <a href="index.html" class="home-btn" style="position: absolute; top: 15px; left: 15px;">🏠 回主選單</a>
-        <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 40px;">有趣的空間坐標</h1>
+        <div style="display: flex; justify-content: space-between; width: 100%; padding: 15px; box-sizing: border-box; position: absolute; top: 0; left: 0;">
+            <a href="index.html" class="home-btn">🏠 回主選單</a>
+            <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pubhtml" target="_blank" style="color: #d35400; font-weight: bold; text-decoration: none; background: #ffefd5; padding: 5px 10px; border-radius: 8px;">🏆 排行榜</a>
+        </div>
+        
+        <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 50px;">有趣的空間坐標</h1>
         <h2 id="final-score-text" class="hidden" style="color: var(--color-gold); margin-top: -10px; margin-bottom: 10px;"></h2>
         <div id="end-error-log" class="hidden" style="background: #fffdf5; border: 2px dashed #e74c3c; padding: 15px; border-radius: 10px; max-width: 90%; margin: 0 auto 20px;"></div>
 
-        <div id="rules-box">
-            <h3>📜 遊戲規則與計分方式</h3>
-            <ul>
-                <li><b>作答方式：</b>限時90秒。距離與長度直接輸入數字；座標請用逗號 <code>,</code> 隔開 (如: 1,2,3)。有根號請按 <code>√</code>。</li>
-                <li><b>計分方式：</b>基本題答對+10分，答錯扣5分；連對Combo可獲得額外加分！<br><span style="color:#e74c3c;">⚠️ 若放棄跳過 (PASS) 將直接扣 20 分！請謹慎使用。</span></li>
-                <li><b style="color:#8e44ad;">智慧容錯：</b>不必理會有理化！打 <code>1/√2</code> 或 <code>√2/2</code> 都算對，系統也會自動過濾多餘的空白！</li>
-                <li><b style="color:#2980b9;">神級錯題本：</b>答錯的題目會重出，直到你算對為止。遊戲結束時，更會附贈你的專屬錯題觀念提示！</li>
+        <div id="rules-box" class="rules-container">
+            <div class="rules-title">📜 遊戲規則與計分方式</div>
+            <hr class="rules-divider">
+            <ul class="rules-list">
+                <li><b>挑戰時間：</b>總共 <b>90 秒</b>，請盡可能拿高分！</li>
+                <li><b>基本得分：</b>答對 +10 分，連續答對享有 Combo 加成！</li>
+                <li><b>倒扣懲罰：</b>按錯送出會<b>漸進式扣分</b> (5分、10分...)。</li>
+                <li><b>難度進化：</b>總分達 <b>100分</b> 解鎖「進階階段(對稱與距離)」。</li>
+                <li><b>狂熱時間：</b>最後 30 秒難度全開，且<b>得分加倍</b>！</li>
+                <li><b style="color:#e74c3c;">神級錯題本：</b>按 PASS(扣20分)或答錯的題目，會收錄錯題本並反覆出題！</li>
             </ul>
         </div>
         
@@ -131,11 +172,7 @@
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
             
-            <div class="key key-sqrt" onclick="input('√')" style="display: flex; align-items: center; justify-content: center;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 13h2l3.5 7 4.5-14h7" />
-                </svg>
-            </div>
+            <div class="key key-sqrt" onclick="input('√')" style="font-family: math, serif;">√</div>
             
             <div class="key" onclick="input('0')">0</div>
             <div class="key key-op" onclick="input('-')">-</div>
@@ -148,23 +185,24 @@
 
     <script src="common.js"></script>
     <script>
-        // ✨ 純化後的空間坐標專屬題庫（移除所有向量題目）
+        // ✨ 純血空間坐標題庫 (移除所有向量與中點)
         const spaceQuestions = [
             // Level 1: 基礎投影與距離
-            { q: "點 (3,4,5) 到 xy平面的距離", a: "5", hint: "找 z 坐標的絕對值", level: 1 },
             { q: "點 (3,4,5) 在 xy平面的投影點", a: "3,4,0", hint: "投影在 xy 平面，z 坐標變為 0", level: 1 },
-            { q: "點 (0,3,4) 到 x軸的距離", a: "5", hint: "√(y²+z²) = √(3²+4²) = 5", level: 1 },
-            { q: "A(1,1,1) 與 B(3,5,7) 的中點", a: "2,3,4", hint: "坐標相加除以 2，記得打逗號", level: 1 },
+            { q: "點 (-2,1,4) 在 x軸的投影點", a: "-2,0,0", hint: "投影在 x 軸，y 與 z 坐標變為 0", level: 1 },
+            { q: "點 (3,4,5) 到 xy平面的距離", a: "5", hint: "找 z 坐標的絕對值", level: 1 },
+            { q: "點 (0,3,4) 到 x軸的距離", a: "5", hint: "√(3² + 4²) = 5", level: 1 },
+            { q: "點 (1,2,2) 到原點的距離", a: "3", hint: "√(1² + 2² + 2²) = 3", level: 1 },
 
             // Level 2: 對稱點與兩點距離
             { q: "點 (1,2,3) 對 xy平面的對稱點", a: "1,2,-3", hint: "對 xy 平面對稱，z 坐標變號", level: 2 },
             { q: "點 (2,-3,4) 對原點的對稱點", a: "-2,3,-4", hint: "對原點對稱，xyz 皆變號", level: 2 },
-            { q: "點 (1,2,3) 對 x軸的對稱點", a: "1,-2,-3", hint: "對 x 軸對稱，yz 坐標變號", level: 2 },
+            { q: "點 (1,2,3) 對 x軸的對稱點", a: "1,-2,-3", hint: "對 x 軸對稱，y 與 z 坐標變號", level: 2 },
             { q: "點 A(1,2,3) 到 B(1,5,7) 的距離", a: "5", hint: "√(0² + 3² + 4²) = 5", level: 2 },
 
             // Level 3: 進階距離
-            { q: "點 (2,3,6) 到原點的距離", a: "7", hint: "√(2²+3²+6²) = √49 = 7", level: 3 },
-            { q: "點 (4,-2,4) 到原點的距離", a: "6", hint: "√(4²+(-2)²+4²) = √36 = 6", level: 3 }
+            { q: "點 A(2,0,0) 到 B(0,3,0) 的距離", a: "√13", hint: "√(2² + 3²) = √13", level: 3 },
+            { q: "點 (3,4,12) 到原點的距離", a: "13", hint: "√(3² + 4² + 12²) = 13", level: 3 }
         ];
 
         let score = 0, combo = 0, consecutiveWrong = 0;
@@ -176,21 +214,16 @@
         let errorLogMap = new Map(); 
         let activeWrongPool = [];
 
+        // ✨ 1. 最粗細均勻的根號排版 (使用 text-decoration: overline)
         function formatMath(str) {
             if (!str) return "";
             return String(str).replace(/√(\d*)/g, function(match, inner) {
-                if (!inner) {
-                    return `<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em;"><path d="M3 13h2l3.5 7 4.5-14h7" /></svg>`;
-                }
-                let w = inner.length * 9;
-                let totalW = 15 + w + 2;
-                return `<svg width="${(totalW / 24) * 1.2}em" height="1.2em" viewBox="0 0 ${totalW} 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em; margin: 0 0.05em;">
-                            <path d="M3 13h2l3.5 7 4.5-14h${w + 2}" />
-                            <text x="14" y="19" fill="currentColor" stroke="none" font-size="16" font-family="system-ui, sans-serif" font-weight="bold">${inner}</text>
-                        </svg>`;
+                if (!inner) return `<span style="font-family: math, serif; font-weight: 600;">√</span>`;
+                return `<span style="white-space: nowrap; font-family: math, serif; font-weight: 600;">√<span style="text-decoration: overline;">${inner}</span></span>`;
             });
         }
 
+        // ✨ 2. 最強計算容錯引擎：自動化簡與防呆比對
         function evalMathStr(s) {
             if (!s) return null;
             if (!/^[0-9+\-*/().\s√]+$/.test(s)) return null;
@@ -231,11 +264,11 @@
             } else if (consecutiveWrong >= 2) {
                 currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎)"; 
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
-            } else if (score >= 120) {
+            } else if (score >= 100) {
                 currentMultiplier = 1; phaseStr = "⚡ 最終階段 (進階空間距離)"; 
                 allowedLevels = [3]; document.getElementById('phase-indicator').style.color = "#8e44ad";
             } else if (combo >= 3 || score >= 50) {
-                currentMultiplier = 1; phaseStr = "⚡ 進階階段 (對稱點與距離)"; 
+                currentMultiplier = 1; phaseStr = "⚡ 進階階段 (對稱與距離)"; 
                 allowedLevels = [2, 3]; document.getElementById('phase-indicator').style.color = "#d68910";
             } else {
                 currentMultiplier = 1; phaseStr = `🌱 基礎階段`; 
@@ -371,6 +404,7 @@
                 comboText.style.color = "#9b59b6"; 
                 comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box');
             } else { 
+                // ✨ 統一紅色 FEVER
                 comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`; 
                 comboFill.classList.add('fever-fill'); inputBox.classList.add('fever-box'); 
             }
