@@ -6,44 +6,36 @@
     <title>超好玩的三角比 - 數學領域展開</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ✨ 專屬的「青綠色」主題 */
+        /* ✨ 三角比專屬主題 */
         :root {
-            --bg-main: #e8f8f5; --text-dark: #1c2833; --text-gray: #7f8c8d; --color-gold: #16a085; 
+            --bg-main: #f7f9fc; --text-dark: #1c2833; --text-gray: #7f8c8d; --color-gold: #27ae60; 
             --btn-white: #ffffff; --btn-del-bg: #fae5e5; --btn-del-text: #c0392b; 
-            --btn-enter-bg: #16a085; --btn-enter-text: #ffffff;
+            --btn-enter-bg: #27ae60; --btn-enter-text: #ffffff;
             --shake-intensity: 2px; 
         }
         
-        /* ✨ 強制覆蓋全域 CSS，打造完美電話型數字鍵盤 */
+        /* ✨ 恢復老師最愛的直排 4 欄計算機！ */
         #keypad {
             display: grid !important;
-            grid-template-columns: repeat(3, 1fr) !important;
+            grid-template-columns: repeat(4, 1fr) !important;
             grid-auto-rows: min(10vh, 55px);
-            gap: 12px;
+            gap: 10px;
         }
-        .key { font-size: 26px; }
-        .key-del { 
-            font-size: 22px; 
-            grid-column: span 1 !important; 
-            background-color: var(--btn-del-bg) !important;
-            color: var(--btn-del-text) !important;
-        }
+        .key { font-size: 26px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: #2c3e50;}
+        .key:active { transform: scale(0.95); }
+        .key-del { background-color: var(--btn-del-bg) !important; color: var(--btn-del-text) !important; font-size: 24px; }
+        .key-sqrt { background-color: #fef5e7 !important; color: #d35400 !important; font-size: 26px; }
+        .key-op { background-color: #ebf5fb !important; color: #2980b9 !important; font-size: 28px; }
         .key-enter { 
-            font-size: 22px; 
+            font-size: 20px; 
             font-weight: bold; 
-            grid-column: 1 / -1 !important; 
+            grid-column: 1 / -1 !important; /* 橫跨 4 格 */
             background-color: var(--btn-enter-bg) !important;
             color: var(--btn-enter-text) !important;
+            letter-spacing: 2px;
         }
-        .key-empty {
-            background: transparent !important;
-            box-shadow: none !important;
-            pointer-events: none;
-        }
-        /* 三角函數專用：平方根按鈕 */
-        .key-sqrt { font-size: 24px; color: #16a085; }
+        .key-empty { background: transparent !important; box-shadow: none !important; pointer-events: none; }
 
-        /* ✨ 漸進式震動特效 */
         @keyframes progressiveShake {
             0% { transform: translate(var(--shake-intensity), var(--shake-intensity)) rotate(0deg); }
             25% { transform: translate(calc(var(--shake-intensity) * -1), 0) rotate(1deg); }
@@ -66,17 +58,16 @@
 
     <div id="overlay">
         <a href="index.html" class="home-btn" style="position: absolute; top: 15px; left: 15px;">🏠 回主選單</a>
-        <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 40px;">神奇三角函數！</h1>
+        <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 40px;">超好玩的三角比</h1>
         <h2 id="final-score-text" class="hidden" style="color: var(--color-gold); margin-top: -10px; margin-bottom: 10px;"></h2>
         <div id="end-error-log" class="hidden" style="background: #fffdf5; border: 2px dashed #e74c3c; padding: 15px; border-radius: 10px; max-width: 90%; margin: 0 auto 20px;"></div>
 
         <div id="rules-box">
             <h3>📜 遊戲規則與計分方式</h3>
             <ul>
-                <li><b>輸入方式：</b>請輸入分數 `a/b` 或 `-a/b`（例：`-1/2`）。</li>
+                <li><b>輸入方式：</b>請輸入分數 `a/b` 或 `-a/b`，根號請按 `√`。</li>
                 <li><b>挑戰時間：</b>總共 <b>90 秒</b>，最後 10 秒極限狂熱！</li>
-                <li><b style="color:#27ae60;">漸進難度：</b>從基礎 30/45/60 到特殊角，最後解鎖更高角度！</li>
-                <li><b style="color:#2980b9;">神級錯題本：</b>答錯的題目會重出，結束時附贈<b>專屬觀念提示</b>！</li>
+                <li><b style="color:#27ae60;">神級錯題本：</b>答錯的題目會重出，結束時附贈專屬觀念提示！</li>
             </ul>
         </div>
         
@@ -84,10 +75,11 @@
         <button class="action-btn" onclick="startGame()" style="background: var(--btn-enter-bg);">START GAME</button>
     </div>
 
+    <div id="progress-container"><div id="progress-bar" style="background: var(--color-gold);"></div></div>
     <div id="header">
-        <div class="stat-group"><div class="stat-label">STUDENT</div><div id="ui-name" class="stat-value">---</div></div>
+        <div class="stat-group"><div class="stat-label">STUDENT</div><div id="ui-name" class="stat-value" style="color: #d68910;">---</div></div>
         <div class="stat-group"><div class="stat-label">TIME</div><div id="ui-time" class="stat-value" style="color: #e74c3c;">90</div></div>
-        <div class="stat-group"><div class="stat-label">SCORE</div><div id="ui-score" class="stat-value">0</div></div>
+        <div class="stat-group"><div class="stat-label">SCORE</div><div id="ui-score" class="stat-value" style="color: #d68910;">0</div></div>
     </div>
     
     <div id="combo-gauge-wrapper">
@@ -95,14 +87,14 @@
         <div id="combo-gauge-bg"><div id="combo-gauge-fill" style="background: var(--color-gold);"></div></div>
         <div id="combo-gauge-text">0</div>
     </div>
-    <div id="phase-indicator">🌱 階段一：符號暖身</div>
+    <div id="phase-indicator">🌱 基礎階段 (連對3題解鎖進階)</div>
 
     <div id="display-area">
-        <div id="question-text" style="font-size: 24px; font-weight: bold; color: var(--text-dark);">題目讀取中...</div>
+        <div id="question-text" style="font-size: 26px; font-weight: bold; color: var(--text-gray);">題目讀取中...</div>
         
         <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 15px; margin-bottom: 5px;">
             <div style="font-size: 32px; font-weight: bold; color: var(--text-dark); line-height: 1;">=</div>
-            <div id="input-box" style="margin-top: 0; min-width: 100px;"></div>
+            <div id="input-box" style="margin-top: 0; min-width: 120px;"></div>
             <button onclick="skipQuestion()" style="background: #ffefd5; color: #d35400; border: 2px solid #f39c12; border-radius: 12px; font-size: 14px; font-weight: bold; padding: 6px 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2); white-space: nowrap; transition: 0.1s;">
                 PASS<br><span style="font-size:11px;">(-20分)</span>
             </button>
@@ -114,42 +106,39 @@
             <div class="key" onclick="input('7')">7</div>
             <div class="key" onclick="input('8')">8</div>
             <div class="key" onclick="input('9')">9</div>
+            <div class="key key-del" onclick="input('DEL')">⌫</div>
             
             <div class="key" onclick="input('4')">4</div>
             <div class="key" onclick="input('5')">5</div>
             <div class="key" onclick="input('6')">6</div>
+            <div class="key key-sqrt" onclick="input('√')">√</div>
             
             <div class="key" onclick="input('1')">1</div>
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
+            <div class="key" onclick="input('0')">0</div>
             
-            <div class="key key-sqrt" onclick="input('√')">√</div> <div class="key" onclick="input('0')">0</div>
-            <div class="key key-del" onclick="input('DEL')">⌫</div>
-
-            <div class="key" onclick="input('-')">-</div>
-            <div class="key" onclick="input('/')">/</div>
-            <div class="key key-enter" onclick="submitAnswer()" style="grid-column: span 1 !important;">ENTER</div>
+            <div class="key key-op" onclick="input('-')">-</div>
+            <div class="key key-op" onclick="input('/')">/</div>
+            <div class="key key-empty"></div>
+            <div class="key key-empty"></div>
+            
+            <div class="key key-enter" onclick="submitAnswer()">送出答案 (ENTER)</div>
         </div>
     </div>
 
     <script src="common.js"></script>
     <script>
-        // ✨ 江老師專屬三角比題庫
         const trigQuestions = [
-            // Level 1: 符號暖身 (30/45/60)
             { q: "sin 30°", a: "1/2", hint: "畫 30-60-90 三角形！對邊/斜邊 = 1/2", level: 1 },
             { q: "cos 60°", a: "1/2", hint: "畫 30-60-90 三角形！鄰邊/斜邊 = 1/2", level: 1 },
             { q: "tan 45°", a: "1", hint: "畫 45-45-90 三角形！對邊/鄰邊 = 1/1 = 1", level: 1 },
             { q: "sin 45°", a: "√2/2", hint: "1/√2 ➡ 有理化變成 √2/2", level: 1 },
             { q: "cos 0°", a: "1", hint: "角度為 0，鄰邊=斜邊 ➡ cos=1", level: 1 },
-            
-            // Level 2: 特殊角與象限
             { q: "sin 90°", a: "1", hint: "角度為 90，對邊=斜邊 ➡ sin=1", level: 2 },
             { q: "cos 180°", a: "-1", hint: "第二象限角，鄰邊方向相反 ➡ cos=-1", level: 2 },
             { q: "sin(-30°)", a: "-1/2", hint: "sin(-θ) = -sinθ ➡ -sin 30° = -1/2", level: 2 },
             { q: "tan 240°", a: "√3", hint: "第三象限角，tan=對邊/鄰邊=(-√3)/(-1) = √3", level: 2 },
-            
-            // Level 3: 更高角度
             { q: "sin 120°", a: "√3/2", hint: "第二象限角，對邊>0 ➡ sin 120 = sin 60 = √3/2", level: 3 },
             { q: "cos 150°", a: "-√3/2", hint: "第二象限角，cos<0 ➡ cos 150 = -cos 30 = -√3/2", level: 3 },
             { q: "sin 315°", a: "-√2/2", hint: "第四象限角，對邊<0 ➡ sin 315 = -sin 45 = -√2/2", level: 3 },
@@ -182,7 +171,7 @@
                 currentMultiplier = 1; phaseStr = "⚡ 進階階段 (情境與多象限練習)"; 
                 allowedLevels = [2, 3]; document.getElementById('phase-indicator').style.color = "#d68910";
             } else {
-                currentMultiplier = 1; phaseStr = `🌱 階段一：基礎三角比`; 
+                currentMultiplier = 1; phaseStr = `🌱 基礎階段 (連對3題解鎖進階)`; 
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
             }
 
@@ -191,8 +180,7 @@
                 let qData = activeWrongPool[idx];
                 currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
                 document.getElementById('phase-indicator').innerText = phaseStr;
-                // ✨ 修正重點：只印出題目，把原本的程式碼生成的等號移除
-                document.getElementById('question-text').innerHTML = currentQuestionStr; 
+                document.getElementById('question-text').innerHTML = currentQuestionStr; // 已經拿掉等號
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
@@ -204,8 +192,7 @@
             currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; currentHint = selectedQ.hint;
 
             document.getElementById('phase-indicator').innerText = phaseStr;
-            // ✨ 修正重點：只印出題目，把原本的程式碼生成的等號移除
-            document.getElementById('question-text').innerHTML = currentQuestionStr; 
+            document.getElementById('question-text').innerHTML = currentQuestionStr; // 已經拿掉等號
             userInput = ""; currentQuestionErrors = 0; renderInput();
         }
 
@@ -231,13 +218,10 @@
             }
         }
 
-        // ✨ 修改：答錯只提示，不給答案
         function triggerErrorEffect() {
             playWrong(); combo = 0; consecutiveWrong++; 
             let h = typeof currentHint !== 'undefined' ? currentHint : "";
-            
             errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
-            
             if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
                 activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
             }
@@ -245,22 +229,15 @@
             const area = document.getElementById('display-area'); area.classList.remove('shake-animation'); void area.offsetWidth; area.classList.add('shake-animation');
             currentQuestionErrors++; score -= (currentQuestionErrors * 5 * currentMultiplier); 
             document.getElementById('input-box').classList.add('error-text'); flashScoreRed(); updateUI();
-            
             showToast(`❌ 答錯囉！再仔細想想！`, 1200); checkDeath(); 
         }
 
-        // ✨ 修改：答對消除錯題本紀錄，並加入漸進式震動
         function submitAnswer() {
             if (userInput === "") return; 
             const box = document.getElementById('input-box');
             
-            // 三角比容錯：允许√2/2 或 1/√2 这种写法（此版本只允许標準格式 sqrt 2 / 2）
-
             if (userInput === targetAns) {
-                if (currentQuestionErrors === 0) {
-                    correctQuestionsSet.add(currentQuestionStr);
-                }
-                
+                if (currentQuestionErrors === 0) correctQuestionsSet.add(currentQuestionStr);
                 activeWrongPool = activeWrongPool.filter(item => item.q !== currentQuestionStr);
                 errorLogMap.delete(currentQuestionStr); 
 
@@ -280,22 +257,17 @@
             } else { triggerErrorEffect(); }
         }
 
-        // ✨ 修改：跳過才給正確答案
         function skipQuestion() {
             if (!document.getElementById('overlay').classList.contains('hidden')) return; 
-            
             let h = typeof currentHint !== 'undefined' ? currentHint : "";
             errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
             if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
                 activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
             }
 
-            playWrong(); combo = 0; consecutiveWrong++;
-            currentQuestionErrors++; 
+            playWrong(); combo = 0; consecutiveWrong++; currentQuestionErrors++; 
             score -= (20 * currentMultiplier) - (currentQuestionErrors * 5 * currentMultiplier); 
-            updateUI(); 
-            
-            showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500); 
+            updateUI(); showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500); 
             checkDeath(); setTimeout(getNewQuestion, 450); 
         }
 
@@ -305,7 +277,7 @@
             let fillPercent = Math.min((combo / 10) * 100, 100); comboFill.style.width = fillPercent + "%";
             comboText.classList.remove('bump-anim'); void comboText.offsetWidth; if(combo > 0) comboText.classList.add('bump-anim');
             if (combo === 0) { comboText.innerHTML = "0"; comboText.style.color = "var(--text-gray)"; comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box'); 
-            } else if (combo < 10) { comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`; comboText.style.color = "#16a085"; comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box');
+            } else if (combo < 10) { comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`; comboText.style.color = "#27ae60"; comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box');
             } else { comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`; comboFill.classList.add('fever-fill'); inputBox.classList.add('fever-box'); }
         }
 
