@@ -138,6 +138,15 @@
       .btn-space:hover {
         background-color: #8e44ad;
       }
+      /* ✨ 排列組合專屬顏色 */
+      .btn-perm {
+        background-color: #16a085;
+        box-shadow: 0 4px 10px rgba(22, 160, 133, 0.3);
+      }
+      .btn-perm:hover {
+        background-color: #117a65;
+      }
+
       .btn-practice {
         background-color: #e67e22;
         box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
@@ -304,7 +313,7 @@
     </style>
   </head>
   <body>
-    <div id="version-btn" onclick="toggleUpdateLog()">v2.0.0 更新日誌</div>
+    <div id="version-btn" onclick="toggleUpdateLog()">v2.1.0 更新日誌</div>
 
     <div id="update-modal">
       <div class="modal-content">
@@ -312,39 +321,35 @@
         <h2>🚀 版本更新日誌</h2>
 
         <div class="update-item">
-          <span class="version-tag">v2.0.0</span>
-          <span class="date-tag">史詩級大升級！</span>
+          <span class="version-tag" style="background: #16a085;">v2.1.0</span>
+          <span class="date-tag">全新單元解鎖！</span>
           <ul>
             <li>
-              <b style="color: #e67e22">綜合練習模式：</b
-              >自由勾選多個單元進行混和測驗，隨機出題考驗真功夫！此模式無壓力，不列入排行榜。
+              <b style="color: #16a085">神速排列組合上線：</b
+              >專為高二下學期打造，極簡化純數字鍵盤，考驗方程式與情境判斷的直覺反射！
             </li>
             <li>
-              <b style="color: #2980b9">動態難度上線：</b
-              >連對觸發進階題，連錯啟動基礎保底，遇強則強！
+              <b style="color: #e74c3c">錯題本終極進化：</b
+              >現在不僅顯示正確答案，還會附帶「專屬觀念提示」，直接當作考前秘笈！
             </li>
             <li>
-              <b style="color: #e74c3c">專屬錯題本：</b
-              >通關或出局後，將為你統整所有錯題，複習更精準。
-            </li>
-            <li>
-              <b style="color: #27ae60">即時回饋：</b
-              >答錯時畫面上方會短暫彈出「正確答案」提示囉。
-            </li>
-            <li>
-              <b style="color: #2c3e50">大廳介面翻新：</b
-              >新增雙模式頁籤切換，介面更清晰，載入速度提升。
+              <b style="color: #2980b9">漸進式動態震動：</b
+              >5 連擊以上觸發畫面震動，連擊越高震動越強烈，打擊手感再升級！
             </li>
           </ul>
         </div>
 
         <div class="update-item">
-          <span class="version-tag" style="background: #95a5a6">v1.5.0</span>
-          <span class="date-tag">經典回顧</span>
+          <span class="version-tag">v2.0.0</span>
+          <span class="date-tag">史詩級大升級</span>
           <ul>
-            <li>加入「空間坐標極限戰」單元。</li>
-            <li>新增連擊 FEVER 動畫特效。</li>
-            <li>導入 -20 分出局的死亡機制防呆機制。</li>
+            <li>
+              <b style="color: #e67e22">綜合練習模式：</b
+              >自由勾選多個單元進行混和測驗，隨機出題考驗真功夫！
+            </li>
+            <li>動態難度上線：連對觸發進階題，連錯啟動基礎保底。</li>
+            <li>專屬錯題本：通關或出局後，統整所有錯題。</li>
+            <li>大廳介面翻新：新增雙模式頁籤切換。</li>
           </ul>
         </div>
       </div>
@@ -425,11 +430,31 @@
           <div class="btn-arrow">▶</div>
         </a>
 
-        <a href="#" class="menu-btn btn-locked">
-          <div class="btn-text">
-            <span class="level-icon">🔒</span> 敬請期待...
+        <a href="perm.html" class="menu-btn btn-perm">
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              text-align: left;
+              gap: 4px;
+            "
+          >
+            <div class="btn-text">
+              <span class="level-icon"></span> 神速排列組合
+            </div>
+            <div
+              style="
+                font-size: 13px;
+                font-weight: normal;
+                color: rgba(255, 255, 255, 0.9);
+              "
+            >
+              🎯 挑戰反應神經！(無排行榜)
+            </div>
           </div>
+          <div class="btn-arrow">▶</div>
         </a>
+
       </div>
 
       <div id="content-practice" class="content-section">
@@ -442,6 +467,9 @@
           </label>
           <label class="check-item">
             <input type="checkbox" id="chk-space" checked /> 有趣的空間坐標
+          </label>
+          <label class="check-item">
+            <input type="checkbox" id="chk-perm" checked /> 神速排列組合
           </label>
         </div>
         <button class="menu-btn btn-practice" onclick="startPractice()">
@@ -476,6 +504,9 @@
           selectedModes.push("trig");
         if (document.getElementById("chk-space").checked)
           selectedModes.push("space");
+        // ✨ 加入排列組合的勾選判斷
+        if (document.getElementById("chk-perm").checked)
+          selectedModes.push("perm");
 
         if (selectedModes.length === 0) {
           alert("⚠️ 請至少勾選一個單元才能開始練習喔！");
