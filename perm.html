@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>好玩的數學</title>
+    <title>神速排列組合 - 數學領域展開</title>
     <link rel="stylesheet" href="style.css">
     <style>
         /* ✨ 專屬的「青綠色」主題 */
@@ -14,17 +14,34 @@
             --shake-intensity: 2px; /* 漸進式震動初始值 */
         }
         
-        /* ✨ 超極簡、超大按鍵的 3x4 鍵盤 (拔掉根號與負號) */
+        /* ✨ 強制覆蓋全域 CSS，打造完美電話型數字鍵盤 */
         #keypad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(4, min(12vh, 60px));
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            grid-auto-rows: min(10vh, 55px);
             gap: 12px;
         }
         .key { font-size: 26px; }
-        .key-del { font-size: 22px; }
-        .key-enter { font-size: 20px; font-weight: bold; }
+        .key-del { 
+            font-size: 22px; 
+            grid-column: span 1 !important; /* 強制只佔1格 */
+            background-color: var(--btn-del-bg) !important;
+            color: var(--btn-del-text) !important;
+        }
+        .key-enter { 
+            font-size: 22px; 
+            font-weight: bold; 
+            grid-column: 1 / -1 !important; /* 強制橫跨全部 3 格 */
+            background-color: var(--btn-enter-bg) !important;
+            color: var(--btn-enter-text) !important;
+        }
+        .key-empty {
+            background: transparent !important;
+            box-shadow: none !important;
+            pointer-events: none;
+        }
 
+        /* ✨ 漸進式震動特效 */
         @keyframes progressiveShake {
             0% { transform: translate(var(--shake-intensity), var(--shake-intensity)) rotate(0deg); }
             25% { transform: translate(calc(var(--shake-intensity) * -1), 0) rotate(1deg); }
@@ -90,17 +107,29 @@
 
     <div id="keypad-container">
         <div id="keypad">
-            <div class="key" onclick="input('7')">7</div><div class="key" onclick="input('8')">8</div><div class="key" onclick="input('9')">9</div>
-            <div class="key" onclick="input('4')">4</div><div class="key" onclick="input('5')">5</div><div class="key" onclick="input('6')">6</div>
-            <div class="key" onclick="input('1')">1</div><div class="key" onclick="input('2')">2</div><div class="key" onclick="input('3')">3</div>
-            <div class="key key-del" onclick="input('DEL')">⌫</div><div class="key" onclick="input('0')">0</div>
+            <div class="key" onclick="input('7')">7</div>
+            <div class="key" onclick="input('8')">8</div>
+            <div class="key" onclick="input('9')">9</div>
+            
+            <div class="key" onclick="input('4')">4</div>
+            <div class="key" onclick="input('5')">5</div>
+            <div class="key" onclick="input('6')">6</div>
+            
+            <div class="key" onclick="input('1')">1</div>
+            <div class="key" onclick="input('2')">2</div>
+            <div class="key" onclick="input('3')">3</div>
+            
+            <div class="key key-empty"></div>
+            <div class="key" onclick="input('0')">0</div>
+            <div class="key key-del" onclick="input('DEL')">⌫</div>
+            
             <div class="key key-enter" onclick="submitAnswer()">ENTER</div>
         </div>
     </div>
 
     <script src="common.js"></script>
     <script>
-        // ✨ 江老師專屬：排列組話題庫與提示設定
+        // ✨ 江老師專屬：排列組合題庫與神級提示
         const permQuestions = [
             // Level 1: 符號暖身
             { q: "4!", a: "24", hint: "4 × 3 × 2 × 1", level: 1 },
@@ -126,7 +155,7 @@
             { q: "4個相同蘋果 分給3人(可不分)", a: "15", hint: "重複組合 H(3,4) = C(6,4) = 15", level: 4 },
             { q: "x + y = 5 的 非負整數解", a: "6", hint: "等於分5個蘋果給2人 ➡ H(2,5) = C(6,5) = 6", level: 4 },
             { q: "x + y = 5 的 正整數解", a: "4", hint: "先各發1個，剩3個分給2人 ➡ H(2,3) = C(4,3) = 4", level: 4 },
-            { q: "x + y + z = 4 的 非負整數解", a: "15", hint: "H(3,4) = C(6,4) = C(6,2) = 15", level: 4 },
+            { q: "x + y + z = 4 的 非負整數解", a: "15", hint: "H(3,4) = C(6,4) = 15", level: 4 },
             { q: "x + y + z = 5 的 正整數解", a: "6", hint: "先各發1個，剩2個分給3人 ➡ H(3,2) = C(4,2) = 6", level: 4 },
             { q: "x + y + z = 6 的 正整數解", a: "10", hint: "先各發1個，剩3個分給3人 ➡ H(3,3) = C(5,3) = 10", level: 4 }
         ];
@@ -161,7 +190,6 @@
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
             }
 
-            // 40% 機率錯題重出
             if (activeWrongPool.length > 0 && Math.random() < 0.4) {
                 let idx = Math.floor(Math.random() * activeWrongPool.length);
                 let qData = activeWrongPool[idx];
@@ -171,11 +199,8 @@
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
-            // 從題庫中篩選出符合當前難度、且還沒答對過的題目
             let pool = permQuestions.filter(q => allowedLevels.includes(q.level) && !correctQuestionsSet.has(q.q));
-            // 如果這難度都答對了，就隨機抽還沒答對的
             if (pool.length === 0) pool = permQuestions.filter(q => !correctQuestionsSet.has(q.q));
-            // 真的全部答對了，就拿所有題庫重來
             if (pool.length === 0) pool = permQuestions; 
 
             let selectedQ = pool[Math.floor(Math.random() * pool.length)];
@@ -192,7 +217,6 @@
         }
         function input(val) { if (val === 'DEL') userInput = userInput.slice(0, -1); else userInput += val; renderInput(); }
 
-        // ✨ 內建觀念提示的神級錯題本
         function generateErrorLogHTML() {
             if (errorLogMap.size === 0) return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
             let html = "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:16px; color:#444; margin:0; padding-left:20px;'>";
@@ -211,7 +235,6 @@
 
         function triggerErrorEffect() {
             playWrong(); combo = 0; consecutiveWrong++; 
-            // 存入包含 hint 的物件
             errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: currentHint });
             
             if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
@@ -236,7 +259,7 @@
                 if (combo >= 9) { playFeverCorrect(); } else { playCorrect(); }
                 box.classList.add('correct-flash'); score += (10 + (combo * 2)) * currentMultiplier; combo++;
                 
-                // ✨ 漸進式震動機制：5連擊起跳，每多一擊加 1px 強度
+                // ✨ 漸進式震動機制
                 if (combo >= 5) { 
                     const body = document.body; 
                     let intensity = Math.min(2 + (combo - 5), 10);
@@ -291,9 +314,6 @@
             const endLog = document.getElementById('end-error-log'); endLog.innerHTML = generateErrorLogHTML(); endLog.classList.remove('hidden');
             window.scrollTo(0, 0);
             document.getElementById('player-name').value = "練習結束！這是你的錯題本 👉"; 
-            
-            // 💡 註記：如果你未來要給排列組合單獨建一個排行榜表單，就在這裡加上 fetch 送出成績的邏輯！
-            // 目前先設定為單純練習模式不送成績。
         }
     </script>
 </body>
