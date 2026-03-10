@@ -98,14 +98,14 @@
 
     <div id="display-area">
         <div id="question-text" style="font-size: 24px; font-weight: bold; color: var(--text-dark);">題目讀取中...</div>
-        <div style="display: flex; justify-content: center; align-items: flex-end; gap: 15px; margin-top: 15px; margin-bottom: 10px;">
-            <div style="font-size: 28px; font-weight: bold; color: var(--text-dark); line-height: 1;">=</div>
+        
+        <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 15px; margin-bottom: 5px;">
+            <div style="font-size: 32px; font-weight: bold; color: var(--text-dark); line-height: 1;">=</div>
             <div id="input-box" style="margin-top: 0; min-width: 100px;"></div>
+            <button onclick="skipQuestion()" style="background: #ffefd5; color: #d35400; border: 2px solid #f39c12; border-radius: 12px; font-size: 14px; font-weight: bold; padding: 6px 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2); white-space: nowrap; transition: 0.1s;">
+                PASS<br><span style="font-size:11px;">(-20分)</span>
+            </button>
         </div>
-    </div>
-
-    <div class="skip-container">
-        <button class="skip-btn" onclick="skipQuestion()">PASS 跳過 (-20分)</button>
     </div>
 
     <div id="keypad-container">
@@ -133,6 +133,7 @@
     <script src="common.js"></script>
     <script>
         const permQuestions = [
+            // Level 1: 符號暖身
             { q: "4!", a: "24", hint: "4 × 3 × 2 × 1", level: 1 },
             { q: "5!", a: "120", hint: "5 × 4 × 3 × 2 × 1", level: 1 },
             { q: "0!", a: "1", hint: "0的階乘規定為 1 哦！", level: 1 },
@@ -140,15 +141,18 @@
             { q: "C(5,2)", a: "10", hint: "P(5,2) 除以 2! ➡ (5×4)/2", level: 1 },
             { q: "C(10,8)", a: "45", hint: "數字太大用扣的！C(10,8) = C(10,2) = 45", level: 1 },
 
+            // Level 2: 經典情境翻譯
             { q: "5人選3人 排成一列", a: "60", hint: "順序有差用 P ➡ P(5,3) = 5×4×3", level: 2 },
             { q: "5人選3人 組委員會", a: "10", hint: "順序沒差用 C ➡ C(5,3) = C(5,2) = 10", level: 2 },
             { q: "3封不同信 投入2個郵筒", a: "8", hint: "信去選郵筒！ 2 × 2 × 2 = 2³ = 8", level: 2 },
             
+            // Level 3: 條件限制
             { q: "甲乙丙丁4人排，甲乙 相鄰", a: "12", hint: "甲乙綁一起當1人 ➡ 3! × 2! = 12", level: 3 },
             { q: "甲乙丙丁4人排，甲乙 不相鄰", a: "12", hint: "丙丁先排，甲乙插空隙 ➡ 2! × P(3,2) = 12", level: 3 },
             { q: "AABB 排成一列", a: "6", hint: "不盡相異物排列 ➡ 4! / (2!2!) = 6", level: 3 },
             { q: "AAAB 排成一列", a: "4", hint: "不盡相異物排列 ➡ 4! / 3! = 4", level: 3 },
 
+            // Level 4: 重複組合 H 與方程式
             { q: "4個相同蘋果 分給3人(可不分)", a: "15", hint: "重複組合 H(3,4) = C(6,4) = 15", level: 4 },
             { q: "x + y = 5 的 非負整數解", a: "6", hint: "等於分5個蘋果給2人 ➡ H(2,5) = C(6,5) = 6", level: 4 },
             { q: "x + y = 5 的 正整數解", a: "4", hint: "先各發1個，剩3個分給2人 ➡ H(2,3) = C(4,3) = 4", level: 4 },
@@ -157,7 +161,7 @@
             { q: "x + y + z = 6 的 正整數解", a: "10", hint: "先各發1個，剩3個分給3人 ➡ H(3,3) = C(5,3) = 10", level: 4 }
         ];
 
-        // ✨ 自動生成 n*m 捷徑圖形題庫的引擎 (高度絕對鎖死版)
+        // ✨ 自動生成 n*m 捷徑圖形題庫的引擎 (精簡間距版)
         function generateGridQuestions() {
             function C(n, k) {
                 if (k < 0 || k > n) return 0;
@@ -182,8 +186,8 @@
                     for (let i = 0; i <= m; i++) pathD += `M0,${i*s} H${w} `;
                     for (let i = 0; i <= n; i++) pathD += `M${i*s},0 V${h} `;
                     
-                    let svgStr = `<div style='text-align: center; margin: 8px 0;'>` +
-                        `<svg viewBox='-25 -25 ${w + 50} ${h + 50}' style='height: 90px; max-height: 12vh; width: auto; max-width: 100%;'>` +
+                    let svgStr = `<div style='text-align: center; margin: 5px 0 0 0;'>` +
+                        `<svg viewBox='-25 -25 ${w + 50} ${h + 50}' style='height: 85px; max-height: 12vh; width: auto; max-width: 100%;'>` +
                         `<path d='${pathD}' stroke='#34495e' stroke-width='3' fill='none'/>` +
                         `<circle cx='0' cy='${h}' r='6' fill='#e74c3c'/>` +
                         `<text x='-20' y='${h + 20}' fill='#e74c3c' font-weight='bold' font-size='20'>A</text>` +
@@ -237,8 +241,6 @@
                 let qData = activeWrongPool[idx];
                 currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
                 document.getElementById('phase-indicator').innerText = phaseStr;
-                
-                // ✨ 將原來的 currentQuestionStr + " =" 移除，只印出題目
                 document.getElementById('question-text').innerHTML = currentQuestionStr; 
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
@@ -251,8 +253,6 @@
             currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; currentHint = selectedQ.hint;
 
             document.getElementById('phase-indicator').innerText = phaseStr;
-            
-            // ✨ 將原來的 currentQuestionStr + " =" 移除，只印出題目
             document.getElementById('question-text').innerHTML = currentQuestionStr; 
             userInput = ""; currentQuestionErrors = 0; renderInput();
         }
