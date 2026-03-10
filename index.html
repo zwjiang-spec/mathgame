@@ -520,6 +520,17 @@
         window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
       }
 
+      // ✨ 學生建議的 XSS 消毒濾水器
+      function sanitizeHTML(str) {
+          if (!str) return "";
+          return String(str)
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
+      }
+
       // ✨ 自動抓取最高分數的腳本
       const TRIG_CSV =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
@@ -568,8 +579,9 @@
 
               if (scoreRaw > topScore) {
                 topScore = scoreRaw;
-                // 濾掉名稱後面的 (錯題...) 標記
-                topName = nameRaw.split(" (錯題:")[0].split(" (全對")[0].trim();
+                // ✨ 抓到名字後，立刻進行 XSS 消毒！
+                let rawName = nameRaw.split(" (錯題:")[0].split(" (全對")[0].trim();
+                topName = sanitizeHTML(rawName);
                 hasRecord = true;
               }
             }
