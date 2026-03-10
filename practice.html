@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>好玩的數學</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      :root {
+        --bg-main: #fdf5e6;
+        --text-dark: #1c2833;
+        --text-gray: #95a5a6;
+        --color-gold: #e67e22;
+        --btn-white: #ffffff;
+        --btn-blue-bg: #fbeee6;
+        --btn-blue-text: #d35400;
+        --btn-del-bg: #fae5e5;
+        --btn-del-text: #c0392b;
+        --btn-sqrt-bg: #fdedec;
+        --btn-sqrt-text: #e67e22;
+        --btn-enter-bg: #d35400;
+        --btn-enter-text: #ffffff;
+      }
+      #keypad {
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(5, min(11vh, 55px));
+        gap: 8px;
+      }
+      .key-enter {
+        font-size: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toast">答案提示區</div>
+    <div id="death-screen">
+      <h1>💀 你已經死了</h1>
+      <p>分數過低 (-20分)，請重新再來</p>
+      <div
+        id="death-error-log"
+        style="
+          background: rgba(255, 255, 255, 0.9);
+          padding: 15px;
+          border-radius: 10px;
+          color: black;
+          max-width: 90%;
+          margin-top: 15px;
+        "
+      ></div>
+      <button
+        class="action-btn"
+        onclick="location.reload()"
+        style="margin-top: 20px; background: #555"
+      >
+        重新開始
+      </button>
+      <a href="index.html" style="color: #ccc; margin-top: 15px"
+        >🏠 回到數學天地主選單</a
+      >
+    </div>
+
+    <div id="overlay">
+      <a
+        href="index.html"
+        class="home-btn"
+        style="position: absolute; top: 15px; left: 15px"
+        >🏠 回主選單</a
+      >
+
+      <h1 style="color: #d35400; margin-bottom: 10px; margin-top: 50px">
+        🔥 綜合練習模式
+      </h1>
+      <p style="color: #7f8c8d; font-size: 16px; margin-bottom: 30px">
+        題庫已混合！準備好迎接全方位的挑戰了嗎？
+      </p>
+
+      <h2
+        id="final-score-text"
+        class="hidden"
+        style="color: var(--color-gold); margin-top: -10px; margin-bottom: 10px"
+      ></h2>
+      <div
+        id="end-error-log"
+        class="hidden"
+        style="
+          background: #fffdf5;
+          border: 2px dashed #e74c3c;
+          padding: 15px;
+          border-radius: 10px;
+          max-width: 90%;
+          margin: 0 auto 20px;
+        "
+      ></div>
+
+      <button class="action-btn" id="start-btn" onclick="startGame()">
+        START PRACTICE
+      </button>
+    </div>
+
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="header">
+      <div class="stat-group">
+        <div class="stat-label">MODE</div>
+        <div class="stat-value" style="font-size: 16px; color: #d35400">
+          練習
+        </div>
+      </div>
+      <div class="stat-group">
+        <div class="stat-label">TIME</div>
+        <div id="ui-time" class="stat-value" style="color: #e74c3c">90</div>
+      </div>
+      <div class="stat-group">
+        <div class="stat-label">SCORE</div>
+        <div id="ui-score" class="stat-value">0</div>
+      </div>
+    </div>
+
+    <div id="combo-gauge-wrapper">
+      <div class="combo-label">COMBO</div>
+      <div id="combo-gauge-bg"><div id="combo-gauge-fill"></div></div>
+      <div id="combo-gauge-text">0</div>
+    </div>
+    <div id="phase-indicator">🎲 隨機題庫抽取中</div>
+
+    <div id="display-area">
+      <div id="question-text" style="font-size: 20px; color: var(--text-gray)">
+        讀取中...
+      </div>
+      <div id="input-box"></div>
+    </div>
+
+    <div class="skip-container">
+      <button class="skip-btn" onclick="skipQuestion()">
+        PASS 跳過 (-20分)
+      </button>
+    </div>
+
+    <div id="keypad-container">
+      <div id="keypad">
+        <div class="key" onclick="input('7')">7</div>
+        <div class="key" onclick="input('8')">8</div>
+        <div class="key" onclick="input('9')">9</div>
+        <div class="key key-del" onclick="input('DEL')">⌫</div>
+        <div class="key" onclick="input('4')">4</div>
+        <div class="key" onclick="input('5')">5</div>
+        <div class="key" onclick="input('6')">6</div>
+        <div class="key key-sqrt" onclick="input('√')" title="根號">
+          <span class="sqrt-box" style="font-size: 1.2em"
+            ><div class="sqrt-tick">
+              <svg viewBox="0 0 50 100" preserveAspectRatio="none">
+                <path
+                  d="M 5 60 L 15 60 L 30 95 L 48 5"
+                  stroke="currentColor"
+                  stroke-width="10"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <span class="sqrt-num" style="min-width: 0.6em"></span
+          ></span>
+        </div>
+        <div class="key" onclick="input('1')">1</div>
+        <div class="key" onclick="input('2')">2</div>
+        <div class="key" onclick="input('3')">3</div>
+        <div class="key key-blue" onclick="input('-')">-</div>
+        <div class="key" onclick="input('0')">0</div>
+        <div class="key key-blue" onclick="input('/')">/</div>
+        <div
+          class="key key-blue"
+          style="grid-column: span 2; font-size: 32px"
+          onclick="input(',')"
+        >
+          ,
+        </div>
+        <div class="key key-enter" onclick="submitAnswer()">
+          送出答案 (ENTER)
+        </div>
+      </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+      const urlParams = new URLSearchParams(window.location.search);
+      const selectedModesStr = urlParams.get("modes");
+      const activeModes = selectedModesStr
+        ? selectedModesStr.split(",")
+        : ["trig", "space"];
+
+      const trigMap = {
+        0: { sin: "0", cos: "1", tan: "0" },
+        30: { sin: "1/2", cos: "√3/2", tan: "√3/3" },
+        45: { sin: "√2/2", cos: "√2/2", tan: "1" },
+        60: { sin: "√3/2", cos: "1/2", tan: "√3" },
+        90: { sin: "1", cos: "0" },
+        120: { sin: "√3/2", cos: "-1/2", tan: "-√3" },
+        135: { sin: "√2/2", cos: "-√2/2", tan: "-1" },
+        150: { sin: "1/2", cos: "-√3/2", tan: "-√3/3" },
+        180: { sin: "0", cos: "-1", tan: "0" },
+        210: { sin: "-1/2", cos: "-√3/2", tan: "√3/3" },
+        225: { sin: "-√2/2", cos: "-√2/2", tan: "1" },
+        240: { sin: "-√3/2", cos: "-1/2", tan: "√3" },
+        270: { sin: "-1", cos: "0" },
+        300: { sin: "-√3/2", cos: "1/2", tan: "-√3" },
+        315: { sin: "-√2/2", cos: "√2/2", tan: "-1" },
+        330: { sin: "-1/2", cos: "√3/2", tan: "-√3/3" },
+      };
+      const baseAngles = Object.keys(trigMap).map(Number);
+      const funcs = ["sin", "cos", "tan"];
+      function formatRoot(d2) {
+        let root = Math.sqrt(d2);
+        if (Number.isInteger(root)) return root.toString();
+        return `√${d2}`;
+      }
+
+      let score = 0,
+        combo = 0,
+        consecutiveWrong = 0,
+        targetAns = "",
+        userInput = "",
+        currentQuestionStr = "";
+      let isCoordinateAns = false;
+      let currentQuestionErrors = 0,
+        currentMultiplier = 1;
+      let timer,
+        startTime,
+        lastTickSec = -1;
+      const TIME_LIMIT = 90;
+
+      let correctQuestionsSet = new Set();
+      let errorLogMap = new Map();
+      let activeWrongPool = [];
+
+      function getNewQuestion() {
+        let remain = startTime
+          ? TIME_LIMIT - (Date.now() - startTime) / 1000
+          : TIME_LIMIT;
+        let phaseStr = "",
+          loop = 0,
+          spacePool = [];
+
+        if (remain <= 30) {
+          currentMultiplier = 2;
+          phaseStr = "🔥 狂熱時間 (全難度解禁, 分數 x2)";
+          loop = Math.floor(Math.random() * 5) - 2;
+          spacePool = [1, 2, 3];
+          document.getElementById("phase-indicator").style.color = "#c0392b";
+        } else if (consecutiveWrong >= 2) {
+          currentMultiplier = 1;
+          phaseStr = "🌱 基礎保底 (幫你找回手感)";
+          loop = 0;
+          spacePool = [1];
+          document.getElementById("phase-indicator").style.color = "#27ae60";
+        } else if (combo >= 3) {
+          currentMultiplier = 1;
+          phaseStr = "⚡ 乘勝追擊 (連擊進階挑戰！)";
+          loop = Math.floor(Math.random() * 3) - 1;
+          spacePool = [2, 3];
+          document.getElementById("phase-indicator").style.color = "#d68910";
+        } else if (score >= 100) {
+          currentMultiplier = 1;
+          phaseStr = "⚡ 進階階段 (分數達標難度提升)";
+          loop = Math.floor(Math.random() * 2) - 1;
+          spacePool = [1, 2];
+          document.getElementById("phase-indicator").style.color = "#d68910";
+        } else {
+          currentMultiplier = 1;
+          phaseStr = `🌱 基礎階段 (連對3題進階)`;
+          loop = 0;
+          spacePool = [1];
+          document.getElementById("phase-indicator").style.color = "#27ae60";
+        }
+
+        // ✨ 從錯題池拉出來考
+        if (activeWrongPool.length > 0 && Math.random() < 0.4) {
+          let idx = Math.floor(Math.random() * activeWrongPool.length);
+          currentQuestionStr = activeWrongPool[idx].q;
+          targetAns = activeWrongPool[idx].a;
+          isCoordinateAns = activeWrongPool[idx].isC;
+          document.getElementById("phase-indicator").innerText = phaseStr;
+          document.getElementById(
+            "question-text"
+          ).innerHTML = `${currentQuestionStr} =`;
+          userInput = "";
+          currentQuestionErrors = 0;
+          renderInput();
+          return;
+        }
+
+        document.getElementById("phase-indicator").innerText = phaseStr;
+        const currentTopic =
+          activeModes[Math.floor(Math.random() * activeModes.length)];
+
+        if (currentTopic === "trig") {
+          isCoordinateAns = false;
+          let valid = false;
+          let attempts = 0;
+          while (!valid && attempts < 100) {
+            let func = funcs[Math.floor(Math.random() * 3)];
+            let baseAngle =
+              baseAngles[Math.floor(Math.random() * baseAngles.length)];
+            if (trigMap[baseAngle][func] !== undefined) {
+              let realAngle = baseAngle + loop * 360;
+              let tempQ = `<span style="font-size:14px; color:#27ae60;">[三角]</span><br>${func} ${realAngle}°`;
+              if (!correctQuestionsSet.has(tempQ)) {
+                valid = true;
+                currentQuestionStr = tempQ;
+                targetAns = trigMap[baseAngle][func];
+              }
+            }
+            attempts++;
+          }
+        } else if (currentTopic === "space") {
+          let valid = false;
+          let attempts = 0;
+          let kwProj = `<strong style="color: #e74c3c; font-size: 1.1em;">投影點</strong>`;
+          let kwSymm = `<strong style="color: #2980b9; font-size: 1.1em;">對稱點</strong>`;
+          let kwDist = `<strong style="color: #d68910; font-size: 1.1em;">距離</strong>`;
+          while (!valid && attempts < 100) {
+            let x = 0,
+              y = 0,
+              z = 0;
+            while (x === 0 && y === 0 && z === 0) {
+              x = Math.floor(Math.random() * 11) - 5;
+              y = Math.floor(Math.random() * 11) - 5;
+              z = Math.floor(Math.random() * 11) - 5;
+            }
+            let questions = [];
+            let p = `P(${x},${y},${z})`;
+            if (spacePool.includes(1)) {
+              questions.push({
+                q: `${p} 在 xy平面的${kwProj}`,
+                a: `(${x},${y},0)`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 在 yz平面的${kwProj}`,
+                a: `(0,${y},${z})`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 在 zx平面的${kwProj}`,
+                a: `(${x},0,${z})`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 對 xy平面的${kwSymm}`,
+                a: `(${x},${y},${-z})`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 對 yz平面的${kwSymm}`,
+                a: `(${-x},${y},${z})`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 對 zx平面的${kwSymm}`,
+                a: `(${x},${-y},${z})`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 到 xy平面的${kwDist}`,
+                a: `${Math.abs(z)}`,
+                isC: false,
+              });
+              questions.push({
+                q: `${p} 到 yz平面的${kwDist}`,
+                a: `${Math.abs(x)}`,
+                isC: false,
+              });
+              questions.push({
+                q: `${p} 到 zx平面的${kwDist}`,
+                a: `${Math.abs(y)}`,
+                isC: false,
+              });
+            }
+            if (spacePool.includes(2)) {
+              questions.push({
+                q: `${p} 在 x軸的${kwProj}`,
+                a: `(${x},0,0)`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 在 y軸的${kwProj}`,
+                a: `(0,${y},0)`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 在 z軸的${kwProj}`,
+                a: `(0,0,${z})`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 對 x軸的${kwSymm}`,
+                a: `(${x},${-y},${-z})`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 對 y軸的${kwSymm}`,
+                a: `(${-x},${y},${-z})`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 對 z軸的${kwSymm}`,
+                a: `(${-x},${-y},${z})`,
+                isC: true,
+              });
+              questions.push({
+                q: `${p} 對 原點的${kwSymm}`,
+                a: `(${-x},${-y},${-z})`,
+                isC: true,
+              });
+            }
+            if (spacePool.includes(3)) {
+              questions.push({
+                q: `${p} 到 x軸的${kwDist}`,
+                a: formatRoot(y * y + z * z),
+                isC: false,
+              });
+              questions.push({
+                q: `${p} 到 y軸的${kwDist}`,
+                a: formatRoot(x * x + z * z),
+                isC: false,
+              });
+              questions.push({
+                q: `${p} 到 z軸的${kwDist}`,
+                a: formatRoot(x * x + y * y),
+                isC: false,
+              });
+              questions.push({
+                q: `${p} 到 原點的${kwDist}`,
+                a: formatRoot(x * x + y * y + z * z),
+                isC: false,
+              });
+            }
+            let sq = questions[Math.floor(Math.random() * questions.length)];
+            let tempQ = `<span style="font-size:14px; color:#8e44ad;">[空間]</span><br>${sq.q}`;
+            if (!correctQuestionsSet.has(tempQ)) {
+              valid = true;
+              currentQuestionStr = tempQ;
+              targetAns = sq.a;
+              isCoordinateAns = sq.isC;
+            }
+            attempts++;
+          }
+        }
+
+        document.getElementById(
+          "question-text"
+        ).innerHTML = `${currentQuestionStr} =`;
+        userInput = "";
+        currentQuestionErrors = 0;
+        renderInput();
+      }
+
+      function renderInput() {
+        const box = document.getElementById("input-box");
+        let displayHTML = formatMathHTML(userInput);
+        if (isCoordinateAns) {
+          if (userInput === "") {
+            box.innerHTML = `<span style="color: #bdc3c7; opacity: 0.6;">( x , y , z )</span>`;
+          } else {
+            box.innerHTML = `( ${displayHTML} )`;
+          }
+        } else {
+          box.innerHTML = displayHTML;
+        }
+        box.classList.remove("error-text", "correct-flash");
+      }
+      function input(val) {
+        if (val === "DEL") userInput = userInput.slice(0, -1);
+        else userInput += val;
+        renderInput();
+      }
+
+      function generateErrorLogHTML() {
+        if (errorLogMap.size === 0)
+          return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
+        let html =
+          "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:15px; color:#444; margin:0; padding-left:20px;'>";
+        errorLogMap.forEach((ansHTML, qStr) => {
+          let cleanQ = qStr.replace("[三角]", "📐 ").replace("[空間]", "🚀 ");
+          html += `<li style="margin-bottom:6px; line-height:1.4;">${cleanQ} <br><span style="color:#e67e22; font-weight:bold;">➡ 正解: ${ansHTML}</span></li>`;
+        });
+        return html + "</ul>";
+      }
+
+      function checkDeath() {
+        if (score < -20) {
+          clearInterval(timer);
+          document.getElementById("death-error-log").innerHTML =
+            generateErrorLogHTML();
+          document.getElementById("death-screen").classList.add("show");
+          document.getElementById("keypad-container").style.display = "none";
+        }
+      }
+
+      function triggerErrorEffect() {
+        playWrong();
+        combo = 0;
+        consecutiveWrong++;
+        let displayAns = isCoordinateAns
+          ? `( ${formatMathHTML(targetAns)} )`
+          : formatMathHTML(targetAns);
+        errorLogMap.set(currentQuestionStr, displayAns);
+
+        if (!activeWrongPool.some((item) => item.q === currentQuestionStr)) {
+          activeWrongPool.push({
+            q: currentQuestionStr,
+            a: targetAns,
+            isC: isCoordinateAns,
+          });
+        }
+
+        const area = document.getElementById("display-area");
+        area.classList.remove("shake-animation");
+        void area.offsetWidth;
+        area.classList.add("shake-animation");
+        currentQuestionErrors++;
+        score -= currentQuestionErrors * 5 * currentMultiplier;
+        document.getElementById("input-box").classList.add("error-text");
+        flashScoreRed();
+        updateUI();
+
+        showToast(`❌ 答錯囉！請再試一次！`, 1200);
+        checkDeath();
+      }
+
+      function submitAnswer() {
+        if (userInput === "") return;
+        const box = document.getElementById("input-box");
+        let isCorrect = false;
+        if (isCoordinateAns) {
+          let cleanUser = userInput.replace(/[\s\(\)]/g, "");
+          let cleanTarget = targetAns.replace(/[\s\(\)]/g, "");
+          isCorrect = cleanUser === cleanTarget;
+        } else {
+          let userVal = evalMath(userInput);
+          let targetVal = evalMath(targetAns);
+          isCorrect =
+            !isNaN(userVal) &&
+            !isNaN(targetVal) &&
+            Math.abs(userVal - targetVal) < 1e-5;
+        }
+
+        if (isCorrect) {
+          correctQuestionsSet.add(currentQuestionStr);
+          activeWrongPool = activeWrongPool.filter(
+            (item) => item.q !== currentQuestionStr
+          );
+
+          spawnComboParticle();
+          consecutiveWrong = 0;
+          if (combo >= 9) {
+            playFeverCorrect();
+          } else {
+            playCorrect();
+          }
+          box.classList.add("correct-flash");
+          score += (10 + combo * 2) * currentMultiplier;
+          combo++;
+          if (combo > 5) {
+            const body = document.body;
+            body.classList.remove("strong-shake-effect");
+            void body.offsetWidth;
+            body.classList.add("strong-shake-effect");
+          }
+          updateUI();
+          setTimeout(getNewQuestion, 150);
+        } else {
+          triggerErrorEffect();
+        }
+      }
+
+      function skipQuestion() {
+        if (!document.getElementById("overlay").classList.contains("hidden"))
+          return;
+        triggerErrorEffect();
+        score -=
+          20 * currentMultiplier -
+          currentQuestionErrors * 5 * currentMultiplier;
+        updateUI();
+        checkDeath();
+        setTimeout(getNewQuestion, 450);
+      }
+
+      function updateUI() {
+        document.getElementById("ui-score").innerText = score;
+        const comboFill = document.getElementById("combo-gauge-fill");
+        const comboText = document.getElementById("combo-gauge-text");
+        const inputBox = document.getElementById("input-box");
+        let fillPercent = Math.min((combo / 10) * 100, 100);
+        comboFill.style.width = fillPercent + "%";
+        comboText.classList.remove("bump-anim");
+        void comboText.offsetWidth;
+        if (combo > 0) comboText.classList.add("bump-anim");
+        if (combo === 0) {
+          comboText.innerHTML = "0";
+          comboText.style.color = "var(--text-gray)";
+          comboFill.classList.remove("fever-fill");
+          inputBox.classList.remove("fever-box");
+        } else if (combo < 10) {
+          comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`;
+          comboText.style.color = "#d35400";
+          comboFill.classList.remove("fever-fill");
+          inputBox.classList.remove("fever-box");
+        } else {
+          comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`;
+          comboFill.classList.add("fever-fill");
+          inputBox.classList.add("fever-box");
+        }
+      }
+
+      function startGame() {
+        window.scrollTo(0, 0);
+        initAudio();
+        document.getElementById("overlay").classList.add("hidden");
+        document.getElementById("death-screen").classList.remove("show");
+        document.getElementById("keypad-container").style.display = "block";
+        document
+          .getElementById("ui-time")
+          .classList.remove("timer-danger-extreme");
+        document.body.classList.remove("body-danger-flash");
+
+        correctQuestionsSet.clear();
+        errorLogMap.clear();
+        activeWrongPool = [];
+        score = 0;
+        combo = 0;
+        consecutiveWrong = 0;
+        currentQuestionErrors = 0;
+        updateUI();
+        startTime = Date.now();
+        getNewQuestion();
+        timer = setInterval(() => {
+          let passed = (Date.now() - startTime) / 1000;
+          let remain = TIME_LIMIT - passed;
+          document.getElementById("progress-bar").style.width =
+            (remain / TIME_LIMIT) * 100 + "%";
+          let sec = Math.ceil(Math.max(0, remain));
+          const timeEl = document.getElementById("ui-time");
+          timeEl.innerText = sec;
+          if (sec <= 10 && sec > 0) {
+            timeEl.classList.add("timer-danger-extreme");
+            document.body.classList.add("body-danger-flash");
+          } else {
+            timeEl.classList.remove("timer-danger-extreme");
+            document.body.classList.remove("body-danger-flash");
+          }
+          if (sec <= 10 && sec > 0 && sec !== lastTickSec) {
+            playTick();
+            lastTickSec = sec;
+          }
+          if (remain <= 0) {
+            timeEl.classList.remove("timer-danger-extreme");
+            document.body.classList.remove("body-danger-flash");
+            clearInterval(timer);
+            endGame();
+          }
+        }, 50);
+      }
+
+      function endGame() {
+        document.getElementById("overlay").classList.remove("hidden");
+        document.getElementById("final-score-text").classList.remove("hidden");
+        document.getElementById(
+          "final-score-text"
+        ).innerText = `最終得分: ${score}`;
+        document.querySelector("#overlay p").innerText =
+          "練習結束！這是你的錯題總整理：";
+        document.querySelector("#start-btn").innerText = "再挑戰一次";
+
+        const endLog = document.getElementById("end-error-log");
+        endLog.innerHTML = generateErrorLogHTML();
+        endLog.classList.remove("hidden");
+        window.scrollTo(0, 0);
+      }
+    </script>
+  </body>
+</html>
