@@ -13,7 +13,6 @@
             --shake-intensity: 2px; 
         }
         
-        /* ✨ 完美還原老師原本的特殊跨行計算機 */
         #keypad {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
@@ -24,31 +23,10 @@
         .key { font-size: 26px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: #2c3e50;}
         .key:active { transform: scale(0.95); }
         
-        .key-del { 
-            grid-row: span 2; /* 佔兩格高度 */
-            background-color: var(--btn-del-bg) !important; 
-            color: var(--btn-del-text) !important; 
-            font-size: 28px; 
-        }
-        .key-sqrt { 
-            grid-row: span 2; /* 佔兩格高度 */
-            background-color: #fef5e7 !important; 
-            color: #d35400 !important; 
-            font-size: 28px; 
-        }
-        .key-op { 
-            background-color: #ebf5fb !important; 
-            color: #2980b9 !important; 
-            font-size: 30px; 
-        }
-        .key-enter { 
-            font-size: 20px; 
-            font-weight: bold; 
-            grid-column: 1 / -1 !important; /* 橫跨 4 格 */
-            background-color: var(--btn-enter-bg) !important;
-            color: var(--btn-enter-text) !important;
-            letter-spacing: 2px;
-        }
+        .key-del { grid-row: span 2; background-color: var(--btn-del-bg) !important; color: var(--btn-del-text) !important; font-size: 28px; }
+        .key-sqrt { grid-row: span 2; background-color: #fef5e7 !important; color: #d35400 !important; font-size: 28px; }
+        .key-op { background-color: #ebf5fb !important; color: #2980b9 !important; font-size: 30px; }
+        .key-enter { font-size: 20px; font-weight: bold; grid-column: 1 / -1 !important; background-color: var(--btn-enter-bg) !important; color: var(--btn-enter-text) !important; letter-spacing: 2px; }
 
         @keyframes progressiveShake {
             0% { transform: translate(var(--shake-intensity), var(--shake-intensity)) rotate(0deg); }
@@ -79,9 +57,10 @@
         <div id="rules-box">
             <h3>📜 遊戲規則與計分方式</h3>
             <ul>
-                <li><b>輸入方式：</b>請輸入分數 `a/b` 或 `-a/b`，根號請按 `√`。</li>
-                <li><b>挑戰時間：</b>總共 <b>90 秒</b>，最後 10 秒極限狂熱！</li>
-                <li><b style="color:#27ae60;">神級錯題本：</b>答錯的題目會重出，結束時附贈專屬觀念提示！</li>
+                <li><b>作答方式：</b>限時90秒，請直接輸入數字。分數請用 <code>/</code> (如: 1/2)，根號請按 <code>√</code> (如: √3/2)，負號請加在最前面 (如: -1/2)。</li>
+                <li><b>計分方式：</b>基本題答對+10分，答錯扣5分；連對Combo可獲得額外加分！<br><span style="color:#e74c3c;">⚠️ 若放棄跳過 (PASS) 將直接扣 20 分！請謹慎使用。</span></li>
+                <li><b style="color:#27ae60;">動態難度：</b>系統會根據你的連對狀況，自動提升題目難度，挑戰更高角度與不同象限！</li>
+                <li><b style="color:#2980b9;">神級錯題本：</b>答錯的題目會重出，直到你算對為止。遊戲結束時，更會附贈你的專屬錯題觀念提示！</li>
             </ul>
         </div>
         
@@ -104,7 +83,6 @@
 
     <div id="display-area">
         <div id="question-text" style="font-size: 26px; font-weight: bold; color: var(--text-gray);">題目讀取中...</div>
-        
         <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 15px; margin-bottom: 5px;">
             <div style="font-size: 32px; font-weight: bold; color: var(--text-dark); line-height: 1;">=</div>
             <div id="input-box" style="margin-top: 0; min-width: 120px;"></div>
@@ -196,7 +174,7 @@
                 let qData = activeWrongPool[idx];
                 currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
                 document.getElementById('phase-indicator').innerText = phaseStr;
-                document.getElementById('question-text').innerHTML = currentQuestionStr; 
+                document.getElementById('question-text').innerHTML = currentQuestionStr;
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
@@ -229,26 +207,30 @@
 
         function checkDeath() {
             if (score < -20) {
-                clearInterval(timer); document.getElementById('death-error-log').innerHTML = generateErrorLogHTML(); 
-                document.getElementById('death-screen').classList.add('show'); document.getElementById('keypad-container').style.display = 'none'; 
+                if(timer) clearInterval(timer); 
+                document.getElementById('death-error-log').innerHTML = generateErrorLogHTML(); 
+                document.getElementById('death-screen').classList.add('show'); 
+                document.getElementById('keypad-container').style.display = 'none'; 
             }
         }
 
         function triggerErrorEffect() {
-            playWrong(); combo = 0; consecutiveWrong++; 
+            if (typeof playWrong === 'function') playWrong(); 
+            combo = 0; consecutiveWrong++; 
             let h = typeof currentHint !== 'undefined' ? currentHint : "";
-            
             errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
-            
             if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
                 activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
             }
 
-            const area = document.getElementById('display-area'); area.classList.remove('shake-animation'); void area.offsetWidth; area.classList.add('shake-animation');
+            const area = document.getElementById('display-area'); 
+            area.classList.remove('shake-animation'); void area.offsetWidth; area.classList.add('shake-animation');
             currentQuestionErrors++; score -= (currentQuestionErrors * 5 * currentMultiplier); 
-            document.getElementById('input-box').classList.add('error-text'); flashScoreRed(); updateUI();
-            
-            showToast(`❌ 答錯囉！再仔細想想！`, 1200); checkDeath(); 
+            document.getElementById('input-box').classList.add('error-text'); 
+            if (typeof flashScoreRed === 'function') flashScoreRed(); 
+            updateUI();
+            if (typeof showToast === 'function') showToast(`❌ 答錯囉！再仔細想想！`, 1200); 
+            checkDeath(); 
         }
 
         function submitAnswer() {
@@ -256,15 +238,17 @@
             const box = document.getElementById('input-box');
             
             if (userInput === targetAns) {
-                if (currentQuestionErrors === 0) {
-                    correctQuestionsSet.add(currentQuestionStr);
-                }
-                
+                if (currentQuestionErrors === 0) correctQuestionsSet.add(currentQuestionStr);
                 activeWrongPool = activeWrongPool.filter(item => item.q !== currentQuestionStr);
                 errorLogMap.delete(currentQuestionStr); 
 
-                spawnComboParticle(); consecutiveWrong = 0; 
-                if (combo >= 9) { playFeverCorrect(); } else { playCorrect(); }
+                if (typeof spawnComboParticle === 'function') spawnComboParticle(); 
+                consecutiveWrong = 0; 
+                if (combo >= 9) { 
+                    if (typeof playFeverCorrect === 'function') playFeverCorrect(); 
+                } else { 
+                    if (typeof playCorrect === 'function') playCorrect(); 
+                }
                 box.classList.add('correct-flash'); score += (10 + (combo * 2)) * currentMultiplier; combo++;
                 
                 if (combo >= 5) { 
@@ -281,57 +265,106 @@
 
         function skipQuestion() {
             if (!document.getElementById('overlay').classList.contains('hidden')) return; 
-            
             let h = typeof currentHint !== 'undefined' ? currentHint : "";
             errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
-            
             if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
                 activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
             }
 
-            playWrong(); combo = 0; consecutiveWrong++;
-            currentQuestionErrors++; 
+            if (typeof playWrong === 'function') playWrong(); 
+            combo = 0; consecutiveWrong++; currentQuestionErrors++; 
             score -= (20 * currentMultiplier) - (currentQuestionErrors * 5 * currentMultiplier); 
             updateUI(); 
-            
-            showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500); 
+            if (typeof showToast === 'function') showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500); 
             checkDeath(); setTimeout(getNewQuestion, 450); 
         }
 
         function updateUI() { 
             document.getElementById('ui-score').innerText = score; 
-            const comboFill = document.getElementById('combo-gauge-fill'); const comboText = document.getElementById('combo-gauge-text'); const inputBox = document.getElementById('input-box');
-            let fillPercent = Math.min((combo / 10) * 100, 100); comboFill.style.width = fillPercent + "%";
-            comboText.classList.remove('bump-anim'); void comboText.offsetWidth; if(combo > 0) comboText.classList.add('bump-anim');
-            if (combo === 0) { comboText.innerHTML = "0"; comboText.style.color = "var(--text-gray)"; comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box'); 
-            } else if (combo < 10) { comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`; comboText.style.color = "#27ae60"; comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box');
-            } else { comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`; comboFill.classList.add('fever-fill'); inputBox.classList.add('fever-box'); }
+            const comboFill = document.getElementById('combo-gauge-fill'); 
+            const comboText = document.getElementById('combo-gauge-text'); 
+            const inputBox = document.getElementById('input-box');
+            let fillPercent = Math.min((combo / 10) * 100, 100); 
+            comboFill.style.width = fillPercent + "%";
+            comboText.classList.remove('bump-anim'); void comboText.offsetWidth; 
+            if(combo > 0) comboText.classList.add('bump-anim');
+            
+            if (combo === 0) { 
+                comboText.innerHTML = "0"; comboText.style.color = "var(--text-gray)"; 
+                comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box'); 
+            } else if (combo < 10) { 
+                comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`; 
+                comboText.style.color = "#27ae60"; 
+                comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box');
+            } else { 
+                comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`; 
+                comboFill.classList.add('fever-fill'); inputBox.classList.add('fever-box'); 
+            }
         }
 
         function startGame() {
-            document.getElementById('player-name').blur(); window.scrollTo(0, 0); initAudio(); 
-            const name = document.getElementById('player-name').value.trim() || "Guest"; document.getElementById('ui-name').innerText = name;
-            document.getElementById('overlay').classList.add('hidden'); document.getElementById('death-screen').classList.remove('show'); 
-            document.getElementById('keypad-container').style.display = 'block'; document.getElementById('ui-time').classList.remove('timer-danger-extreme'); document.body.classList.remove('body-danger-flash');
+            const nameInput = document.getElementById('player-name');
+            if (nameInput) nameInput.blur(); 
+            window.scrollTo(0, 0); 
+            if (typeof initAudio === 'function') initAudio(); 
+            
+            const name = nameInput.value.trim() || "Guest"; 
+            document.getElementById('ui-name').innerText = name;
+            document.getElementById('overlay').classList.add('hidden'); 
+            document.getElementById('death-screen').classList.remove('show'); 
+            document.getElementById('keypad-container').style.display = 'block'; 
+            document.getElementById('ui-time').classList.remove('timer-danger-extreme'); 
+            document.body.classList.remove('body-danger-flash');
             
             correctQuestionsSet.clear(); errorLogMap.clear(); activeWrongPool = []; 
-            score = 0; combo = 0; consecutiveWrong = 0; currentQuestionErrors = 0; updateUI();
-            startTime = Date.now(); getNewQuestion();
+            score = 0; combo = 0; consecutiveWrong = 0; currentQuestionErrors = 0; 
+            updateUI();
+            
+            startTime = Date.now(); 
+            getNewQuestion();
+            
+            if (timer) clearInterval(timer);
             timer = setInterval(() => {
-                let passed = (Date.now() - startTime) / 1000; let remain = TIME_LIMIT - passed;
-                document.getElementById('progress-bar').style.width = (remain / TIME_LIMIT * 100) + "%"; let sec = Math.ceil(Math.max(0, remain));
-                const timeEl = document.getElementById('ui-time'); timeEl.innerText = sec;
-                if (sec <= 10 && sec > 0) { timeEl.classList.add('timer-danger-extreme'); document.body.classList.add('body-danger-flash');
-                } else { timeEl.classList.remove('timer-danger-extreme'); document.body.classList.remove('body-danger-flash'); }
-                if (sec <= 10 && sec > 0 && sec !== lastTickSec) { playTick(); lastTickSec = sec; }
-                if (remain <= 0) { timeEl.classList.remove('timer-danger-extreme'); document.body.classList.remove('body-danger-flash'); clearInterval(timer); endGame(); }
+                let passed = (Date.now() - startTime) / 1000; 
+                let remain = TIME_LIMIT - passed;
+                
+                let progressBar = document.getElementById('progress-bar');
+                if (progressBar) progressBar.style.width = (remain / TIME_LIMIT * 100) + "%"; 
+                
+                let sec = Math.ceil(Math.max(0, remain));
+                const timeEl = document.getElementById('ui-time'); 
+                if (timeEl) timeEl.innerText = sec;
+                
+                if (sec <= 10 && sec > 0) { 
+                    if(timeEl) timeEl.classList.add('timer-danger-extreme'); 
+                    document.body.classList.add('body-danger-flash');
+                } else { 
+                    if(timeEl) timeEl.classList.remove('timer-danger-extreme'); 
+                    document.body.classList.remove('body-danger-flash'); 
+                }
+                
+                if (sec <= 10 && sec > 0 && sec !== lastTickSec) { 
+                    if (typeof playTick === 'function') playTick(); 
+                    lastTickSec = sec; 
+                }
+                
+                if (remain <= 0) { 
+                    if(timeEl) timeEl.classList.remove('timer-danger-extreme'); 
+                    document.body.classList.remove('body-danger-flash'); 
+                    clearInterval(timer); 
+                    endGame(); 
+                }
             }, 50); 
         }
 
         function endGame() {
-            document.getElementById('overlay').classList.remove('hidden'); document.getElementById('final-score-text').classList.remove('hidden');
-            document.getElementById('final-score-text').innerText = `最終得分: ${score}`; document.getElementById('rules-box').classList.add('hidden'); 
-            const endLog = document.getElementById('end-error-log'); endLog.innerHTML = generateErrorLogHTML(); endLog.classList.remove('hidden');
+            document.getElementById('overlay').classList.remove('hidden'); 
+            document.getElementById('final-score-text').classList.remove('hidden');
+            document.getElementById('final-score-text').innerText = `最終得分: ${score}`; 
+            document.getElementById('rules-box').classList.add('hidden'); 
+            const endLog = document.getElementById('end-error-log'); 
+            endLog.innerHTML = generateErrorLogHTML(); 
+            endLog.classList.remove('hidden');
             window.scrollTo(0, 0);
             document.getElementById('player-name').value = "練習結束！這是你的錯題本 👉"; 
         }
