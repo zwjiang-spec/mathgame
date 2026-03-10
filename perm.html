@@ -37,6 +37,31 @@
             100% { transform: translate(0, 0) rotate(0deg); }
         }
         .progressive-shake { animation: progressiveShake 0.4s ease-in-out; }
+
+        /* ✨ 補回 FEVER 狂熱閃爍與跳動特效 */
+        @keyframes feverFlash {
+            0% { background-color: var(--color-gold); box-shadow: 0 0 10px var(--color-gold); }
+            50% { background-color: #f1c40f; box-shadow: 0 0 20px #f1c40f, 0 0 30px #e67e22; }
+            100% { background-color: var(--color-gold); box-shadow: 0 0 10px var(--color-gold); }
+        }
+        .fever-fill {
+            animation: feverFlash 0.5s infinite !important;
+            background-color: #f1c40f !important;
+        }
+        @keyframes pop {
+            from { transform: scale(1); }
+            to { transform: scale(1.15); }
+        }
+        .fever-text {
+            animation: pop 0.3s infinite alternate;
+            color: #f1c40f !important;
+            font-weight: 900;
+            display: inline-block;
+        }
+        .fever-box {
+            border-color: #f1c40f !important;
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.4) !important;
+        }
     </style>
 </head>
 <body>
@@ -58,9 +83,9 @@
         <div id="rules-box">
             <h3>📜 遊戲規則與計分方式</h3>
             <ul>
-                <li><b>極速輸入：</b>答案皆為<b>正整數</b>，請直接輸入數字。限時90秒！</li>
+                <li><b>作答方式：</b>限時90秒，請直接輸入數字。分數請用 <code>/</code> (如: 1/2)，根號請按 <code>√</code> (如: √3/2)，負號請加在最前面 (如: -1/2)。</li>
                 <li><b>計分方式：</b>基本題答對+10分，答錯扣5分；連對Combo可獲得額外加分！<br><span style="color:#e74c3c;">⚠️ 若放棄跳過 (PASS) 將直接扣 20 分！請謹慎使用。</span></li>
-                <li><b style="color:#27ae60;">漸進難度：</b>從基礎符號到排列組合，最後解鎖方程式與重複組合 H！</li>
+                <li><b style="color:#27ae60;">動態難度：</b>系統會根據你的連對狀況，自動提升題目難度，解鎖方程式與重複組合 H！</li>
                 <li><b style="color:#2980b9;">神級錯題本：</b>答錯的題目會重出，直到你算對為止。遊戲結束時，更會附贈你的專屬錯題觀念提示！</li>
             </ul>
         </div>
@@ -194,6 +219,40 @@
         let errorLogMap = new Map(); 
         let activeWrongPool = [];
 
+        // ✨ 1. SVG 漂亮根號替換器
+        function formatMath(str) {
+            if (!str) return "";
+            const svgSqrt = `<svg width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.2em; margin-right: 0.05em;"><path d="M3 12h2.5l3.5 7 4.5-14h7" /></svg>`;
+            return String(str).replace(/√/g, svgSqrt);
+        }
+
+        // ✨ 2. 智慧化簡容錯引擎
+        function evalMathStr(s) {
+            if (!s) return null;
+            let parsed = s.replace(/√(\d+)/g, 'Math.sqrt($1)');
+            try {
+                let val = Function('"use strict";return (' + parsed + ')')();
+                return (typeof val === 'number' && !isNaN(val)) ? val : null;
+            } catch(e) { return null; }
+        }
+
+        function isMathEqual(inStr, tarStr) {
+            if (!inStr || !tarStr) return false;
+            let inParts = inStr.replace(/\s+/g, '').split(',');
+            let tarParts = tarStr.replace(/\s+/g, '').split(',');
+            if (inParts.length !== tarParts.length) return false;
+            for(let i=0; i<inParts.length; i++){
+                let v1 = evalMathStr(inParts[i]);
+                let v2 = evalMathStr(tarParts[i]);
+                if (v1 === null || v2 === null) {
+                    if (inParts[i] !== tarParts[i]) return false;
+                } else {
+                    if (Math.abs(v1 - v2) > 1e-6) return false;
+                }
+            }
+            return true;
+        }
+
         function getNewQuestion() {
             let remain = startTime ? (TIME_LIMIT - ((Date.now() - startTime) / 1000)) : TIME_LIMIT;
             let phaseStr = ""; let allowedLevels = []; 
@@ -220,7 +279,7 @@
                 let qData = activeWrongPool[idx];
                 currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
                 document.getElementById('phase-indicator').innerText = phaseStr;
-                document.getElementById('question-text').innerHTML = currentQuestionStr; 
+                document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr); 
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
@@ -232,13 +291,14 @@
             currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; currentHint = selectedQ.hint;
 
             document.getElementById('phase-indicator').innerText = phaseStr;
-            document.getElementById('question-text').innerHTML = currentQuestionStr; 
+            document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr); 
             userInput = ""; currentQuestionErrors = 0; renderInput();
         }
 
         function renderInput() {
             const box = document.getElementById('input-box'); 
-            box.innerText = userInput; box.classList.remove('error-text', 'correct-flash');
+            box.innerHTML = formatMath(userInput); // SVG 替換
+            box.classList.remove('error-text', 'correct-flash');
         }
         function input(val) { if (val === 'DEL') userInput = userInput.slice(0, -1); else userInput += val; renderInput(); }
 
@@ -246,7 +306,7 @@
             if (errorLogMap.size === 0) return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
             let html = "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:16px; color:#444; margin:0; padding-left:20px;'>";
             errorLogMap.forEach((data, qStr) => {
-                html += `<li style="margin-bottom:12px; line-height:1.5;">${qStr} <br><span style="color:#16a085; font-weight:bold;">➡ 正解: ${data.ans}</span><br><span style="color:#7f8c8d; font-size:14px;">💡 提示: ${data.hint}</span></li>`;
+                html += `<li style="margin-bottom:12px; line-height:1.5;">${formatMath(qStr)} <br><span style="color:#16a085; font-weight:bold;">➡ 正解: ${formatMath(data.ans)}</span><br><span style="color:#7f8c8d; font-size:14px;">💡 提示: ${formatMath(data.hint)}</span></li>`;
             });
             return html + "</ul>";
         }
@@ -283,7 +343,8 @@
             if (userInput === "") return; 
             const box = document.getElementById('input-box');
             
-            if (userInput === targetAns) {
+            // ✨ 套用智慧化簡比對引擎
+            if (isMathEqual(userInput, targetAns)) {
                 if (currentQuestionErrors === 0) correctQuestionsSet.add(currentQuestionStr);
                 activeWrongPool = activeWrongPool.filter(item => item.q !== currentQuestionStr);
                 errorLogMap.delete(currentQuestionStr); 
@@ -403,6 +464,7 @@
             }, 50); 
         }
 
+        // ✨ Google 表單自動上傳功能
         function endGame() {
             document.getElementById('overlay').classList.remove('hidden'); 
             document.getElementById('final-score-text').classList.remove('hidden');
