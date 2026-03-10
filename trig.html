@@ -90,9 +90,9 @@
     </div>
 
     <div id="header">
-        <div class="stat-group"><div class="stat-label">STUDENT</div><div id="ui-name" class="stat-value" style="color: #d68910;">---</div></div>
-        <div class="stat-group"><div class="stat-label">TIME</div><div id="ui-time" class="stat-value" style="color: #e74c3c;">90</div></div>
-        <div class="stat-group"><div class="stat-label">SCORE</div><div id="ui-score" class="stat-value" style="color: #d68910;">0</div></div>
+        <div class="stat-group"><div class="stat-label">STUDENT</div><div id="ui-name" class="stat-value" style="color: var(--text-gray);">---</div></div>
+        <div class="stat-group"><div class="stat-label">TIME</div><div id="ui-time" class="stat-value" style="color: var(--text-gray);">90</div></div>
+        <div class="stat-group"><div class="stat-label">SCORE</div><div id="ui-score" class="stat-value" style="color: var(--text-gray);">0</div></div>
     </div>
     
     <div id="combo-gauge-wrapper">
@@ -128,7 +128,12 @@
             <div class="key" onclick="input('1')">1</div>
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
-            <div class="key key-sqrt" onclick="input('√')">√</div>
+            
+            <div class="key key-sqrt" onclick="input('√')" style="display: flex; align-items: center; justify-content: center;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12h2.5l3.5 7 4.5-14h7" />
+                </svg>
+            </div>
             
             <div class="key" onclick="input('0')">0</div>
             <div class="key key-op" onclick="input('-')">-</div>
@@ -191,7 +196,7 @@
                 let qData = activeWrongPool[idx];
                 currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
                 document.getElementById('phase-indicator').innerText = phaseStr;
-                document.getElementById('question-text').innerHTML = currentQuestionStr; // 已經拿掉等號
+                document.getElementById('question-text').innerHTML = currentQuestionStr; 
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
@@ -203,7 +208,7 @@
             currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; currentHint = selectedQ.hint;
 
             document.getElementById('phase-indicator').innerText = phaseStr;
-            document.getElementById('question-text').innerHTML = currentQuestionStr; // 已經拿掉等號
+            document.getElementById('question-text').innerHTML = currentQuestionStr; 
             userInput = ""; currentQuestionErrors = 0; renderInput();
         }
 
@@ -232,7 +237,9 @@
         function triggerErrorEffect() {
             playWrong(); combo = 0; consecutiveWrong++; 
             let h = typeof currentHint !== 'undefined' ? currentHint : "";
+            
             errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
+            
             if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
                 activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
             }
@@ -240,6 +247,7 @@
             const area = document.getElementById('display-area'); area.classList.remove('shake-animation'); void area.offsetWidth; area.classList.add('shake-animation');
             currentQuestionErrors++; score -= (currentQuestionErrors * 5 * currentMultiplier); 
             document.getElementById('input-box').classList.add('error-text'); flashScoreRed(); updateUI();
+            
             showToast(`❌ 答錯囉！再仔細想想！`, 1200); checkDeath(); 
         }
 
@@ -248,7 +256,10 @@
             const box = document.getElementById('input-box');
             
             if (userInput === targetAns) {
-                if (currentQuestionErrors === 0) correctQuestionsSet.add(currentQuestionStr);
+                if (currentQuestionErrors === 0) {
+                    correctQuestionsSet.add(currentQuestionStr);
+                }
+                
                 activeWrongPool = activeWrongPool.filter(item => item.q !== currentQuestionStr);
                 errorLogMap.delete(currentQuestionStr); 
 
@@ -270,15 +281,20 @@
 
         function skipQuestion() {
             if (!document.getElementById('overlay').classList.contains('hidden')) return; 
+            
             let h = typeof currentHint !== 'undefined' ? currentHint : "";
             errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
+            
             if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
                 activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
             }
 
-            playWrong(); combo = 0; consecutiveWrong++; currentQuestionErrors++; 
+            playWrong(); combo = 0; consecutiveWrong++;
+            currentQuestionErrors++; 
             score -= (20 * currentMultiplier) - (currentQuestionErrors * 5 * currentMultiplier); 
-            updateUI(); showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500); 
+            updateUI(); 
+            
+            showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500); 
             checkDeath(); setTimeout(getNewQuestion, 450); 
         }
 
