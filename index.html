@@ -59,7 +59,6 @@
         letter-spacing: normal;
       }
 
-      /* ✨ 模式切換頁籤樣式 */
       .tabs {
         display: flex;
         background: #e0e0e0;
@@ -138,7 +137,6 @@
       .btn-space:hover {
         background-color: #8e44ad;
       }
-      /* ✨ 排列組合專屬顏色 */
       .btn-perm {
         background-color: #16a085;
         box-shadow: 0 4px 10px rgba(22, 160, 133, 0.3);
@@ -182,7 +180,6 @@
         opacity: 0.7;
       }
 
-      /* ✨ 勾選框樣式 */
       .checkbox-group {
         text-align: left;
         background: #f8f9fa;
@@ -379,25 +376,11 @@
 
       <div id="content-ranked" class="content-section active">
         <a href="trig.html" class="menu-btn btn-trig">
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              text-align: left;
-              gap: 4px;
-            "
-          >
+          <div style="display: flex; flex-direction: column; text-align: left; gap: 4px;">
             <div class="btn-text">
               <span class="level-icon"></span> 超好玩的三角比
             </div>
-            <div
-              id="top-trig"
-              style="
-                font-size: 13px;
-                font-weight: normal;
-                color: rgba(255, 255, 255, 0.9);
-              "
-            >
+            <div id="top-trig" style="font-size: 13px; font-weight: normal; color: rgba(255, 255, 255, 0.9);">
               👑 最高紀錄：讀取中...
             </div>
           </div>
@@ -405,25 +388,11 @@
         </a>
 
         <a href="space.html" class="menu-btn btn-space">
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              text-align: left;
-              gap: 4px;
-            "
-          >
+          <div style="display: flex; flex-direction: column; text-align: left; gap: 4px;">
             <div class="btn-text">
               <span class="level-icon"></span> 有趣的空間坐標
             </div>
-            <div
-              id="top-space"
-              style="
-                font-size: 13px;
-                font-weight: normal;
-                color: rgba(255, 255, 255, 0.9);
-              "
-            >
+            <div id="top-space" style="font-size: 13px; font-weight: normal; color: rgba(255, 255, 255, 0.9);">
               👑 最高紀錄：讀取中...
             </div>
           </div>
@@ -431,30 +400,18 @@
         </a>
 
         <a href="perm.html" class="menu-btn btn-perm">
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              text-align: left;
-              gap: 4px;
-            "
-          >
+          <div style="display: flex; flex-direction: column; text-align: left; gap: 4px;">
             <div class="btn-text">
               <span class="level-icon"></span> 神奇的排列組合
             </div>
-            <div
-              style="
-                font-size: 13px;
-                font-weight: normal;
-                color: rgba(255, 255, 255, 0.9);
-              "
-            >
-              🎯 挑戰反應神經！(無排行榜)
+            <div id="top-perm" style="font-size: 13px; font-weight: normal; color: rgba(255, 255, 255, 0.9);">
+              👑 最高紀錄：讀取中...
             </div>
           </div>
           <div class="btn-arrow">▶</div>
         </a>
-      <a href="#" class="menu-btn btn-locked" style="margin-top: 0px;">
+        
+        <a href="#" class="menu-btn btn-locked" style="margin-top: 0px;">
           <div class="btn-text">
             <span class="level-icon">🔒</span> 敬請期待...
           </div>
@@ -473,7 +430,7 @@
             <input type="checkbox" id="chk-space" checked /> 有趣的空間坐標
           </label>
           <label class="check-item">
-            <input type="checkbox" id="chk-perm" checked /> 神奇的排列組合
+            <input type="checkbox" id="chk-perm" checked /> 神速排列組合
           </label>
         </div>
         <button class="menu-btn btn-practice" onclick="startPractice()">
@@ -481,7 +438,7 @@
         </button>
       </div>
 
-      <div id="credit">Powered by 帥哥江子緯老師</div>
+      <div id="credit">Powered by 江子緯老師</div>
     </div>
 
     <script>
@@ -508,7 +465,6 @@
           selectedModes.push("trig");
         if (document.getElementById("chk-space").checked)
           selectedModes.push("space");
-        // ✨ 加入排列組合的勾選判斷
         if (document.getElementById("chk-perm").checked)
           selectedModes.push("perm");
 
@@ -520,7 +476,6 @@
         window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
       }
 
-      // ✨ 學生建議的 XSS 消毒濾水器
       function sanitizeHTML(str) {
           if (!str) return "";
           return String(str)
@@ -531,20 +486,13 @@
               .replace(/'/g, "&#039;");
       }
 
-      // ✨ 自動抓取最高分數的腳本
-      const TRIG_CSV =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
-      const SPACE_CSV =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
+      const TRIG_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
+      const SPACE_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
+      // ✨ 加入最新的排列組合排行榜 CSV！
+      const PERM_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwQuA4SuPuNdHk6sUV9yyOU9g6z7uKNqIPsQw0Rj8u8g6-2WTLRMW-oeFhLRbiw2v7Oiz8v2g1XwNP/pub?output=csv";
 
       function parseCSV(text) {
-        let p = "",
-          row = [""],
-          ret = [row],
-          i = 0,
-          r = 0,
-          s = !0,
-          l;
+        let p = "", row = [""], ret = [row], i = 0, r = 0, s = !0, l;
         for (l of text) {
           if ('"' === l) {
             if (s && l === p) row[i] += l;
@@ -579,7 +527,6 @@
 
               if (scoreRaw > topScore) {
                 topScore = scoreRaw;
-                // ✨ 抓到名字後，立刻進行 XSS 消毒！
                 let rawName = nameRaw.split(" (錯題:")[0].split(" (全對")[0].trim();
                 topName = sanitizeHTML(rawName);
                 hasRecord = true;
@@ -597,10 +544,11 @@
         }
       }
 
-      // 網頁載入時立刻抓資料
+      // ✨ 網頁載入時，三款遊戲的排行榜都會一起被抓出來！
       window.onload = () => {
         loadTopScore(TRIG_CSV, "top-trig");
         loadTopScore(SPACE_CSV, "top-space");
+        loadTopScore(PERM_CSV, "top-perm");
       };
     </script>
   </body>
