@@ -37,19 +37,17 @@
         }
         .progressive-shake { animation: progressiveShake 0.4s ease-in-out; }
 
-        /* ✨ 補回 FEVER 狂熱閃爍與跳動特效 */
-        @keyframes feverFlash {
-            0% { background-color: var(--color-gold); box-shadow: 0 0 10px var(--color-gold); }
-            50% { background-color: #f1c40f; box-shadow: 0 0 20px #f1c40f, 0 0 30px #e67e22; }
-            100% { background-color: var(--color-gold); box-shadow: 0 0 10px var(--color-gold); }
+        /* ✨ 補回並強化的 FEVER 狂熱特效 */
+        @keyframes feverBg {
+            0%, 100% { background-color: #f1c40f; box-shadow: 0 0 15px rgba(241, 196, 15, 0.8); }
+            50% { background-color: #e74c3c; box-shadow: 0 0 25px rgba(231, 76, 60, 0.9); }
         }
         .fever-fill {
-            animation: feverFlash 0.5s infinite !important;
-            background-color: #f1c40f !important;
+            animation: feverBg 0.4s infinite !important;
         }
         @keyframes pop {
             from { transform: scale(1); }
-            to { transform: scale(1.15); }
+            to { transform: scale(1.15); color: #e74c3c; }
         }
         .fever-text {
             animation: pop 0.3s infinite alternate;
@@ -84,7 +82,7 @@
             <ul>
                 <li><b>作答方式：</b>限時90秒，請直接輸入數字。分數請用 <code>/</code> (如: 1/2)，根號請按 <code>√</code> (如: √3/2)，負號請加在最前面 (如: -1/2)。</li>
                 <li><b>計分方式：</b>基本題答對+10分，答錯扣5分；連對Combo可獲得額外加分！<br><span style="color:#e74c3c;">⚠️ 若放棄跳過 (PASS) 將直接扣 20 分！請謹慎使用。</span></li>
-                <li><b style="color:#27ae60;">動態難度：</b>系統會根據你的連對狀況，自動提升題目難度，挑戰更高角度與不同象限！</li>
+                <li><b style="color:#27ae60;">智慧容錯：</b>不必理會有理化！打 <code>1/√2</code> 或 <code>√2/2</code> 都算對！</li>
                 <li><b style="color:#2980b9;">神級錯題本：</b>答錯的題目會重出，直到你算對為止。遊戲結束時，更會附贈你的專屬錯題觀念提示！</li>
             </ul>
         </div>
@@ -110,7 +108,7 @@
         <div id="question-text" style="font-size: 26px; font-weight: bold; color: var(--text-gray);">題目讀取中...</div>
         <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 15px; margin-bottom: 5px;">
             <div style="font-size: 32px; font-weight: bold; color: var(--text-dark); line-height: 1;">=</div>
-            <div id="input-box" style="margin-top: 0; min-width: 120px;"></div>
+            <div id="input-box" style="margin-top: 0; min-width: 120px; min-height: 55px; display: flex; justify-content: center; align-items: center;"></div>
             <button onclick="skipQuestion()" style="background: #ffefd5; color: #d35400; border: 2px solid #f39c12; border-radius: 12px; font-size: 14px; font-weight: bold; padding: 6px 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2); white-space: nowrap; transition: 0.1s;">
                 PASS<br><span style="font-size:11px;">(-20分)</span>
             </button>
@@ -132,11 +130,7 @@
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
             
-            <div class="key key-sqrt" onclick="input('√')" style="display: flex; align-items: center; justify-content: center;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 12h2.5l3.5 7 4.5-14h7" />
-                </svg>
-            </div>
+            <div class="key key-sqrt" onclick="input('√')" style="font-family: math, 'Times New Roman', serif;">&radic;</div>
             
             <div class="key" onclick="input('0')">0</div>
             <div class="key key-op" onclick="input('-')">-</div>
@@ -173,40 +167,73 @@
         let errorLogMap = new Map(); 
         let activeWrongPool = [];
 
-        // ✨ 1. SVG 漂亮根號替換器
-        function formatMath(str) {
+        // ✨ 1. 最強排版引擎：完美處理根號包覆與上下分數
+        function formatFractionAndRoot(str) {
             if (!str) return "";
-            const svgSqrt = `<svg width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.2em; margin-right: 0.05em;"><path d="M3 12h2.5l3.5 7 4.5-14h7" /></svg>`;
-            return String(str).replace(/√/g, svgSqrt);
+            str = String(str);
+
+            // 處理根號：加上完美的上方橫線
+            let processRoots = (text) => {
+                return text.replace(/√(\d*)/g, function(match, inner) {
+                    if (!inner) return '<span style="font-family: math, serif; font-size: 1.1em;">&radic;</span>';
+                    return `<span style="white-space: nowrap; display: inline-flex; align-items: baseline;"><span style="font-family: math, serif; font-size: 1.1em; transform: translateY(0.1em);">&radic;</span><span style="border-top: 2px solid currentColor; padding: 0 0.1em; margin-left: -0.1em;">${inner}</span></span>`;
+                });
+            };
+
+            // 處理分數：自動轉成上下排版
+            if (str.includes('/')) {
+                let parts = str.split('/');
+                if (parts.length === 2) {
+                    let isNegative = false;
+                    let numStr = parts[0];
+                    if (numStr.startsWith('-')) {
+                        isNegative = true;
+                        numStr = numStr.substring(1);
+                    }
+                    
+                    let numHtml = processRoots(numStr) || '&nbsp;';
+                    let denHtml = processRoots(parts[1]) || '&nbsp;';
+                    
+                    let fracHtml = `<span style="display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; font-size: 0.9em; line-height: 1.1; margin: 0 4px;">
+                                        <span style="border-bottom: 2px solid currentColor; padding-bottom: 2px; min-height: 1.1em;">${numHtml}</span>
+                                        <span style="padding-top: 2px; min-height: 1.1em;">${denHtml}</span>
+                                    </span>`;
+                    
+                    if (isNegative) {
+                        return `<span style="vertical-align: middle; font-weight: bold; margin-right: 2px;">-</span>` + fracHtml;
+                    }
+                    return fracHtml;
+                }
+            }
+            return processRoots(str);
         }
 
-        // ✨ 2. 智慧化簡容錯引擎
+        // ✨ 2. 最強計算容錯引擎：自動化簡與比對
         function evalMathStr(s) {
             if (!s) return null;
-            // 把 √ 轉成 JS 看得懂的 Math.sqrt
-            let parsed = s.replace(/√(\d+)/g, 'Math.sqrt($1)');
+            // 移除所有空白，並將 √ 轉為 JS 可讀的 Math.sqrt
+            let parsed = s.replace(/\s+/g, '').replace(/√(\d+)/g, 'Math.sqrt($1)');
             try {
                 let val = Function('"use strict";return (' + parsed + ')')();
-                return (typeof val === 'number' && !isNaN(val)) ? val : null;
+                return (typeof val === 'number' && !isNaN(val) && isFinite(val)) ? val : null;
             } catch(e) { return null; }
         }
 
         function isMathEqual(inStr, tarStr) {
             if (!inStr || !tarStr) return false;
-            // 過濾空白，並處理向量座標的多個逗號
             let inParts = inStr.replace(/\s+/g, '').split(',');
             let tarParts = tarStr.replace(/\s+/g, '').split(',');
             if (inParts.length !== tarParts.length) return false;
             
-            for(let i=0; i<inParts.length; i++){
+            for(let i = 0; i < inParts.length; i++){
                 let v1 = evalMathStr(inParts[i]);
                 let v2 = evalMathStr(tarParts[i]);
                 
-                // 如果無法計算出數字（例如純文字），就退回字串比對
+                // 若無法計算(純文字)，則退回字串比對
                 if (v1 === null || v2 === null) {
                     if (inParts[i] !== tarParts[i]) return false;
                 } else {
-                    // 若計算結果差異小於百萬分之一，即視為相等（容許 1/√2 == √2/2, 1/-2 == -1/2）
+                    // 若計算結果差距小於百萬分之一，即視為完全相等 (容許 1/√2 == √2/2)
                     if (Math.abs(v1 - v2) > 1e-6) return false;
                 }
             }
@@ -239,7 +266,7 @@
                 let qData = activeWrongPool[idx];
                 currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
                 document.getElementById('phase-indicator').innerText = phaseStr;
-                document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr);
+                document.getElementById('question-text').innerHTML = formatFractionAndRoot(currentQuestionStr);
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
@@ -251,13 +278,14 @@
             currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; currentHint = selectedQ.hint;
 
             document.getElementById('phase-indicator').innerText = phaseStr;
-            document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr); 
+            document.getElementById('question-text').innerHTML = formatFractionAndRoot(currentQuestionStr); 
             userInput = ""; currentQuestionErrors = 0; renderInput();
         }
 
         function renderInput() {
             const box = document.getElementById('input-box'); 
-            box.innerHTML = formatMath(userInput); // 替換為精美 SVG 根號
+            // ✨ 套用上下分數與根號排版引擎
+            box.innerHTML = formatFractionAndRoot(userInput); 
             box.classList.remove('error-text', 'correct-flash');
         }
         function input(val) { if (val === 'DEL') userInput = userInput.slice(0, -1); else userInput += val; renderInput(); }
@@ -266,7 +294,8 @@
             if (errorLogMap.size === 0) return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
             let html = "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:16px; color:#444; margin:0; padding-left:20px;'>";
             errorLogMap.forEach((data, qStr) => {
-                html += `<li style="margin-bottom:12px; line-height:1.5;">${formatMath(qStr)} <br><span style="color:#16a085; font-weight:bold;">➡ 正解: ${formatMath(data.ans)}</span><br><span style="color:#7f8c8d; font-size:14px;">💡 提示: ${formatMath(data.hint)}</span></li>`;
+                // 錯題本也全數套用數學排版引擎
+                html += `<li style="margin-bottom:12px; line-height:1.5;">${formatFractionAndRoot(qStr)} <br><span style="color:#16a085; font-weight:bold;">➡ 正解: ${formatFractionAndRoot(data.ans)}</span><br><span style="color:#7f8c8d; font-size:14px;">💡 提示: ${formatFractionAndRoot(data.hint)}</span></li>`;
             });
             return html + "</ul>";
         }
@@ -303,7 +332,7 @@
             if (userInput === "") return; 
             const box = document.getElementById('input-box');
             
-            // ✨ 套用智慧化簡比對引擎
+            // ✨ 套用智慧化簡引擎取代舊的字串比對
             if (isMathEqual(userInput, targetAns)) {
                 if (currentQuestionErrors === 0) correctQuestionsSet.add(currentQuestionStr);
                 activeWrongPool = activeWrongPool.filter(item => item.q !== currentQuestionStr);
@@ -342,6 +371,7 @@
             combo = 0; consecutiveWrong++; currentQuestionErrors++; 
             score -= (20 * currentMultiplier) - (currentQuestionErrors * 5 * currentMultiplier); 
             updateUI(); 
+            // 跳過時也顯示美觀的分數格式
             if (typeof showToast === 'function') showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500); 
             checkDeath(); setTimeout(getNewQuestion, 450); 
         }
