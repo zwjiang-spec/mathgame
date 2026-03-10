@@ -14,7 +14,7 @@
             --shake-intensity: 2px; 
         }
         
-        /* ✨ 統一為直排 4 欄配置，建立肌肉記憶！ */
+        /* ✨ 完全對齊其他遊戲的直排 4 欄配置，建立完美肌肉記憶！ */
         #keypad {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
@@ -26,10 +26,21 @@
         .key:active { transform: scale(0.95); }
         
         .key-del { 
-            grid-row: span 2; /* 佔兩格高度，與其他遊戲一致 */
+            grid-row: span 2; /* 佔兩格高度 */
             background-color: var(--btn-del-bg) !important; 
             color: var(--btn-del-text) !important; 
             font-size: 28px; 
+        }
+        /* 排列組合雖然用不到，但維持版面整齊的裝飾按鍵 */
+        .key-sqrt { 
+            background-color: #e8f6f3 !important; 
+            color: #16a085 !important; 
+            font-size: 28px; 
+        }
+        .key-op { 
+            background-color: #ebf5fb !important; 
+            color: #2980b9 !important; 
+            font-size: 30px; 
         }
         .key-enter { 
             font-size: 20px; 
@@ -38,11 +49,6 @@
             background-color: var(--btn-enter-bg) !important;
             color: var(--btn-enter-text) !important;
             letter-spacing: 2px;
-        }
-        .key-empty { 
-            background: transparent !important; 
-            box-shadow: none !important; 
-            pointer-events: none; 
         }
 
         /* ✨ 漸進式震動特效 */
@@ -125,8 +131,18 @@
             <div class="key" onclick="input('1')">1</div>
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
-            <div class="key key-empty" style="grid-row: span 2;"></div> <div class="key key-empty"></div> <div class="key" onclick="input('0')">0</div>
-            <div class="key key-empty"></div> <div class="key key-enter" onclick="submitAnswer()">送出答案 (ENTER)</div>
+            <div class="key key-sqrt" onclick="input('√')" style="display: flex; align-items: center; justify-content: center;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12h2.5l3.5 7 4.5-14h7" />
+                </svg>
+            </div>
+            
+            <div class="key" onclick="input('0')">0</div>
+            <div class="key key-op" onclick="input('-')">-</div>
+            <div class="key key-op" onclick="input('/')">/</div>
+            <div class="key key-op" onclick="input(',')">,</div>
+            
+            <div class="key key-enter" onclick="submitAnswer()">送出答案 (ENTER)</div>
         </div>
     </div>
 
