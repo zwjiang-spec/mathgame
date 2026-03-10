@@ -37,7 +37,7 @@
         }
         .progressive-shake { animation: progressiveShake 0.4s ease-in-out; }
 
-        /* ✨ 保留 FEVER 狂熱特效 */
+        /* ✨ 狂熱特效 (確保量表會一直閃爍) */
         @keyframes feverBg {
             0%, 100% { background-color: #f1c40f; box-shadow: 0 0 15px rgba(241, 196, 15, 0.8); }
             50% { background-color: #e74c3c; box-shadow: 0 0 25px rgba(231, 76, 60, 0.9); }
@@ -130,7 +130,11 @@
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
             
-            <div class="key key-sqrt" onclick="input('√')" style="font-family: 'Times New Roman', math, serif;">√</div>
+            <div class="key key-sqrt" onclick="input('√')" style="display: flex; align-items: center; justify-content: center;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 13h2l3.5 7 4.5-14h7" />
+                </svg>
+            </div>
             
             <div class="key" onclick="input('0')">0</div>
             <div class="key key-op" onclick="input('-')">-</div>
@@ -167,20 +171,27 @@
         let errorLogMap = new Map(); 
         let activeWrongPool = [];
 
-        // ✨ 1. 最完美的根號排版引擎 (與附圖 100% 一致)
+        // ✨ 1. SVG 動態繪圖引擎：完美還原截圖裡的根號包覆數字效果！
         function formatMath(str) {
             if (!str) return "";
             return String(str).replace(/√(\d*)/g, function(match, inner) {
-                if (!inner) return `<span style="font-family: 'Times New Roman', math, serif;">√</span>`;
-                // 使用 border-top 產生完美的延伸橫線將數字包覆，並與根號字體完美貼合
-                return `<span style="white-space: nowrap;"><span style="font-family: 'Times New Roman', math, serif; padding-right: 1px;">√</span><span style="border-top: 2px solid currentColor; padding-top: 1px;">${inner}</span></span>`;
+                if (!inner) {
+                    return `<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em;"><path d="M3 13h2l3.5 7 4.5-14h7" /></svg>`;
+                }
+                // 根據數字長度自動延伸上方橫線，並將數字繪製在 SVG 內部
+                let w = inner.length * 9;
+                let totalW = 15 + w + 2;
+                return `<svg width="${(totalW / 24) * 1.2}em" height="1.2em" viewBox="0 0 ${totalW} 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em; margin: 0 0.05em;">
+                            <path d="M3 13h2l3.5 7 4.5-14h${w + 2}" />
+                            <text x="14" y="19" fill="currentColor" stroke="none" font-size="16" font-family="system-ui, sans-serif" font-weight="bold">${inner}</text>
+                        </svg>`;
             });
         }
 
         // ✨ 2. 最強計算容錯引擎：自動化簡與防呆比對
         function evalMathStr(s) {
             if (!s) return null;
-            // 基礎防護：只允許數字及運算符號，防止惡意字串，同時過濾多餘空白
+            // 過濾空白，並將 √ 轉為 Math.sqrt，只允許合法數學字元
             if (!/^[0-9+\-*/().\s√]+$/.test(s)) return null;
             let parsed = s.replace(/\s+/g, '').replace(/√(\d+)/g, 'Math.sqrt($1)');
             if (parsed.endsWith('Math.sqrt()')) return null;
@@ -203,7 +214,7 @@
                 if (v1 === null || v2 === null) {
                     if (inParts[i] !== tarParts[i]) return false;
                 } else {
-                    // 差距小於百萬分之一視為相等 (容許 1/√2 == √2/2, 1/2 == 2/4)
+                    // 差距小於百萬分之一視為相等 (容許 1/√2 == √2/2)
                     if (Math.abs(v1 - v2) > 1e-6) return false;
                 }
             }
@@ -254,7 +265,7 @@
 
         function renderInput() {
             const box = document.getElementById('input-box'); 
-            box.innerHTML = formatMath(userInput); // ✨ 答案區也會套用漂亮的包覆根號
+            box.innerHTML = formatMath(userInput); // ✨ 動態繪製完美根號
             box.classList.remove('error-text', 'correct-flash');
         }
         function input(val) { if (val === 'DEL') userInput = userInput.slice(0, -1); else userInput += val; renderInput(); }
@@ -300,7 +311,7 @@
             if (userInput === "") return; 
             const box = document.getElementById('input-box');
             
-            // ✨ 套用智慧化簡比對引擎
+            // 套用智慧化簡比對引擎
             if (isMathEqual(userInput, targetAns)) {
                 if (currentQuestionErrors === 0) correctQuestionsSet.add(currentQuestionStr);
                 activeWrongPool = activeWrongPool.filter(item => item.q !== currentQuestionStr);
