@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>好玩的數學</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background-color: #f7f9fc;
+        background-image: linear-gradient(
+            rgba(155, 89, 182, 0.03) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(155, 89, 182, 0.03) 1px, transparent 1px),
+          url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48ZyBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM5YjU5YjYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTAgMGg0MHY0MEgwVjB6bTIwIDIwaDIwdjIwSDIWMjB6TTAgMjBoMjB2MjBIMFYyMHoyMCAwaDIwdjIwaC0yMFYweiIvPjwvZz48L2c+PC9zdmc+");
+        background-size: 20px 20px, 20px 20px, 40px 40px;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100dvh;
+        width: 100vw;
+        color: #2c3e50;
+        overflow: hidden;
+      }
+
+      .main-container {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.98);
+        padding: 30px 25px;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        max-width: 90%;
+        width: 400px;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      h1 {
+        font-size: 30px;
+        font-weight: 800;
+        margin-bottom: 20px;
+        color: #1c2833;
+        letter-spacing: 2px;
+      }
+      h1 .teacher {
+        font-size: 0.55em;
+        color: #9b59b6;
+        display: block;
+        letter-spacing: normal;
+      }
+
+      /* ✨ 模式切換頁籤樣式 */
+      .tabs {
+        display: flex;
+        background: #e0e0e0;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        overflow: hidden;
+      }
+      .tab-btn {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        background: none;
+        font-size: 16px;
+        font-weight: bold;
+        color: #7f8c8d;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .tab-btn.active {
+        background: #2c3e50;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .content-section {
+        display: none;
+        flex-direction: column;
+        gap: 15px;
+        animation: fadeIn 0.3s;
+      }
+      .content-section.active {
+        display: flex;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .menu-btn {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-decoration: none;
+        padding: 16px 20px;
+        border-radius: 12px;
+        color: white;
+        font-size: 17px;
+        font-weight: 700;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .menu-btn:active {
+        transform: scale(0.96);
+      }
+
+      .btn-trig {
+        background-color: #27ae60;
+        box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+      }
+      .btn-trig:hover {
+        background-color: #219150;
+      }
+      .btn-space {
+        background-color: #9b59b6;
+        box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
+      }
+      .btn-space:hover {
+        background-color: #8e44ad;
+      }
+      .btn-practice {
+        background-color: #e67e22;
+        box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
+        justify-content: center;
+        font-size: 18px;
+      }
+      .btn-practice:hover {
+        background-color: #d35400;
+      }
+
+      .btn-locked {
+        background-color: #e0e0e0;
+        color: #95a5a6;
+        cursor: not-allowed;
+        pointer-events: none;
+        border: 2px dashed #bdc3c7;
+      }
+      .btn-locked .level-icon {
+        filter: grayscale(1);
+        opacity: 0.6;
+      }
+
+      .btn-text {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .level-icon {
+        font-size: 1.3em;
+      }
+      .btn-arrow {
+        font-size: 1.2em;
+        opacity: 0.7;
+      }
+
+      /* ✨ 勾選框樣式 */
+      .checkbox-group {
+        text-align: left;
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-radius: 12px;
+        border: 1px solid #eee;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 5px;
+      }
+      .check-item {
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+        font-weight: bold;
+        color: #34495e;
+        cursor: pointer;
+      }
+      .check-item input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-right: 12px;
+        cursor: pointer;
+        accent-color: #e67e22;
+      }
+
+      #credit {
+        font-size: 12px;
+        color: #bdc3c7;
+        margin-top: 25px;
+      }
+
+      #version-btn {
+        position: fixed;
+        bottom: 15px;
+        left: 15px;
+        background: rgba(44, 62, 80, 0.8);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.2s;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 50;
+      }
+      #version-btn:hover {
+        background: rgba(44, 62, 80, 1);
+        transform: scale(1.05);
+      }
+      #update-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 200;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      #update-modal.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .modal-content {
+        background: white;
+        width: 85%;
+        max-width: 450px;
+        border-radius: 15px;
+        padding: 25px;
+        position: relative;
+        max-height: 80vh;
+        overflow-y: auto;
+        text-align: left;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+      .close-btn {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 24px;
+        cursor: pointer;
+        color: #95a5a6;
+        transition: 0.2s;
+      }
+      .close-btn:hover {
+        color: #e74c3c;
+      }
+      .modal-content h2 {
+        margin-top: 0;
+        color: #2c3e50;
+        font-size: 22px;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 10px;
+      }
+      .update-item {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #eee;
+      }
+      .version-tag {
+        background: #3498db;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: bold;
+        margin-right: 5px;
+      }
+      .date-tag {
+        color: #7f8c8d;
+        font-size: 13px;
+      }
+      .update-item ul {
+        margin: 10px 0 0 0;
+        padding-left: 20px;
+        font-size: 15px;
+        color: #444;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="version-btn" onclick="toggleUpdateLog()">v2.0.0 更新日誌</div>
+
+    <div id="update-modal">
+      <div class="modal-content">
+        <span class="close-btn" onclick="toggleUpdateLog()">×</span>
+        <h2>🚀 版本更新日誌</h2>
+
+        <div class="update-item">
+          <span class="version-tag">v2.0.0</span>
+          <span class="date-tag">史詩級大升級！</span>
+          <ul>
+            <li>
+              <b style="color: #e67e22">綜合練習模式：</b
+              >自由勾選多個單元進行混和測驗，隨機出題考驗真功夫！此模式無壓力，不列入排行榜。
+            </li>
+            <li>
+              <b style="color: #2980b9">動態難度上線：</b
+              >連對觸發進階題，連錯啟動基礎保底，遇強則強！
+            </li>
+            <li>
+              <b style="color: #e74c3c">專屬錯題本：</b
+              >通關或出局後，將為你統整所有錯題，複習更精準。
+            </li>
+            <li>
+              <b style="color: #27ae60">即時回饋：</b
+              >答錯時畫面上方會短暫彈出「正確答案」提示囉。
+            </li>
+            <li>
+              <b style="color: #2c3e50">大廳介面翻新：</b
+              >新增雙模式頁籤切換，介面更清晰，載入速度提升。
+            </li>
+          </ul>
+        </div>
+
+        <div class="update-item">
+          <span class="version-tag" style="background: #95a5a6">v1.5.0</span>
+          <span class="date-tag">經典回顧</span>
+          <ul>
+            <li>加入「空間坐標極限戰」單元。</li>
+            <li>新增連擊 FEVER 動畫特效。</li>
+            <li>導入 -20 分出局的死亡機制防呆機制。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="main-container">
+      <h1>
+        <span class="teacher"></span>
+        數學領域展開
+      </h1>
+
+      <div class="tabs">
+        <button
+          class="tab-btn active"
+          onclick="switchTab('ranked')"
+          id="btn-ranked"
+        >
+          🏆 單元競賽
+        </button>
+        <button
+          class="tab-btn"
+          onclick="switchTab('practice')"
+          id="btn-practice"
+        >
+          💪 綜合練習
+        </button>
+      </div>
+
+      <div id="content-ranked" class="content-section active">
+        <a href="trig.html" class="menu-btn btn-trig">
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              text-align: left;
+              gap: 4px;
+            "
+          >
+            <div class="btn-text">
+              <span class="level-icon"></span> 超好玩的三角比
+            </div>
+            <div
+              id="top-trig"
+              style="
+                font-size: 13px;
+                font-weight: normal;
+                color: rgba(255, 255, 255, 0.9);
+              "
+            >
+              👑 最高紀錄：讀取中...
+            </div>
+          </div>
+          <div class="btn-arrow">▶</div>
+        </a>
+
+        <a href="space.html" class="menu-btn btn-space">
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              text-align: left;
+              gap: 4px;
+            "
+          >
+            <div class="btn-text">
+              <span class="level-icon"></span> 有趣的空間坐標
+            </div>
+            <div
+              id="top-space"
+              style="
+                font-size: 13px;
+                font-weight: normal;
+                color: rgba(255, 255, 255, 0.9);
+              "
+            >
+              👑 最高紀錄：讀取中...
+            </div>
+          </div>
+          <div class="btn-arrow">▶</div>
+        </a>
+
+        <a href="#" class="menu-btn btn-locked">
+          <div class="btn-text">
+            <span class="level-icon">🔒</span> 敬請期待...
+          </div>
+        </a>
+      </div>
+
+      <div id="content-practice" class="content-section">
+        <p style="margin-bottom: 10px; color: #e67e22; font-weight: bold">
+          自由勾選想混合練習的單元：
+        </p>
+        <div class="checkbox-group">
+          <label class="check-item">
+            <input type="checkbox" id="chk-trig" checked /> 超好玩的三角比
+          </label>
+          <label class="check-item">
+            <input type="checkbox" id="chk-space" checked /> 有趣的空間坐標
+          </label>
+        </div>
+        <button class="menu-btn btn-practice" onclick="startPractice()">
+          🔥 開始綜合練習
+        </button>
+      </div>
+
+      <div id="credit">Powered by 江子緯老師</div>
+    </div>
+
+    <script>
+      function toggleUpdateLog() {
+        const modal = document.getElementById("update-modal");
+        modal.classList.contains("show")
+          ? modal.classList.remove("show")
+          : modal.classList.add("show");
+      }
+
+      function switchTab(tabId) {
+        document.getElementById("btn-ranked").classList.remove("active");
+        document.getElementById("btn-practice").classList.remove("active");
+        document.getElementById("content-ranked").classList.remove("active");
+        document.getElementById("content-practice").classList.remove("active");
+
+        document.getElementById("btn-" + tabId).classList.add("active");
+        document.getElementById("content-" + tabId).classList.add("active");
+      }
+
+      function startPractice() {
+        let selectedModes = [];
+        if (document.getElementById("chk-trig").checked)
+          selectedModes.push("trig");
+        if (document.getElementById("chk-space").checked)
+          selectedModes.push("space");
+
+        if (selectedModes.length === 0) {
+          alert("⚠️ 請至少勾選一個單元才能開始練習喔！");
+          return;
+        }
+
+        window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
+      }
+
+      // ✨ 自動抓取最高分數的腳本
+      const TRIG_CSV =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
+      const SPACE_CSV =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
+
+      function parseCSV(text) {
+        let p = "",
+          row = [""],
+          ret = [row],
+          i = 0,
+          r = 0,
+          s = !0,
+          l;
+        for (l of text) {
+          if ('"' === l) {
+            if (s && l === p) row[i] += l;
+            s = !s;
+          } else if ("," === l && s) l = row[++i] = "";
+          else if ("\n" === l && s) {
+            if ("\r" === p) row[i] = row[i].slice(0, -1);
+            row = ret[++r] = [(l = "")];
+            i = 0;
+          } else row[i] += l;
+          p = l;
+        }
+        return ret;
+      }
+
+      async function loadTopScore(url, elementId) {
+        const el = document.getElementById(elementId);
+        try {
+          let res = await fetch(url, { cache: "no-store" });
+          let text = await res.text();
+          let data = parseCSV(text);
+
+          let topName = "無";
+          let topScore = -9999;
+          let hasRecord = false;
+
+          for (let i = 1; i < data.length; i++) {
+            if (data[i].length >= 3) {
+              let nameRaw = data[i][1] || "";
+              let scoreRaw = parseInt(data[i][2]);
+              if (isNaN(scoreRaw)) continue;
+
+              if (scoreRaw > topScore) {
+                topScore = scoreRaw;
+                // 濾掉名稱後面的 (錯題...) 標記
+                topName = nameRaw.split(" (錯題:")[0].split(" (全對")[0].trim();
+                hasRecord = true;
+              }
+            }
+          }
+
+          if (hasRecord) {
+            el.innerText = `👑 最高紀錄：${topName} (${topScore}分)`;
+          } else {
+            el.innerText = `👑 最高紀錄：尚無挑戰者`;
+          }
+        } catch (e) {
+          el.innerText = `👑 最高紀錄：讀取失敗`;
+        }
+      }
+
+      // 網頁載入時立刻抓資料
+      window.onload = () => {
+        loadTopScore(TRIG_CSV, "top-trig");
+        loadTopScore(SPACE_CSV, "top-space");
+      };
+    </script>
+  </body>
+</html>
