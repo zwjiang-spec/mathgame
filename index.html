@@ -550,6 +550,7 @@
         loadTopScore(SPACE_CSV, "top-space");
         loadTopScore(PERM_CSV, "top-perm");
       };
+      window.onpageshow = function(event) { if (event.persisted) { window.location.reload(); } };
     </script>
   </body>
 </html>
