@@ -97,10 +97,7 @@
         
         <h1 style="color: #1c2833; margin-bottom: 15px; margin-top: 50px;">排列組合真有趣！</h1>
         
-        <div id="leaderboard-container" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; width: 100%; max-width: 400px; padding: 0 10px; box-sizing: border-box;">
-            <div id="today-lb" style="flex:1; background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left;">載入中...</div>
-            <div id="alltime-lb" style="flex:1; background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left;">載入中...</div>
-        </div>
+        
 
         <h2 id="final-score-text" class="hidden" style="color: var(--color-gold); margin-top: -10px; margin-bottom: 10px;"></h2>
         <div id="end-error-log" class="hidden" style="background: #fffdf5; border: 2px dashed #e74c3c; padding: 15px; border-radius: 10px; max-width: 90%; margin: 0 auto 20px;"></div>
@@ -116,6 +113,11 @@
                 <li><b style="color:#f39c12;">狂熱時間：</b>最後 30 秒難度全開，且<b>得分加倍</b>！</li>
                 <li><b style="color:#e74c3c;">神級錯題本：</b>按 PASS(扣20分)或答錯的題目，會收錄並反覆出題！</li>
             </ul>
+        </div>
+
+        <div id="leaderboard-container" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; width: 100%; max-width: 400px; padding: 0 10px; box-sizing: border-box;">
+            <div id="today-lb" style="flex:1; background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left;">載入中...</div>
+            <div id="alltime-lb" style="flex:1; background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left;">載入中...</div>
         </div>
         
         <input type="text" id="player-name" class="name-input" placeholder="請輸入姓名或學號" maxlength="10">
