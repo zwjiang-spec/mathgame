@@ -37,7 +37,7 @@
         }
         .progressive-shake { animation: progressiveShake 0.4s ease-in-out; }
 
-        /* ✨ 保留 FEVER 狂熱特效 */
+        /* ✨ 狂熱特效 */
         @keyframes feverBg {
             0%, 100% { background-color: #f1c40f; box-shadow: 0 0 15px rgba(241, 196, 15, 0.8); }
             50% { background-color: #e74c3c; box-shadow: 0 0 25px rgba(231, 76, 60, 0.9); }
@@ -130,7 +130,11 @@
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
             
-            <div class="key key-sqrt" onclick="input('√')" style="font-family: 'Times New Roman', math, serif;">√</div>
+            <div class="key key-sqrt" onclick="input('√')" style="display: flex; align-items: center; justify-content: center;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 13h2l3.5 7 4.5-14h7" />
+                </svg>
+            </div>
             
             <div class="key" onclick="input('0')">0</div>
             <div class="key key-op" onclick="input('-')">-</div>
@@ -165,12 +169,19 @@
         let errorLogMap = new Map(); 
         let activeWrongPool = [];
 
-        // ✨ 1. 最完美的根號排版引擎
+        // ✨ 1. SVG 動態繪圖引擎：完美還原截圖裡的根號包覆數字效果！
         function formatMath(str) {
             if (!str) return "";
             return String(str).replace(/√(\d*)/g, function(match, inner) {
-                if (!inner) return `<span style="font-family: 'Times New Roman', math, serif;">√</span>`;
-                return `<span style="white-space: nowrap;"><span style="font-family: 'Times New Roman', math, serif; padding-right: 1px;">√</span><span style="border-top: 2px solid currentColor; padding-top: 1px;">${inner}</span></span>`;
+                if (!inner) {
+                    return `<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em;"><path d="M3 13h2l3.5 7 4.5-14h7" /></svg>`;
+                }
+                let w = inner.length * 9;
+                let totalW = 15 + w + 2;
+                return `<svg width="${(totalW / 24) * 1.2}em" height="1.2em" viewBox="0 0 ${totalW} 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em; margin: 0 0.05em;">
+                            <path d="M3 13h2l3.5 7 4.5-14h${w + 2}" />
+                            <text x="14" y="19" fill="currentColor" stroke="none" font-size="16" font-family="system-ui, sans-serif" font-weight="bold">${inner}</text>
+                        </svg>`;
             });
         }
 
