@@ -38,14 +38,11 @@
         }
         .progressive-shake { animation: progressiveShake 0.4s ease-in-out; }
 
-        /* ✨ 紅色 FEVER 特效 */
         @keyframes feverBgRed {
             0%, 100% { background-color: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); }
             50% { background-color: #c0392b; box-shadow: 0 0 25px rgba(192, 57, 43, 0.9); }
         }
-        .fever-fill {
-            animation: feverBgRed 0.4s infinite !important;
-        }
+        .fever-fill { animation: feverBgRed 0.4s infinite !important; }
         @keyframes popRed {
             from { transform: scale(1); }
             to { transform: scale(1.15); color: #c0392b; }
@@ -61,35 +58,18 @@
             box-shadow: 0 0 15px rgba(231, 76, 60, 0.4) !important;
         }
 
-        /* ✨ 原版遊戲規則樣式 */
         .rules-container {
-            border: 2px dashed #d4af37; 
-            border-radius: 12px; 
-            padding: 15px 20px; 
-            text-align: left; 
-            background: #fffcf5; 
-            margin-bottom: 20px;
+            border: 2px dashed #d4af37; border-radius: 12px; padding: 15px 20px; text-align: left; background: #fffcf5; margin-bottom: 15px;
         }
         .rules-title {
-            color: #d4af37; 
-            text-align: center; 
-            margin-top: 0; 
-            font-size: 18px;
-            font-weight: bold;
+            color: #d4af37; text-align: center; margin-top: 0; font-size: 18px; font-weight: bold;
         }
-        .rules-divider {
-            border: 0; 
-            height: 1px; 
-            background: #f1e5bc; 
-            margin-bottom: 12px;
-        }
-        .rules-list {
-            color: #555; 
-            font-size: 15px; 
-            line-height: 1.8; 
-            padding-left: 20px; 
-            margin-bottom: 0;
-        }
+        .rules-divider { border: 0; height: 1px; background: #f1e5bc; margin-bottom: 12px; }
+        .rules-list { color: #555; font-size: 14px; line-height: 1.6; padding-left: 20px; margin-bottom: 0; }
+        
+        .lb-table { width: 100%; font-size: 13px; border-collapse: collapse; margin-top: 5px;}
+        .lb-table td { padding: 3px 0; border-bottom: 1px solid #eee;}
+        .lb-table tr:last-child td { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -98,21 +78,19 @@
         <h1>💀 你已經死了</h1>
         <p>分數過低 (-20分)，失去挑戰資格</p>
         <div id="death-error-log" style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px; color: black; max-width: 90%; margin-top: 15px;"></div>
-        
-        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-            <button class="action-btn" onclick="location.reload()" style="background: #555; padding: 10px 20px;">重新開始</button>
-            <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pubhtml" target="_blank" style="background: #f39c12; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; line-height: 1.5;">🏆 排行榜</a>
-        </div>
-        <a href="index.html" style="color: #ccc; margin-top: 20px; display: block;">🏠 回到數學天地主選單</a>
+        <button class="action-btn" onclick="location.reload()" style="margin-top: 20px; background: #555;">重新開始</button>
+        <a href="index.html" style="color: #ccc; margin-top: 15px; display: block;">🏠 回到數學天地主選單</a>
     </div>
 
     <div id="overlay">
-        <div style="display: flex; justify-content: space-between; width: 100%; padding: 15px; box-sizing: border-box; position: absolute; top: 0; left: 0;">
-            <a href="index.html" class="home-btn">🏠 回主選單</a>
-            <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pubhtml" target="_blank" style="color: #d35400; font-weight: bold; text-decoration: none; background: #ffefd5; padding: 5px 10px; border-radius: 8px;">🏆 排行榜</a>
-        </div>
+        <a href="index.html" class="home-btn" style="position: absolute; top: 15px; left: 15px;">🏠 回主選單</a>
+        <h1 style="color: #1c2833; margin-bottom: 15px; margin-top: 40px;">神奇三角函數！</h1>
         
-        <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 50px;">神奇三角函數！</h1>
+        <div id="leaderboard-container" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; width: 100%; max-width: 400px; padding: 0 10px; box-sizing: border-box;">
+            <div id="today-lb" style="flex:1; background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left;">載入中...</div>
+            <div id="alltime-lb" style="flex:1; background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left;">載入中...</div>
+        </div>
+
         <h2 id="final-score-text" class="hidden" style="color: var(--color-gold); margin-top: -10px; margin-bottom: 10px;"></h2>
         <div id="end-error-log" class="hidden" style="background: #fffdf5; border: 2px dashed #e74c3c; padding: 15px; border-radius: 10px; max-width: 90%; margin: 0 auto 20px;"></div>
 
@@ -120,12 +98,12 @@
             <div class="rules-title">📜 遊戲規則與計分方式</div>
             <hr class="rules-divider">
             <ul class="rules-list">
-                <li><b>挑戰時間：</b>總共 <b>90 秒</b>，請盡可能拿高分！</li>
-                <li><b>基本得分：</b>答對 +10 分，連續答對享有 Combo 加成！</li>
-                <li><b>倒扣懲罰：</b>按錯送出會<b>漸進式扣分</b> (5分、10分...)。</li>
-                <li><b>難度進化：</b>總分達 <b>100分</b> 解鎖「進階階段(包含負角)」。</li>
-                <li><b>狂熱時間：</b>最後 30 秒角度無限制，且<b>得分加倍</b>！</li>
-                <li><b style="color:#e74c3c;">神級錯題本：</b>按 PASS(扣20分)或答錯的題目，會收錄錯題本並反覆出題！</li>
+                <li><b style="color:#d35400;">挑戰時間：</b>總共 <b>90 秒</b>，請盡可能拿高分！</li>
+                <li><b style="color:#27ae60;">基本得分：</b>答對 +10 分，連續答對享有 Combo 加成！</li>
+                <li><b style="color:#8e44ad;">倒扣懲罰：</b>按錯送出會<b>漸進式扣分</b> (5分、10分...)。</li>
+                <li><b style="color:#2980b9;">難度進化：</b>總分達 <b>100分</b> 解鎖「進階階段(包含負角)」。</li>
+                <li><b style="color:#f39c12;">狂熱時間：</b>最後 30 秒角度無限制，且<b>得分加倍</b>！</li>
+                <li><b style="color:#e74c3c;">神級錯題本：</b>按 PASS(扣20分)或答錯的題目，會收錄並反覆出題！</li>
             </ul>
         </div>
         
@@ -172,7 +150,11 @@
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
             
-            <div class="key key-sqrt" onclick="input('√')" style="font-family: math, serif;">√</div>
+            <div class="key key-sqrt" onclick="input('√')" style="display: flex; align-items: center; justify-content: center;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12h2.5l3.5 7 4.5-14h7" />
+                </svg>
+            </div>
             
             <div class="key" onclick="input('0')">0</div>
             <div class="key key-op" onclick="input('-')">-</div>
@@ -209,16 +191,85 @@
         let errorLogMap = new Map(); 
         let activeWrongPool = [];
 
-        // ✨ 1. 最粗細均勻的根號排版 (使用 text-decoration: overline)
+        // ✨ CSV 排行榜讀取邏輯
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
+        
+        function parseCSV(text) {
+            let p = "", row = [""], ret = [row], i = 0, r = 0, s = !0, l;
+            for (l of text) {
+                if ('"' === l) { if (s && l === p) row[i] += l; s = !s; }
+                else if ("," === l && s) l = row[++i] = "";
+                else if ("\n" === l && s) { if ("\r" === p) row[i] = row[i].slice(0, -1); row = ret[++r] = [(l = "")]; i = 0; }
+                else row[i] += l;
+                p = l;
+            }
+            return ret;
+        }
+
+        async function fetchLeaderboard() {
+            try {
+                let res = await fetch(CSV_URL, { cache: "no-store" });
+                let text = await res.text();
+                let data = parseCSV(text);
+                let records = [];
+                for (let i = 1; i < data.length; i++) {
+                    if (data[i].length >= 3) {
+                        let dateStr = data[i][0];
+                        let name = data[i][1] || "";
+                        let score = parseInt(data[i][2]);
+                        if (!isNaN(score)) records.push({ dateStr, name, score });
+                    }
+                }
+
+                let allTime = [...records].sort((a, b) => b.score - a.score).slice(0, 5);
+
+                let todayObj = new Date();
+                let ty = todayObj.getFullYear();
+                let tm = todayObj.getMonth() + 1;
+                let td = todayObj.getDate();
+
+                let todayRecords = records.filter(r => {
+                    let rowDate = new Date(r.dateStr);
+                    if (!isNaN(rowDate)) {
+                        return rowDate.getFullYear() === ty && (rowDate.getMonth() + 1) === tm && rowDate.getDate() === td;
+                    } else {
+                        return r.dateStr.includes(`${ty}/${tm}/${td}`) || r.dateStr.includes(`${ty}/${String(tm).padStart(2,'0')}/${String(td).padStart(2,'0')}`);
+                    }
+                });
+                let todayTop = [...todayRecords].sort((a, b) => b.score - a.score).slice(0, 5);
+
+                renderLB("today-lb", todayTop, "🌟 今日前五名");
+                renderLB("alltime-lb", allTime, "🏆 歷史前五名");
+            } catch(e) {
+                document.getElementById("today-lb").innerHTML = "排行榜讀取失敗";
+                document.getElementById("alltime-lb").innerHTML = "排行榜讀取失敗";
+            }
+        }
+
+        function renderLB(id, list, title) {
+            let html = `<h4 style="margin: 0 0 8px 0; color: #d35400; font-size: 14px; text-align: center;">${title}</h4>`;
+            if (list.length === 0) {
+                html += `<div style="text-align:center; font-size:12px; color:#999;">尚無紀錄</div>`;
+            } else {
+                html += `<table class="lb-table">`;
+                list.forEach((item, index) => {
+                    let cleanName = item.name.split(" (")[0].substring(0, 8);
+                    html += `<tr><td style="width: 15px; font-weight: bold; color: #7f8c8d;">${index+1}.</td><td style="text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 50px;">${cleanName}</td><td style="text-align: right; font-weight: bold; color: #27ae60;">${item.score}</td></tr>`;
+                });
+                html += `</table>`;
+            }
+            document.getElementById(id).innerHTML = html;
+        }
+
+        // ✨ 完美復刻截圖的作答區根號樣式 (粗體數學字＋粗細一致的 border-top)
         function formatMath(str) {
             if (!str) return "";
             return String(str).replace(/√(\d*)/g, function(match, inner) {
-                if (!inner) return `<span style="font-family: math, serif; font-weight: 600;">√</span>`;
-                return `<span style="white-space: nowrap; font-family: math, serif; font-weight: 600;">√<span style="text-decoration: overline;">${inner}</span></span>`;
+                if (!inner) return `<span style="font-family: math, serif; font-weight: bold;">&radic;</span>`;
+                return `<span style="white-space: nowrap; font-family: math, serif; font-weight: bold;">&radic;<span style="border-top: max(2px, 0.1em) solid currentColor; padding-top: 1px; margin-left: -0.1em;">${inner}</span></span>`;
             });
         }
 
-        // ✨ 2. 最強計算容錯引擎：自動化簡與防呆比對
         function evalMathStr(s) {
             if (!s) return null;
             if (!/^[0-9+\-*/().\s√]+$/.test(s)) return null;
@@ -235,11 +286,9 @@
             let inParts = inStr.replace(/\s+/g, '').split(',');
             let tarParts = tarStr.replace(/\s+/g, '').split(',');
             if (inParts.length !== tarParts.length) return false;
-            
             for(let i = 0; i < inParts.length; i++){
                 let v1 = evalMathStr(inParts[i]);
                 let v2 = evalMathStr(tarParts[i]);
-                
                 if (v1 === null || v2 === null) {
                     if (inParts[i] !== tarParts[i]) return false;
                 } else {
@@ -257,9 +306,9 @@
                 currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (全難度解禁, 分數 x2)"; 
                 allowedLevels = [1, 2, 3]; document.getElementById('phase-indicator').style.color = "#c0392b";
             } else if (consecutiveWrong >= 2) {
-                currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎)"; 
+                currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎三角)"; 
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
-            } else if (score >= 100) {
+            } else if (score >= 120) {
                 currentMultiplier = 1; phaseStr = "⚡ 最終階段 (高角度與特殊角考驗)"; 
                 allowedLevels = [3]; document.getElementById('phase-indicator').style.color = "#8e44ad";
             } else if (combo >= 3 || score >= 50) {
@@ -429,10 +478,8 @@
             timer = setInterval(() => {
                 let passed = (Date.now() - startTime) / 1000; 
                 let remain = TIME_LIMIT - passed;
-                
                 let progressBar = document.getElementById('progress-bar');
                 if (progressBar) progressBar.style.width = (remain / TIME_LIMIT * 100) + "%"; 
-                
                 let sec = Math.ceil(Math.max(0, remain));
                 const timeEl = document.getElementById('ui-time'); 
                 if (timeEl) timeEl.innerText = sec;
@@ -468,8 +515,13 @@
             endLog.innerHTML = generateErrorLogHTML(); 
             endLog.classList.remove('hidden');
             window.scrollTo(0, 0);
+            
+            // 由於三角比尚未綁定上傳表單，這裡僅保留本地畫面結算
             document.getElementById('player-name').value = "練習結束！這是你的錯題本 👉"; 
         }
+
+        // 載入頁面時自動抓取排行榜
+        window.onload = fetchLeaderboard;
     </script>
 </body>
 </html>
