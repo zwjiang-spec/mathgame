@@ -300,7 +300,7 @@
             return true;
         }
 
-        function getNewQuestion() {
+       function getNewQuestion() {
             let remain = startTime ? (TIME_LIMIT - ((Date.now() - startTime) / 1000)) : TIME_LIMIT;
             let phaseStr = ""; let allowedLevels = []; 
             
@@ -308,7 +308,7 @@
                 currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (全難度解禁, 分數 x2)"; 
                 allowedLevels = [1, 2, 3]; document.getElementById('phase-indicator').style.color = "#c0392b";
             } else if (consecutiveWrong >= 2) {
-                currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎三角)"; 
+                currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎)"; 
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
             } else if (score >= 120) {
                 currentMultiplier = 1; phaseStr = "⚡ 最終階段 (高角度與特殊角考驗)"; 
@@ -321,17 +321,26 @@
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
             }
 
-            if (activeWrongPool.length > 0 && Math.random() < 0.4) {
-                let idx = Math.floor(Math.random() * activeWrongPool.length);
-                let qData = activeWrongPool[idx];
+            // ✨ 1. 記住上一題，避免連續重複
+            let lastQ = currentQuestionStr; 
+
+            // ✨ 2. 錯題本抽題：排除剛剛才出現的上一題
+            let availableWrong = activeWrongPool.filter(item => item.q !== lastQ);
+            if (availableWrong.length > 0 && Math.random() < 0.4) {
+                let idx = Math.floor(Math.random() * availableWrong.length);
+                let qData = availableWrong[idx];
                 currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
                 document.getElementById('phase-indicator').innerText = phaseStr;
                 document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr);
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
-            let pool = trigQuestions.filter(q => allowedLevels.includes(q.level) && !correctQuestionsSet.has(q.q));
-            if (pool.length === 0) pool = trigQuestions.filter(q => !correctQuestionsSet.has(q.q));
+            // ✨ 3. 正常抽題：排除「已答對的」以及「上一題」
+            let pool = trigQuestions.filter(q => allowedLevels.includes(q.level) && !correctQuestionsSet.has(q.q) && q.q !== lastQ);
+            
+            // 題庫見底時的保底機制 (優先排除上一題)
+            if (pool.length === 0) pool = trigQuestions.filter(q => !correctQuestionsSet.has(q.q) && q.q !== lastQ);
+            if (pool.length === 0) pool = trigQuestions.filter(q => q.q !== lastQ);
             if (pool.length === 0) pool = trigQuestions; 
 
             let selectedQ = pool[Math.floor(Math.random() * pool.length)];
