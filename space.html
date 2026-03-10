@@ -6,7 +6,6 @@
     <title>有趣的空間坐標 - 數學領域展開</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ✨ 空間坐標專屬主題：紫色 */
         :root {
             --bg-main: #f7f9fc; --text-dark: #1c2833; --text-gray: #7f8c8d; --color-gold: #9b59b6; 
             --btn-white: #ffffff; --btn-del-bg: #fae5e5; --btn-del-text: #c0392b; 
@@ -14,27 +13,41 @@
             --shake-intensity: 2px; 
         }
         
-        /* ✨ 空間坐標的直排 4 欄計算機 */
+        /* ✨ 空間專用排版：刪除跨行，為了塞下逗號，根號只佔一格 */
         #keypad {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
-            grid-auto-rows: min(10vh, 55px);
+            grid-auto-rows: min(10vh, 60px);
             gap: 10px;
+            margin-top: 15px;
         }
         .key { font-size: 26px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: #2c3e50;}
         .key:active { transform: scale(0.95); }
-        .key-del { background-color: var(--btn-del-bg) !important; color: var(--btn-del-text) !important; font-size: 24px; }
-        .key-sqrt { background-color: #f4ecf7 !important; color: #8e44ad !important; font-size: 26px; }
-        .key-op { background-color: #ebf5fb !important; color: #2980b9 !important; font-size: 28px; }
+        
+        .key-del { 
+            grid-row: span 2; /* 佔兩格 */
+            background-color: var(--btn-del-bg) !important; 
+            color: var(--btn-del-text) !important; 
+            font-size: 28px; 
+        }
+        .key-sqrt { 
+            background-color: #f4ecf7 !important; 
+            color: #8e44ad !important; 
+            font-size: 28px; 
+        }
+        .key-op { 
+            background-color: #ebf5fb !important; 
+            color: #2980b9 !important; 
+            font-size: 30px; 
+        }
         .key-enter { 
             font-size: 20px; 
             font-weight: bold; 
-            grid-column: 1 / -1 !important; /* 橫跨 4 格 */
+            grid-column: 1 / -1 !important; 
             background-color: var(--btn-enter-bg) !important;
             color: var(--btn-enter-text) !important;
             letter-spacing: 2px;
         }
-        .key-empty { background: transparent !important; box-shadow: none !important; pointer-events: none; }
 
         @keyframes progressiveShake {
             0% { transform: translate(var(--shake-intensity), var(--shake-intensity)) rotate(0deg); }
@@ -75,7 +88,6 @@
         <button class="action-btn" onclick="startGame()" style="background: var(--btn-enter-bg);">START GAME</button>
     </div>
 
-    <div id="progress-container"><div id="progress-bar" style="background: var(--color-gold);"></div></div>
     <div id="header">
         <div class="stat-group"><div class="stat-label">STUDENT</div><div id="ui-name" class="stat-value" style="color: #d68910;">---</div></div>
         <div class="stat-group"><div class="stat-label">TIME</div><div id="ui-time" class="stat-value" style="color: #e74c3c;">90</div></div>
@@ -111,17 +123,16 @@
             <div class="key" onclick="input('4')">4</div>
             <div class="key" onclick="input('5')">5</div>
             <div class="key" onclick="input('6')">6</div>
-            <div class="key key-sqrt" onclick="input('√')">√</div>
             
             <div class="key" onclick="input('1')">1</div>
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
-            <div class="key" onclick="input('0')">0</div>
+            <div class="key key-sqrt" onclick="input('√')">√</div>
             
+            <div class="key" onclick="input('0')">0</div>
             <div class="key key-op" onclick="input('-')">-</div>
             <div class="key key-op" onclick="input('/')">/</div>
             <div class="key key-op" onclick="input(',')">,</div>
-            <div class="key key-empty"></div>
             
             <div class="key key-enter" onclick="submitAnswer()">送出答案 (ENTER)</div>
         </div>
@@ -129,21 +140,14 @@
 
     <script src="common.js"></script>
     <script>
-        // ✨ 空間坐標題庫
         const spaceQuestions = [
-            // Level 1: 基礎距離與中點
             { q: "點 (0,0,0) 到 (1,2,2) 的距離", a: "3", hint: "√(1²+2²+2²) = √9 = 3", level: 1 },
             { q: "點 (3,4,5) 到 xy平面的距離", a: "5", hint: "找 z 坐標的絕對值", level: 1 },
-            { q: "點 (3,4,5) 到 x軸的距離", a: "5", hint: "√(y²+z²) = √(16+25) = √41，不好意思這題答案是√41啦！我們換個簡單的：(0,3,4)到x軸的距離 = 5", level: 1 },
             { q: "點 (0,3,4) 到 x軸的距離", a: "5", hint: "√(3²+4²) = 5", level: 1 },
             { q: "A(1,1,1) 與 B(3,5,7) 的中點", a: "2,3,4", hint: "坐標相加除以2，記得打逗號喔", level: 1 },
-            
-            // Level 2: 向量操作
             { q: "向量a=(1,2,3), b=(2,-1,1)<br>求 a+b", a: "3,1,4", hint: "x, y, z 坐標分別相加", level: 2 },
             { q: "A(1,2,3) 到 B(2,4,5)<br>求向量 AB", a: "1,2,2", hint: "後減前：B - A", level: 2 },
             { q: "向量a=(1,2,2) 的長度", a: "3", hint: "√(1²+2²+2²) = 3", level: 2 },
-            
-            // Level 3: 內積與進階
             { q: "向量a=(2,0,0), b=(0,3,0)<br>求內積 a·b", a: "0", hint: "互相垂直，內積為 0", level: 3 },
             { q: "向量a=(1,2,3), b=(1,1,0)<br>求內積 a·b", a: "3", hint: "x相乘 + y相乘 + z相乘 = 1+2+0 = 3", level: 3 },
             { q: "x軸與y軸的夾角", a: "90", hint: "三軸互相垂直，夾角 90 度", level: 3 }
