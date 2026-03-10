@@ -11,7 +11,7 @@
             --btn-white: #ffffff; --btn-del-bg: #fae5e5; --btn-del-text: #c0392b; 
             --btn-enter-bg: #9b59b6; --btn-enter-text: #ffffff;
             --shake-intensity: 2px; 
-            --fever-color: #e74c3c; /* ✨ 統一紅色 FEVER */
+            --fever-color: #e74c3c; 
         }
         
         #keypad {
@@ -52,8 +52,8 @@
         }
         .fever-text {
             animation: popRed 0.3s infinite alternate;
-            color: var(--fever-color) !important; /* 紅色 */
-            font-weight: 900; /* 粗體 */
+            color: var(--fever-color) !important; 
+            font-weight: 900; 
             display: inline-block;
         }
         .fever-box {
@@ -81,7 +81,7 @@
         <div id="rules-box">
             <h3>📜 遊戲規則與計分方式</h3>
             <ul>
-                <li><b>作答方式：</b>限時90秒。距離與長度直接輸入數字；座標或向量請用逗號 <code>,</code> 隔開 (如: 1,2,3)。有根號請按 <code>√</code>。</li>
+                <li><b>作答方式：</b>限時90秒。距離與長度直接輸入數字；座標請用逗號 <code>,</code> 隔開 (如: 1,2,3)。有根號請按 <code>√</code>。</li>
                 <li><b>計分方式：</b>基本題答對+10分，答錯扣5分；連對Combo可獲得額外加分！<br><span style="color:#e74c3c;">⚠️ 若放棄跳過 (PASS) 將直接扣 20 分！請謹慎使用。</span></li>
                 <li><b style="color:#8e44ad;">智慧容錯：</b>不必理會有理化！打 <code>1/√2</code> 或 <code>√2/2</code> 都算對，系統也會自動過濾多餘的空白！</li>
                 <li><b style="color:#2980b9;">神級錯題本：</b>答錯的題目會重出，直到你算對為止。遊戲結束時，更會附贈你的專屬錯題觀念提示！</li>
@@ -148,17 +148,23 @@
 
     <script src="common.js"></script>
     <script>
+        // ✨ 純化後的空間坐標專屬題庫（移除所有向量題目）
         const spaceQuestions = [
-            { q: "點 (0,0,0) 到 (1,2,2) 的距離", a: "3", hint: "√(1²+2²+2²) = √9 = 3", level: 1 },
+            // Level 1: 基礎投影與距離
             { q: "點 (3,4,5) 到 xy平面的距離", a: "5", hint: "找 z 坐標的絕對值", level: 1 },
-            { q: "點 (0,3,4) 到 x軸的距離", a: "5", hint: "√(3²+4²) = 5", level: 1 },
-            { q: "A(1,1,1) 與 B(3,5,7) 的中點", a: "2,3,4", hint: "坐標相加除以2，記得打逗號喔", level: 1 },
-            { q: "向量a=(1,2,3), b=(2,-1,1)<br>求 a+b", a: "3,1,4", hint: "x, y, z 坐標分別相加", level: 2 },
-            { q: "A(1,2,3) 到 B(2,4,5)<br>求向量 AB", a: "1,2,2", hint: "後減前：B - A", level: 2 },
-            { q: "向量a=(1,2,2) 的長度", a: "3", hint: "√(1²+2²+2²) = 3", level: 2 },
-            { q: "向量a=(2,0,0), b=(0,3,0)<br>求內積 a·b", a: "0", hint: "互相垂直，內積為 0", level: 3 },
-            { q: "向量a=(1,2,3), b=(1,1,0)<br>求內積 a·b", a: "3", hint: "x相乘 + y相乘 + z相乘 = 1+2+0 = 3", level: 3 },
-            { q: "x軸與y軸的夾角", a: "90", hint: "三軸互相垂直，夾角 90 度", level: 3 }
+            { q: "點 (3,4,5) 在 xy平面的投影點", a: "3,4,0", hint: "投影在 xy 平面，z 坐標變為 0", level: 1 },
+            { q: "點 (0,3,4) 到 x軸的距離", a: "5", hint: "√(y²+z²) = √(3²+4²) = 5", level: 1 },
+            { q: "A(1,1,1) 與 B(3,5,7) 的中點", a: "2,3,4", hint: "坐標相加除以 2，記得打逗號", level: 1 },
+
+            // Level 2: 對稱點與兩點距離
+            { q: "點 (1,2,3) 對 xy平面的對稱點", a: "1,2,-3", hint: "對 xy 平面對稱，z 坐標變號", level: 2 },
+            { q: "點 (2,-3,4) 對原點的對稱點", a: "-2,3,-4", hint: "對原點對稱，xyz 皆變號", level: 2 },
+            { q: "點 (1,2,3) 對 x軸的對稱點", a: "1,-2,-3", hint: "對 x 軸對稱，yz 坐標變號", level: 2 },
+            { q: "點 A(1,2,3) 到 B(1,5,7) 的距離", a: "5", hint: "√(0² + 3² + 4²) = 5", level: 2 },
+
+            // Level 3: 進階距離
+            { q: "點 (2,3,6) 到原點的距離", a: "7", hint: "√(2²+3²+6²) = √49 = 7", level: 3 },
+            { q: "點 (4,-2,4) 到原點的距離", a: "6", hint: "√(4²+(-2)²+4²) = √36 = 6", level: 3 }
         ];
 
         let score = 0, combo = 0, consecutiveWrong = 0;
@@ -170,14 +176,12 @@
         let errorLogMap = new Map(); 
         let activeWrongPool = [];
 
-        // ✨ 1. SVG 動態繪圖引擎：完美還原截圖裡的根號包覆數字效果，修正橫線粗細！
         function formatMath(str) {
             if (!str) return "";
             return String(str).replace(/√(\d*)/g, function(match, inner) {
                 if (!inner) {
                     return `<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em;"><path d="M3 13h2l3.5 7 4.5-14h7" /></svg>`;
                 }
-                // ✨ 修正粗細，stroke-width 設為 1.5
                 let w = inner.length * 9;
                 let totalW = 15 + w + 2;
                 return `<svg width="${(totalW / 24) * 1.2}em" height="1.2em" viewBox="0 0 ${totalW} 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em; margin: 0 0.05em;">
@@ -187,7 +191,6 @@
             });
         }
 
-        // ✨ 2. 最強計算容錯引擎：自動化簡與比對 (支援多維度座標)
         function evalMathStr(s) {
             if (!s) return null;
             if (!/^[0-9+\-*/().\s√]+$/.test(s)) return null;
@@ -229,10 +232,10 @@
                 currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎)"; 
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
             } else if (score >= 120) {
-                currentMultiplier = 1; phaseStr = "⚡ 最終階段 (內積與進階)"; 
+                currentMultiplier = 1; phaseStr = "⚡ 最終階段 (進階空間距離)"; 
                 allowedLevels = [3]; document.getElementById('phase-indicator').style.color = "#8e44ad";
             } else if (combo >= 3 || score >= 50) {
-                currentMultiplier = 1; phaseStr = "⚡ 進階階段 (向量運算)"; 
+                currentMultiplier = 1; phaseStr = "⚡ 進階階段 (對稱點與距離)"; 
                 allowedLevels = [2, 3]; document.getElementById('phase-indicator').style.color = "#d68910";
             } else {
                 currentMultiplier = 1; phaseStr = `🌱 基礎階段`; 
@@ -368,7 +371,6 @@
                 comboText.style.color = "#9b59b6"; 
                 comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box');
             } else { 
-                // ✨ 統一紅色 FEVER
                 comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`; 
                 comboFill.classList.add('fever-fill'); inputBox.classList.add('fever-box'); 
             }
