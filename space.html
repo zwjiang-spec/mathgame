@@ -37,7 +37,7 @@
         }
         .progressive-shake { animation: progressiveShake 0.4s ease-in-out; }
 
-        /* ✨ 補回並強化的 FEVER 狂熱特效 */
+        /* ✨ 狂熱特效 */
         @keyframes feverBg {
             0%, 100% { background-color: #f1c40f; box-shadow: 0 0 15px rgba(241, 196, 15, 0.8); }
             50% { background-color: #e74c3c; box-shadow: 0 0 25px rgba(231, 76, 60, 0.9); }
@@ -108,7 +108,7 @@
         <div id="question-text" style="font-size: 24px; font-weight: bold; color: var(--text-gray);">題目讀取中...</div>
         <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 15px; margin-bottom: 5px;">
             <div style="font-size: 32px; font-weight: bold; color: var(--text-dark); line-height: 1;">=</div>
-            <div id="input-box" style="margin-top: 0; min-width: 120px; min-height: 55px; display: flex; justify-content: center; align-items: center;"></div>
+            <div id="input-box" style="margin-top: 0; min-width: 120px;"></div>
             <button onclick="skipQuestion()" style="background: #ffefd5; color: #d35400; border: 2px solid #f39c12; border-radius: 12px; font-size: 14px; font-weight: bold; padding: 6px 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2); white-space: nowrap; transition: 0.1s;">
                 PASS<br><span style="font-size:11px;">(-20分)</span>
             </button>
@@ -130,7 +130,11 @@
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
             
-            <div class="key key-sqrt" onclick="input('√')" style="font-family: math, 'Times New Roman', serif;">&radic;</div>
+            <div class="key key-sqrt" onclick="input('√')" style="display: flex; align-items: center; justify-content: center;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12h2.5l3.5 7 4.5-14h7" />
+                </svg>
+            </div>
             
             <div class="key" onclick="input('0')">0</div>
             <div class="key key-op" onclick="input('-')">-</div>
@@ -165,51 +169,18 @@
         let errorLogMap = new Map(); 
         let activeWrongPool = [];
 
-        // ✨ 1. 最強排版引擎：完美處理根號包覆與上下分數
-        function formatFractionAndRoot(str) {
+        // ✨ 1. 簡潔的 SVG 根號替換器
+        function formatMath(str) {
             if (!str) return "";
-            str = String(str);
-
-            // 處理根號：加上完美的上方橫線
-            let processRoots = (text) => {
-                return text.replace(/√(\d*)/g, function(match, inner) {
-                    if (!inner) return '<span style="font-family: math, serif; font-size: 1.1em;">&radic;</span>';
-                    return `<span style="white-space: nowrap; display: inline-flex; align-items: baseline;"><span style="font-family: math, serif; font-size: 1.1em; transform: translateY(0.1em);">&radic;</span><span style="border-top: 2px solid currentColor; padding: 0 0.1em; margin-left: -0.1em;">${inner}</span></span>`;
-                });
-            };
-
-            // 處理分數：自動轉成上下排版
-            if (str.includes('/')) {
-                let parts = str.split('/');
-                if (parts.length === 2) {
-                    let isNegative = false;
-                    let numStr = parts[0];
-                    if (numStr.startsWith('-')) {
-                        isNegative = true;
-                        numStr = numStr.substring(1);
-                    }
-                    
-                    let numHtml = processRoots(numStr) || '&nbsp;';
-                    let denHtml = processRoots(parts[1]) || '&nbsp;';
-                    
-                    let fracHtml = `<span style="display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; font-size: 0.9em; line-height: 1.1; margin: 0 4px;">
-                                        <span style="border-bottom: 2px solid currentColor; padding-bottom: 2px; min-height: 1.1em;">${numHtml}</span>
-                                        <span style="padding-top: 2px; min-height: 1.1em;">${denHtml}</span>
-                                    </span>`;
-                    
-                    if (isNegative) {
-                        return `<span style="vertical-align: middle; font-weight: bold; margin-right: 2px;">-</span>` + fracHtml;
-                    }
-                    return fracHtml;
-                }
-            }
-            return processRoots(str);
+            const svgSqrt = `<svg width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.2em; margin-right: 0.05em;"><path d="M3 12h2.5l3.5 7 4.5-14h7" /></svg>`;
+            return String(str).replace(/√/g, svgSqrt);
         }
 
         // ✨ 2. 最強計算容錯引擎：自動化簡與比對 (支援多維度座標)
         function evalMathStr(s) {
             if (!s) return null;
             let parsed = s.replace(/\s+/g, '').replace(/√(\d+)/g, 'Math.sqrt($1)');
+            if (parsed.endsWith('Math.sqrt()')) return null;
             try {
                 let val = Function('"use strict";return (' + parsed + ')')();
                 return (typeof val === 'number' && !isNaN(val) && isFinite(val)) ? val : null;
@@ -262,7 +233,7 @@
                 let qData = activeWrongPool[idx];
                 currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
                 document.getElementById('phase-indicator').innerText = phaseStr;
-                document.getElementById('question-text').innerHTML = formatFractionAndRoot(currentQuestionStr); 
+                document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr); 
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
@@ -274,13 +245,13 @@
             currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; currentHint = selectedQ.hint;
 
             document.getElementById('phase-indicator').innerText = phaseStr;
-            document.getElementById('question-text').innerHTML = formatFractionAndRoot(currentQuestionStr); 
+            document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr); 
             userInput = ""; currentQuestionErrors = 0; renderInput();
         }
 
         function renderInput() {
             const box = document.getElementById('input-box'); 
-            box.innerHTML = formatFractionAndRoot(userInput); 
+            box.innerHTML = formatMath(userInput); 
             box.classList.remove('error-text', 'correct-flash');
         }
         function input(val) { if (val === 'DEL') userInput = userInput.slice(0, -1); else userInput += val; renderInput(); }
@@ -289,7 +260,7 @@
             if (errorLogMap.size === 0) return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
             let html = "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:16px; color:#444; margin:0; padding-left:20px;'>";
             errorLogMap.forEach((data, qStr) => {
-                html += `<li style="margin-bottom:12px; line-height:1.5;">${formatFractionAndRoot(qStr)} <br><span style="color:#16a085; font-weight:bold;">➡ 正解: ${formatFractionAndRoot(data.ans)}</span><br><span style="color:#7f8c8d; font-size:14px;">💡 提示: ${formatFractionAndRoot(data.hint)}</span></li>`;
+                html += `<li style="margin-bottom:12px; line-height:1.5;">${formatMath(qStr)} <br><span style="color:#16a085; font-weight:bold;">➡ 正解: ${formatMath(data.ans)}</span><br><span style="color:#7f8c8d; font-size:14px;">💡 提示: ${formatMath(data.hint)}</span></li>`;
             });
             return html + "</ul>";
         }
