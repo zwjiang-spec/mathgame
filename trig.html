@@ -255,8 +255,14 @@
             } else {
                 html += `<table class="lb-table">`;
                 list.forEach((item, index) => {
-                    let cleanName = item.name.split(" (")[0].substring(0, 8);
-                    html += `<tr><td style="width: 15px; font-weight: bold; color: #7f8c8d;">${index+1}.</td><td style="text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 50px;">${cleanName}</td><td style="text-align: right; font-weight: bold; color: #27ae60;">${item.score}</td></tr>`;
+                    // ✨ 拿掉字數限制，保留完整名稱 (只去除上傳時附加的錯題標記)
+                    let cleanName = item.name.split(" (")[0];
+                    // ✨ 拿掉 50px 限制與隱藏設定，改用 word-break 讓長名字自動換行不撐破版面
+                    html += `<tr>
+                        <td style="width: 15px; font-weight: bold; color: #7f8c8d; vertical-align: top;">${index+1}.</td>
+                        <td style="text-align: left; word-break: break-word; padding-right: 5px;">${cleanName}</td>
+                        <td style="text-align: right; font-weight: bold; color: #27ae60; vertical-align: top; white-space: nowrap;">${item.score}</td>
+                    </tr>`;
                 });
                 html += `</table>`;
             }
