@@ -6,26 +6,41 @@
     <title>超好玩的三角比 - 數學領域展開</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ✨ 三角比專屬主題 */
         :root {
             --bg-main: #f7f9fc; --text-dark: #1c2833; --text-gray: #7f8c8d; --color-gold: #27ae60; 
             --btn-white: #ffffff; --btn-del-bg: #fae5e5; --btn-del-text: #c0392b; 
-            --btn-enter-bg: #27ae60; --btn-enter-text: #ffffff;
+            --btn-enter-bg: #2ecc71; --btn-enter-text: #ffffff;
             --shake-intensity: 2px; 
         }
         
-        /* ✨ 恢復老師最愛的直排 4 欄計算機！ */
+        /* ✨ 完美還原老師原本的特殊跨行計算機 */
         #keypad {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
-            grid-auto-rows: min(10vh, 55px);
+            grid-auto-rows: min(10vh, 60px);
             gap: 10px;
+            margin-top: 15px;
         }
         .key { font-size: 26px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: #2c3e50;}
         .key:active { transform: scale(0.95); }
-        .key-del { background-color: var(--btn-del-bg) !important; color: var(--btn-del-text) !important; font-size: 24px; }
-        .key-sqrt { background-color: #fef5e7 !important; color: #d35400 !important; font-size: 26px; }
-        .key-op { background-color: #ebf5fb !important; color: #2980b9 !important; font-size: 28px; }
+        
+        .key-del { 
+            grid-row: span 2; /* 佔兩格高度 */
+            background-color: var(--btn-del-bg) !important; 
+            color: var(--btn-del-text) !important; 
+            font-size: 28px; 
+        }
+        .key-sqrt { 
+            grid-row: span 2; /* 佔兩格高度 */
+            background-color: #fef5e7 !important; 
+            color: #d35400 !important; 
+            font-size: 28px; 
+        }
+        .key-op { 
+            background-color: #ebf5fb !important; 
+            color: #2980b9 !important; 
+            font-size: 30px; 
+        }
         .key-enter { 
             font-size: 20px; 
             font-weight: bold; 
@@ -34,7 +49,6 @@
             color: var(--btn-enter-text) !important;
             letter-spacing: 2px;
         }
-        .key-empty { background: transparent !important; box-shadow: none !important; pointer-events: none; }
 
         @keyframes progressiveShake {
             0% { transform: translate(var(--shake-intensity), var(--shake-intensity)) rotate(0deg); }
@@ -58,7 +72,7 @@
 
     <div id="overlay">
         <a href="index.html" class="home-btn" style="position: absolute; top: 15px; left: 15px;">🏠 回主選單</a>
-        <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 40px;">超好玩的三角比</h1>
+        <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 40px;">神奇三角函數！</h1>
         <h2 id="final-score-text" class="hidden" style="color: var(--color-gold); margin-top: -10px; margin-bottom: 10px;"></h2>
         <div id="end-error-log" class="hidden" style="background: #fffdf5; border: 2px dashed #e74c3c; padding: 15px; border-radius: 10px; max-width: 90%; margin: 0 auto 20px;"></div>
 
@@ -75,7 +89,6 @@
         <button class="action-btn" onclick="startGame()" style="background: var(--btn-enter-bg);">START GAME</button>
     </div>
 
-    <div id="progress-container"><div id="progress-bar" style="background: var(--color-gold);"></div></div>
     <div id="header">
         <div class="stat-group"><div class="stat-label">STUDENT</div><div id="ui-name" class="stat-value" style="color: #d68910;">---</div></div>
         <div class="stat-group"><div class="stat-label">TIME</div><div id="ui-time" class="stat-value" style="color: #e74c3c;">90</div></div>
@@ -111,17 +124,15 @@
             <div class="key" onclick="input('4')">4</div>
             <div class="key" onclick="input('5')">5</div>
             <div class="key" onclick="input('6')">6</div>
-            <div class="key key-sqrt" onclick="input('√')">√</div>
             
             <div class="key" onclick="input('1')">1</div>
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
-            <div class="key" onclick="input('0')">0</div>
+            <div class="key key-sqrt" onclick="input('√')">√</div>
             
+            <div class="key" onclick="input('0')">0</div>
             <div class="key key-op" onclick="input('-')">-</div>
             <div class="key key-op" onclick="input('/')">/</div>
-            <div class="key key-empty"></div>
-            <div class="key key-empty"></div>
             
             <div class="key key-enter" onclick="submitAnswer()">送出答案 (ENTER)</div>
         </div>
