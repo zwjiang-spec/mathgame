@@ -11,7 +11,7 @@
             --btn-white: #ffffff; --btn-del-bg: #fae5e5; --btn-del-text: #c0392b; 
             --btn-enter-bg: #2ecc71; --btn-enter-text: #ffffff;
             --shake-intensity: 2px; 
-            --fever-color: #e74c3c; /* ✨ 統一紅色 FEVER 顏色 */
+            --fever-color: #e74c3c; 
         }
         
         #keypad {
@@ -38,7 +38,7 @@
         }
         .progressive-shake { animation: progressiveShake 0.4s ease-in-out; }
 
-        /* ✨ 統一紅色 FEVER 閃爍特效 */
+        /* ✨ 紅色 FEVER 特效 */
         @keyframes feverBgRed {
             0%, 100% { background-color: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); }
             50% { background-color: #c0392b; box-shadow: 0 0 25px rgba(192, 57, 43, 0.9); }
@@ -52,13 +52,43 @@
         }
         .fever-text {
             animation: popRed 0.3s infinite alternate;
-            color: var(--fever-color) !important; /* 紅色 */
-            font-weight: 900; /* 粗體 */
+            color: var(--fever-color) !important; 
+            font-weight: 900; 
             display: inline-block;
         }
         .fever-box {
             border-color: var(--fever-color) !important;
             box-shadow: 0 0 15px rgba(231, 76, 60, 0.4) !important;
+        }
+
+        /* ✨ 原版遊戲規則樣式 */
+        .rules-container {
+            border: 2px dashed #d4af37; 
+            border-radius: 12px; 
+            padding: 15px 20px; 
+            text-align: left; 
+            background: #fffcf5; 
+            margin-bottom: 20px;
+        }
+        .rules-title {
+            color: #d4af37; 
+            text-align: center; 
+            margin-top: 0; 
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .rules-divider {
+            border: 0; 
+            height: 1px; 
+            background: #f1e5bc; 
+            margin-bottom: 12px;
+        }
+        .rules-list {
+            color: #555; 
+            font-size: 15px; 
+            line-height: 1.8; 
+            padding-left: 20px; 
+            margin-bottom: 0;
         }
     </style>
 </head>
@@ -68,23 +98,34 @@
         <h1>💀 你已經死了</h1>
         <p>分數過低 (-20分)，失去挑戰資格</p>
         <div id="death-error-log" style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px; color: black; max-width: 90%; margin-top: 15px;"></div>
-        <button class="action-btn" onclick="location.reload()" style="margin-top: 20px; background: #555;">重新開始</button>
-        <a href="index.html" style="color: #ccc; margin-top: 15px;">🏠 回到數學天地主選單</a>
+        
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+            <button class="action-btn" onclick="location.reload()" style="background: #555; padding: 10px 20px;">重新開始</button>
+            <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pubhtml" target="_blank" style="background: #f39c12; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; line-height: 1.5;">🏆 排行榜</a>
+        </div>
+        <a href="index.html" style="color: #ccc; margin-top: 20px; display: block;">🏠 回到數學天地主選單</a>
     </div>
 
     <div id="overlay">
-        <a href="index.html" class="home-btn" style="position: absolute; top: 15px; left: 15px;">🏠 回主選單</a>
-        <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 40px;">神奇三角函數！</h1>
+        <div style="display: flex; justify-content: space-between; width: 100%; padding: 15px; box-sizing: border-box; position: absolute; top: 0; left: 0;">
+            <a href="index.html" class="home-btn">🏠 回主選單</a>
+            <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pubhtml" target="_blank" style="color: #d35400; font-weight: bold; text-decoration: none; background: #ffefd5; padding: 5px 10px; border-radius: 8px;">🏆 排行榜</a>
+        </div>
+        
+        <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 50px;">神奇三角函數！</h1>
         <h2 id="final-score-text" class="hidden" style="color: var(--color-gold); margin-top: -10px; margin-bottom: 10px;"></h2>
         <div id="end-error-log" class="hidden" style="background: #fffdf5; border: 2px dashed #e74c3c; padding: 15px; border-radius: 10px; max-width: 90%; margin: 0 auto 20px;"></div>
 
-        <div id="rules-box">
-            <h3>📜 遊戲規則與計分方式</h3>
-            <ul>
-                <li><b>作答方式：</b>限時90秒，請直接輸入數字。分數請用 <code>/</code> (如: 1/2)，根號請按 <code>√</code> (如: √3/2)，負號請加在最前面 (如: -1/2)。</li>
-                <li><b>計分方式：</b>基本題答對+10分，答錯扣5分；連對Combo可獲得額外加分！<br><span style="color:#e74c3c;">⚠️ 若放棄跳過 (PASS) 將直接扣 20 分！請謹慎使用。</span></li>
-                <li><b style="color:#27ae60;">智慧容錯：</b>不必理會有理化！打 <code>1/√2</code> 或 <code>√2/2</code> 都算對！</li>
-                <li><b style="color:#2980b9;">神級錯題本：</b>答錯的題目會重出，直到你算對為止。遊戲結束時，更會附贈你的專屬錯題觀念提示！</li>
+        <div id="rules-box" class="rules-container">
+            <div class="rules-title">📜 遊戲規則與計分方式</div>
+            <hr class="rules-divider">
+            <ul class="rules-list">
+                <li><b>挑戰時間：</b>總共 <b>90 秒</b>，請盡可能拿高分！</li>
+                <li><b>基本得分：</b>答對 +10 分，連續答對享有 Combo 加成！</li>
+                <li><b>倒扣懲罰：</b>按錯送出會<b>漸進式扣分</b> (5分、10分...)。</li>
+                <li><b>難度進化：</b>總分達 <b>100分</b> 解鎖「進階階段(包含負角)」。</li>
+                <li><b>狂熱時間：</b>最後 30 秒角度無限制，且<b>得分加倍</b>！</li>
+                <li><b style="color:#e74c3c;">神級錯題本：</b>按 PASS(扣20分)或答錯的題目，會收錄錯題本並反覆出題！</li>
             </ul>
         </div>
         
@@ -131,11 +172,7 @@
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
             
-            <div class="key key-sqrt" onclick="input('√')" style="display: flex; align-items: center; justify-content: center;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 13h2l3.5 7 4.5-14h7" />
-                </svg>
-            </div>
+            <div class="key key-sqrt" onclick="input('√')" style="font-family: math, serif;">√</div>
             
             <div class="key" onclick="input('0')">0</div>
             <div class="key key-op" onclick="input('-')">-</div>
@@ -172,27 +209,18 @@
         let errorLogMap = new Map(); 
         let activeWrongPool = [];
 
-        // ✨ 1. SVG 動態繪圖引擎：完美還原截圖裡的根號包覆數字效果，並修正橫線粗細！
+        // ✨ 1. 最粗細均勻的根號排版 (使用 text-decoration: overline)
         function formatMath(str) {
             if (!str) return "";
             return String(str).replace(/√(\d*)/g, function(match, inner) {
-                if (!inner) {
-                    return `<svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em;"><path d="M3 13h2l3.5 7 4.5-14h7" /></svg>`;
-                }
-                // ✨ 修正粗細，stroke-width 設為 1.5，並讓橫線寬度更精準
-                let w = inner.length * 9;
-                let totalW = 15 + w + 2;
-                return `<svg width="${(totalW / 24) * 1.2}em" height="1.2em" viewBox="0 0 ${totalW} 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.25em; margin: 0 0.05em;">
-                            <path d="M3 13h2l3.5 7 4.5-14h${w + 2}" />
-                            <text x="14" y="19" fill="currentColor" stroke="none" font-size="16" font-family="system-ui, sans-serif" font-weight="bold">${inner}</text>
-                        </svg>`;
+                if (!inner) return `<span style="font-family: math, serif; font-weight: 600;">√</span>`;
+                return `<span style="white-space: nowrap; font-family: math, serif; font-weight: 600;">√<span style="text-decoration: overline;">${inner}</span></span>`;
             });
         }
 
         // ✨ 2. 最強計算容錯引擎：自動化簡與防呆比對
         function evalMathStr(s) {
             if (!s) return null;
-            // 過濾空白，並將 √ 轉為 Math.sqrt，只允許合法數學字元
             if (!/^[0-9+\-*/().\s√]+$/.test(s)) return null;
             let parsed = s.replace(/\s+/g, '').replace(/√(\d+)/g, 'Math.sqrt($1)');
             if (parsed.endsWith('Math.sqrt()')) return null;
@@ -215,7 +243,6 @@
                 if (v1 === null || v2 === null) {
                     if (inParts[i] !== tarParts[i]) return false;
                 } else {
-                    // 差距小於百萬分之一視為相等 (容許 1/√2 == √2/2)
                     if (Math.abs(v1 - v2) > 1e-6) return false;
                 }
             }
@@ -230,9 +257,9 @@
                 currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (全難度解禁, 分數 x2)"; 
                 allowedLevels = [1, 2, 3]; document.getElementById('phase-indicator').style.color = "#c0392b";
             } else if (consecutiveWrong >= 2) {
-                currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎三角)"; 
+                currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎)"; 
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
-            } else if (score >= 120) {
+            } else if (score >= 100) {
                 currentMultiplier = 1; phaseStr = "⚡ 最終階段 (高角度與特殊角考驗)"; 
                 allowedLevels = [3]; document.getElementById('phase-indicator').style.color = "#8e44ad";
             } else if (combo >= 3 || score >= 50) {
@@ -312,7 +339,6 @@
             if (userInput === "") return; 
             const box = document.getElementById('input-box');
             
-            // 套用智慧化簡比對引擎
             if (isMathEqual(userInput, targetAns)) {
                 if (currentQuestionErrors === 0) correctQuestionsSet.add(currentQuestionStr);
                 activeWrongPool = activeWrongPool.filter(item => item.q !== currentQuestionStr);
@@ -373,7 +399,6 @@
                 comboText.style.color = "#27ae60"; 
                 comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box');
             } else { 
-                // ✨ 統一紅色 FEVER
                 comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`; 
                 comboFill.classList.add('fever-fill'); inputBox.classList.add('fever-box'); 
             }
