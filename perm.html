@@ -367,18 +367,28 @@
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
             }
 
-            if (activeWrongPool.length > 0 && Math.random() < 0.4) {
-                let idx = Math.floor(Math.random() * activeWrongPool.length);
-                let qData = activeWrongPool[idx];
+            // ✨ 1. 記住上一題，避免連續重複
+            let lastQ = currentQuestionStr; 
+
+            // ✨ 2. 錯題本抽題：40% 機率，且排除剛剛才出現的上一題
+            let availableWrong = activeWrongPool.filter(item => item.q !== lastQ);
+            if (availableWrong.length > 0 && Math.random() < 0.4) {
+                let idx = Math.floor(Math.random() * availableWrong.length);
+                let qData = availableWrong[idx];
                 currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
                 document.getElementById('phase-indicator').innerText = phaseStr;
                 document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr); 
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
-            let pool = permQuestions.filter(q => allowedLevels.includes(q.level) && !correctQuestionsSet.has(q.q));
-            if (pool.length === 0) pool = permQuestions.filter(q => !correctQuestionsSet.has(q.q));
-            if (pool.length === 0) pool = permQuestions; 
+            // ✨ 3. 正常抽題：排除「已答對的」以及「上一題」
+            let pool = permQuestions.filter(q => allowedLevels.includes(q.level) && !correctQuestionsSet.has(q.q) && q.q !== lastQ);
+            
+            // 題庫見底時的保底機制 (依序放寬條件，但優先排除上一題)
+            if (pool.length === 0) pool = permQuestions.filter(q => allowedLevels.includes(q.level) && q.q !== lastQ); 
+            if (pool.length === 0) pool = permQuestions.filter(q => !correctQuestionsSet.has(q.q) && q.q !== lastQ);
+            if (pool.length === 0) pool = permQuestions.filter(q => q.q !== lastQ);
+            if (pool.length === 0) pool = permQuestions; // 最終防呆
 
             let selectedQ = pool[Math.floor(Math.random() * pool.length)];
             currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; currentHint = selectedQ.hint;
