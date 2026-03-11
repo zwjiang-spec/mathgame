@@ -6,11 +6,22 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <title>超級數學領域展開</title>
-    <meta name="google-site-verification" content="2HNqPr4ww0fFYXswBNxfz88fzcYRc_H6aegyCafNEf0" />
-    <meta name="description" content="史上最好玩的數學小遊戲">
-    <meta name="keywords" content="高中數學, 數學遊戲, 三角函數, 空間坐標, 江子緯老師, 數學練習, 學測數學">
-
+    <title>超級爆裂數學領域展開遊戲</title>
+    <meta
+      name="google-site-verification"
+      content="2HNqPr4ww0fFYXswBNxfz88fzcYRc_H6aegyCafNEf0"
+    />
+    <meta name="description" content="史上最好玩的數學小遊戲" />
+    <meta
+      name="keywords"
+      content="高中數學, 數學遊戲, 三角函數, 空間坐標, 江子緯老師, 數學練習, 學測數學"
+    />
+    <meta property="og:title" content="超級爆裂數學領域展開遊戲" />
+    <meta
+      property="og:description"
+      content="超刺激的數學闖關遊戲，三角比、空間坐標、排列組合等你來挑戰！"
+    />
+    <meta property="og:type" content="website" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -59,6 +70,7 @@
         letter-spacing: normal;
       }
 
+      /* ✨ 模式切換頁籤樣式 */
       .tabs {
         display: flex;
         background: #e0e0e0;
@@ -144,7 +156,6 @@
       .btn-perm:hover {
         background-color: #117a65;
       }
-
       .btn-practice {
         background-color: #e67e22;
         box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
@@ -180,6 +191,7 @@
         opacity: 0.7;
       }
 
+      /* ✨ 勾選框樣式 */
       .checkbox-group {
         text-align: left;
         background: #f8f9fa;
@@ -310,38 +322,7 @@
     </style>
   </head>
   <body>
-    <div id="maintenance-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(247, 249, 252, 0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; backdrop-filter: blur(5px);">
-        <div style="background: #fff; border: 4px dashed #e74c3c; border-radius: 20px; padding: 40px 30px; width: 80%; max-width: 400px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); animation: float 2s ease-in-out infinite;">
-            <div style="font-size: 60px; margin-bottom: 10px;">🚧</div>
-            <h1 style="color: #c0392b; font-size: 32px; font-weight: 900; margin: 0 0 15px 0; letter-spacing: 2px;">系統維修中</h1>
-            <p style="color: #2c3e50; font-size: 18px; font-weight: bold; line-height: 1.6; margin: 0;">
-                為了提供更完美的遊戲體驗<br>
-                數學領域展開正在進行系統升級！
-            </p>
-            <div style="margin-top: 25px; padding: 15px; background: #fdf2e3; border-radius: 10px; border-left: 5px solid #f39c12;">
-                <span style="color: #d35400; font-size: 20px; font-weight: 900;">預計明天 18:00 結束更新</span>
-            </div>
-            <p style="color: #7f8c8d; font-size: 15px; margin-top: 20px; font-weight: bold;">
-                請同學們稍後再回來挑戰 🔥
-            </p>
-        </div>
-        <style>
-            @keyframes float {
-                0% { transform: translateY(0px); }
-                50% { transform: translateY(-10px); }
-                100% { transform: translateY(0px); }
-            }
-            body { overflow: hidden; } /* 維修時禁止畫面上下滑動 */
-        </style>
-    </div>
-    ```
-
-### 💡 為什麼用這個方法？
-1. **防護力 100%**：`z-index: 9999` 會讓這塊擋板浮在最高層，學生按不到後面的任何遊戲連結。
-2. **無痛復原**：你不需要去辛苦地隱藏原本的按鈕或連結，明天 18:00 之後，只要把這段註解包起來的代碼**直接刪除**，遊戲大廳就立刻重新開張！
-
-你可以貼上去後重整看看，畫面會有一個微微呼吸浮動的精美維修面板，非常專業！
-    <div id="version-btn" onclick="toggleUpdateLog()">v2.1.0 更新日誌</div>
+    <div id="version-btn" onclick="toggleUpdateLog()">v2.5.0 更新日誌</div>
 
     <div id="update-modal">
       <div class="modal-content">
@@ -349,35 +330,34 @@
         <h2>🚀 版本更新日誌</h2>
 
         <div class="update-item">
-          <span class="version-tag" style="background: #16a085;">v2.1.0</span>
-          <span class="date-tag">全新單元解鎖！</span>
+          <span class="version-tag">v2.5.0</span>
+          <span class="date-tag">史詩級大升級！</span>
           <ul>
             <li>
-              <b style="color: #16a085">神速排列組合上線：</b
-              >專為高二下學期打造，極簡化純數字鍵盤，考驗方程式與情境判斷的直覺反射！
+              <b style="color: #f39c12">大廳榮譽榜：</b
+              >各單元首頁新增「金銀銅」前三名專屬標籤，展現神人霸榜實力！
             </li>
             <li>
-              <b style="color: #e74c3c">錯題本終極進化：</b
-              >現在不僅顯示正確答案，還會附帶「專屬觀念提示」，直接當作考前秘笈！
+              <b style="color: #2980b9">體驗大幅升級：</b>右上角新增「🚪
+              退出」按鈕；結算畫面自動隱藏輸入框，徹底根除誤觸覆蓋名字的問題。
             </li>
             <li>
-              <b style="color: #2980b9">漸進式動態震動：</b
-              >5 連擊以上觸發畫面震動，連擊越高震動越強烈，打擊手感再升級！
+              <b style="color: #ff0000">錯題本提示：</b
+              >錯誤的題目在結束後會提供答案與提示，解題不求人！
             </li>
+            <li>修復了一些煩人的蟲子。</li>
           </ul>
         </div>
 
         <div class="update-item">
-          <span class="version-tag">v2.0.0</span>
-          <span class="date-tag">史詩級大升級</span>
+          <span class="version-tag" style="background: #95a5a6">v2.0.0</span>
+          <span class="date-tag">經典回顧</span>
           <ul>
-            <li>
-              <b style="color: #e67e22">綜合練習模式：</b
-              >自由勾選多個單元進行混和測驗，隨機出題考驗真功夫！
-            </li>
-            <li>動態難度上線：連對觸發進階題，連錯啟動基礎保底。</li>
-            <li>專屬錯題本：通關或出局後，統整所有錯題。</li>
-            <li>大廳介面翻新：新增雙模式頁籤切換。</li>
+            <li>自由勾選多個單元進行混和測驗。</li>
+            <li>連對觸發進階題。</li>
+            <li>通關或出局後，將為你統整所有錯題。</li>
+            <li>跳過時畫面上方會短暫彈出「正確答案」提示。</li>
+            <li>雙模式頁籤切換。</li>
           </ul>
         </div>
       </div>
@@ -407,11 +387,25 @@
 
       <div id="content-ranked" class="content-section active">
         <a href="trig.html" class="menu-btn btn-trig">
-          <div style="display: flex; flex-direction: column; text-align: left; gap: 4px;">
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              text-align: left;
+              gap: 4px;
+            "
+          >
             <div class="btn-text">
               <span class="level-icon"></span> 超好玩的三角比
             </div>
-            <div id="top-trig" style="font-size: 13px; font-weight: normal; color: rgba(255, 255, 255, 0.9);">
+            <div
+              id="top-trig"
+              style="
+                font-size: 13px;
+                font-weight: normal;
+                color: rgba(255, 255, 255, 0.9);
+              "
+            >
               👑 最高紀錄：讀取中...
             </div>
           </div>
@@ -419,11 +413,25 @@
         </a>
 
         <a href="space.html" class="menu-btn btn-space">
-          <div style="display: flex; flex-direction: column; text-align: left; gap: 4px;">
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              text-align: left;
+              gap: 4px;
+            "
+          >
             <div class="btn-text">
               <span class="level-icon"></span> 有趣的空間坐標
             </div>
-            <div id="top-space" style="font-size: 13px; font-weight: normal; color: rgba(255, 255, 255, 0.9);">
+            <div
+              id="top-space"
+              style="
+                font-size: 13px;
+                font-weight: normal;
+                color: rgba(255, 255, 255, 0.9);
+              "
+            >
               👑 最高紀錄：讀取中...
             </div>
           </div>
@@ -431,18 +439,32 @@
         </a>
 
         <a href="perm.html" class="menu-btn btn-perm">
-          <div style="display: flex; flex-direction: column; text-align: left; gap: 4px;">
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              text-align: left;
+              gap: 4px;
+            "
+          >
             <div class="btn-text">
               <span class="level-icon"></span> 神奇的排列組合
             </div>
-            <div id="top-perm" style="font-size: 13px; font-weight: normal; color: rgba(255, 255, 255, 0.9);">
+            <div
+              id="top-perm"
+              style="
+                font-size: 13px;
+                font-weight: normal;
+                color: rgba(255, 255, 255, 0.9);
+              "
+            >
               👑 最高紀錄：讀取中...
             </div>
           </div>
           <div class="btn-arrow">▶</div>
         </a>
-        
-        <a href="#" class="menu-btn btn-locked" style="margin-top: 0px;">
+
+        <a href="#" class="menu-btn btn-locked">
           <div class="btn-text">
             <span class="level-icon">🔒</span> 敬請期待...
           </div>
@@ -461,7 +483,7 @@
             <input type="checkbox" id="chk-space" checked /> 有趣的空間坐標
           </label>
           <label class="check-item">
-            <input type="checkbox" id="chk-perm" checked /> 神速排列組合
+            <input type="checkbox" id="chk-perm" checked /> 神奇的排列組合
           </label>
         </div>
         <button class="menu-btn btn-practice" onclick="startPractice()">
@@ -503,27 +525,25 @@
           alert("⚠️ 請至少勾選一個單元才能開始練習喔！");
           return;
         }
-
         window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
       }
 
-      function sanitizeHTML(str) {
-          if (!str) return "";
-          return String(str)
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#039;");
-      }
-
-      const TRIG_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
-      const SPACE_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
-      // ✨ 加入最新的排列組合排行榜 CSV！
-      const PERM_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwQuA4SuPuNdHk6sUV9yyOU9g6z7uKNqIPsQw0Rj8u8g6-2WTLRMW-oeFhLRbiw2v7Oiz8v2g1XwNP/pub?output=csv";
+      // ✨ 自動抓取最高分數的腳本 (加入排列組合)
+      const TRIG_CSV =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
+      const SPACE_CSV =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
+      const PERM_CSV =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwQuA4SuPuNdHk6sUV9yyOU9g6z7uKNqIPsQw0Rj8u8g6-2WTLRMW-oeFhLRbiw2v7Oiz8v2g1XwNP/pub?output=csv";
 
       function parseCSV(text) {
-        let p = "", row = [""], ret = [row], i = 0, r = 0, s = !0, l;
+        let p = "",
+          row = [""],
+          ret = [row],
+          i = 0,
+          r = 0,
+          s = !0,
+          l;
         for (l of text) {
           if ('"' === l) {
             if (s && l === p) row[i] += l;
@@ -539,49 +559,66 @@
         return ret;
       }
 
+      // ✨ 全新進化：抓取前三名並加上金銀銅牌
       async function loadTopScore(url, elementId) {
         const el = document.getElementById(elementId);
         try {
-          let res = await fetch(url, { cache: "no-store" });
+          // 加上時間戳記，強迫破解 Google 快取
+          let res = await fetch(url + "&t=" + new Date().getTime(), {
+            cache: "no-store",
+          });
           let text = await res.text();
           let data = parseCSV(text);
 
-          let topName = "無";
-          let topScore = -9999;
-          let hasRecord = false;
-
+          let records = [];
           for (let i = 1; i < data.length; i++) {
             if (data[i].length >= 3) {
               let nameRaw = data[i][1] || "";
               let scoreRaw = parseInt(data[i][2]);
               if (isNaN(scoreRaw)) continue;
 
-              if (scoreRaw > topScore) {
-                topScore = scoreRaw;
-                let rawName = nameRaw.split(" (錯題:")[0].split(" (全對")[0].trim();
-                topName = sanitizeHTML(rawName);
-                hasRecord = true;
-              }
+              // 濾掉名稱後面的錯題標記
+              let cleanName = nameRaw
+                .split(" (錯題:")[0]
+                .split(" (全對")[0]
+                .split(" (死亡")[0]
+                .trim();
+              records.push({ name: cleanName, score: scoreRaw });
             }
           }
 
-          if (hasRecord) {
-            el.innerText = `👑 最高紀錄：${topName} (${topScore}分)`;
+          // 依照分數由高到低排序，並取前三名
+          let top3 = records.sort((a, b) => b.score - a.score).slice(0, 3);
+
+          if (top3.length > 0) {
+            // 使用 Flexbox 橫向排列，設計成現代感的「小膠囊標籤」樣式
+            let html = `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">`;
+            let medals = ["🥇", "🥈", "🥉"];
+            let colors = ["#ffd700", "#e0e0e0", "#ffb07c"]; // 針對深色按鈕優化的亮色金銀銅
+
+            top3.forEach((player, index) => {
+              html += `<div style="background: rgba(0, 0, 0, 0.15); padding: 3px 6px; border-radius: 6px; font-size: 11px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.1);">
+                         ${medals[index]}
+                         <span style="max-width: 55px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: white;" title="${player.name}">${player.name}</span>
+                         <span style="color: ${colors[index]}; font-weight: bold;">${player.score}</span>
+                       </div>`;
+            });
+            html += `</div>`;
+            el.innerHTML = html;
           } else {
-            el.innerText = `👑 最高紀錄：尚無挑戰者`;
+            el.innerHTML = `👑 尚無挑戰者`;
           }
         } catch (e) {
-          el.innerText = `👑 最高紀錄：讀取失敗`;
+          el.innerHTML = `👑 讀取失敗，請重新整理`;
         }
       }
 
-      // ✨ 網頁載入時，三款遊戲的排行榜都會一起被抓出來！
+      // 網頁載入時立刻抓資料
       window.onload = () => {
         loadTopScore(TRIG_CSV, "top-trig");
         loadTopScore(SPACE_CSV, "top-space");
         loadTopScore(PERM_CSV, "top-perm");
       };
-      window.onpageshow = function(event) { if (event.persisted) { window.location.reload(); } };
     </script>
   </body>
 </html>
