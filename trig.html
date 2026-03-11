@@ -537,6 +537,8 @@
         function checkDeath() {
             if (score < -20) {
                 clearInterval(timer);
+                // ✨ 死亡時顯示錯題本
+                document.getElementById('death-error-log').innerHTML = generateErrorLogHTML();
                 document.getElementById('death-screen').classList.add('show');
                 document.getElementById('keypad-container').style.display = 'none'; 
             }
@@ -671,24 +673,38 @@
                     timeEl.classList.remove('timer-danger-extreme'); 
                     document.body.classList.remove('body-danger-flash');
                     clearInterval(timer); 
-                    endGame(); 
+                    0分; 
                 }
             }, 50); 
         }
 
+        // ✨ 加回錯題本渲染引擎
+        function generateErrorLogHTML() {
+            if (activeWrongPool.length === 0) return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
+            let html = "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:16px; color:#444; margin:0; padding-left:20px;'>";
+            activeWrongPool.forEach((data) => {
+                html += `<li style="margin-bottom:12px; line-height:1.5;">${formatMathHTML(data.q)} <br><span style="color:#16a085; font-weight:bold;">➡ 正解: ${formatMathHTML(data.a)}</span></li>`;
+            });
+            return html + "</ul>";
+        }
+        
         function endGame() {
             document.getElementById('overlay').classList.remove('hidden');
             document.getElementById('final-score-text').classList.remove('hidden');
             document.getElementById('final-score-text').innerText = `最終得分: ${score}`;
             document.getElementById('rules-box').classList.add('hidden'); 
-            window.scrollTo(0, 0);
             
-            const name = document.getElementById('player-name').value.trim() || "Guest";
-            if (name === "Guest" || score <= 0) {
-                document.getElementById('player-name').value = "練習結束！";
-                return;
+            // ✨ 結算時顯示錯題本
+            const endLog = document.getElementById('end-error-log');
+            if (endLog) {
+                endLog.innerHTML = generateErrorLogHTML();
+                endLog.classList.remove('hidden');
             }
             
+            window.scrollTo(0, 0);
+            
+            // ✨ 拿掉防呆限制：沒寫名字就叫 Guest，不管幾分都照樣上傳！
+            const name = document.getElementById('player-name').value.trim() || "Guest";
             document.getElementById('player-name').value = "成績傳送中..."; 
 
             const formID = "1FAIpQLSeCrdzV9erg41HjfjB3oBDZTMosCJZBIahPX5fa2EQqF-9SQQ"; 
