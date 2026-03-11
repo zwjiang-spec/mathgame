@@ -250,22 +250,17 @@
         }
 
         function renderLB(id, list, title) {
-            let html = `<h4 style="margin: 0 0 8px 0; color: #d35400; font-size: 14px; text-align: center;">${title}</h4>`;
+            let html = `<h3 style="margin: 0 0 10px 0; color: #d68910; text-align: center; font-size: 16px; border-bottom: 1px solid #f5cba7; padding-bottom: 5px;">${title}</h3>`;
             if (list.length === 0) {
-                html += `<div style="text-align:center; font-size:12px; color:#999;">尚無紀錄</div>`;
+                html += `<div class='board-row' style='justify-content:center; display: flex; margin-bottom: 5px; font-size: 14px; color: #555;'>尚無紀錄</div>`;
             } else {
-                html += `<table class="lb-table">`;
                 list.forEach((item, index) => {
-                    // ✨ 拿掉字數限制，保留完整名稱 (只去除上傳時附加的錯題標記)
                     let cleanName = item.name.split(" (")[0];
-                    // ✨ 拿掉 50px 限制與隱藏設定，改用 word-break 讓長名字自動換行不撐破版面
-                    html += `<tr>
-                        <td style="width: 15px; font-weight: bold; color: #7f8c8d; vertical-align: top;">${index+1}.</td>
-                        <td style="text-align: left; word-break: break-word; padding-right: 5px;">${cleanName}</td>
-                        <td style="text-align: right; font-weight: bold; color: #27ae60; vertical-align: top; white-space: nowrap;">${item.score}</td>
-                    </tr>`;
+                    html += `<div class="board-row" style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #555;">
+                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70%;">${index+1}. ${cleanName}</span>
+                        <strong style="color: var(--text-dark);">${item.score}</strong>
+                    </div>`;
                 });
-                html += `</table>`;
             }
             document.getElementById(id).innerHTML = html;
         }
@@ -273,9 +268,8 @@
         // ✨ 完美復刻截圖的作答區根號樣式 (粗體數學字＋粗細一致的 border-top)
         function formatMath(str) {
             if (!str) return "";
-            return String(str).replace(/√(\d*)/g, function(match, inner) {
-                if (!inner) return `<span style="font-family: math, serif; font-weight: bold;">&radic;</span>`;
-                return `<span style="white-space: nowrap; font-family: math, serif; font-weight: bold;">&radic;<span style="border-top: max(2px, 0.1em) solid currentColor; padding-top: 1px; margin-left: -0.1em;">${inner}</span></span>`;
+            return String(str).replace(/√(\d*)/g, (match, num) => {
+                return `<span class="sqrt-box" style="display: inline-flex; align-items: stretch; white-space: nowrap; margin: 0 0.05em;"><div class="sqrt-tick" style="width: 0.55em;"><svg viewBox="0 0 50 100" preserveAspectRatio="none" style="width: 100%; height: 100%; display: block; stroke: currentColor; stroke-width: 10; fill: none; stroke-linecap: round; stroke-linejoin: round;"><path d="M 5 60 L 15 60 L 30 95 L 48 5"/></svg></div><span class="sqrt-num" style="border-top: 0.08em solid currentColor; padding-top: 0.05em; padding-right: 0.05em; min-width: 0.5em; display: inline-block;">${num}</span></span>`;
             });
         }
 
