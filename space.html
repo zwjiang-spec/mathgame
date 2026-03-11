@@ -1,551 +1,856 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>有趣的空間坐標 - 數學領域展開</title>
-    <link rel="stylesheet" href="style.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>好玩的數學</title>
+    <link rel="stylesheet" href="style.css" />
     <style>
-        :root {
-            --bg-main: #f7f9fc; --text-dark: #1c2833; --text-gray: #7f8c8d; --color-gold: #9b59b6; 
-            --btn-white: #ffffff; --btn-del-bg: #fae5e5; --btn-del-text: #c0392b; 
-            --btn-enter-bg: #9b59b6; --btn-enter-text: #ffffff;
-            --shake-intensity: 2px; 
-            --fever-color: #e74c3c; 
-        }
-        
-        #keypad {
-            display: grid !important;
-            grid-template-columns: repeat(4, 1fr) !important;
-            grid-auto-rows: min(10vh, 60px);
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .key { font-size: 26px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: #2c3e50;}
-        .key:active { transform: scale(0.95); }
-        
-        .key-del { grid-row: span 2; background-color: var(--btn-del-bg) !important; color: var(--btn-del-text) !important; font-size: 28px; }
-        .key-sqrt { background-color: #f4ecf7 !important; color: #8e44ad !important; font-size: 28px; }
-        .key-op { background-color: #ebf5fb !important; color: #2980b9 !important; font-size: 30px; }
-        .key-enter { font-size: 20px; font-weight: bold; grid-column: 1 / -1 !important; background-color: var(--btn-enter-bg) !important; color: var(--btn-enter-text) !important; letter-spacing: 2px; }
-
-        @keyframes progressiveShake {
-            0% { transform: translate(var(--shake-intensity), var(--shake-intensity)) rotate(0deg); }
-            25% { transform: translate(calc(var(--shake-intensity) * -1), 0) rotate(1deg); }
-            50% { transform: translate(var(--shake-intensity), calc(var(--shake-intensity) * -1)) rotate(-1deg); }
-            75% { transform: translate(calc(var(--shake-intensity) * -1), var(--shake-intensity)) rotate(0deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
-        .progressive-shake { animation: progressiveShake 0.4s ease-in-out; }
-
-        /* ✨ 統一紅色 FEVER 閃爍特效 */
-        @keyframes feverBgRed {
-            0%, 100% { background-color: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); }
-            50% { background-color: #c0392b; box-shadow: 0 0 25px rgba(192, 57, 43, 0.9); }
-        }
-        .fever-fill { animation: feverBgRed 0.4s infinite !important; }
-        @keyframes popRed {
-            from { transform: scale(1); }
-            to { transform: scale(1.15); color: #c0392b; }
-        }
-        .fever-text {
-            animation: popRed 0.3s infinite alternate;
-            color: var(--fever-color) !important; 
-            font-weight: 900; 
-            display: inline-block;
-        }
-        .fever-box {
-            border-color: var(--fever-color) !important;
-            box-shadow: 0 0 15px rgba(231, 76, 60, 0.4) !important;
-        }
-
-        /* ✨ 原版遊戲規則樣式 */
-        .rules-container {
-            border: 2px dashed #d4af37; border-radius: 12px; padding: 15px 20px; text-align: left; background: #fffcf5; margin-bottom: 15px;
-        }
-        .rules-title {
-            color: #d4af37; text-align: center; margin-top: 0; font-size: 18px; font-weight: bold;
-        }
-        .rules-divider { border: 0; height: 1px; background: #f1e5bc; margin-bottom: 12px; }
-        .rules-list { color: #555; font-size: 14px; line-height: 1.6; padding-left: 20px; margin-bottom: 0; }
-        
-        .lb-table { width: 100%; font-size: 13px; border-collapse: collapse; margin-top: 5px;}
-        .lb-table td { padding: 3px 0; border-bottom: 1px solid #eee;}
-        .lb-table tr:last-child td { border-bottom: none; }
+      :root {
+        --bg-main: #f0f4f8;
+        --text-dark: #2c3e50;
+        --text-gray: #7f8c8d;
+        --color-gold: #9b59b6;
+        --btn-white: #ffffff;
+        --btn-blue-bg: #eaf2f8;
+        --btn-blue-text: #2980b9;
+        --btn-del-bg: #fae5e5;
+        --btn-del-text: #c0392b;
+        --btn-sqrt-bg: #f4ecf7;
+        --btn-sqrt-text: #8e44ad;
+        --btn-enter-bg: #8e44ad;
+        --btn-enter-text: #ffffff;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="toast">答案提示區</div>
     <div id="death-screen">
-        <h1>💀 你已經死了</h1>
-        <p>分數過低 (-20分)，當場死亡</p>
-        <div id="death-error-log" style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px; color: black; max-width: 90%; margin-top: 15px;"></div>
-        <button class="action-btn" onclick="location.reload()" style="margin-top: 20px; background: #555;">重新開始</button>
-        <a href="index.html" style="color: #ccc; margin-top: 15px; display: block;">🏠 回到數學天地主選單</a>
+      <h1>💀 你已經死了</h1>
+      <p>分數過低 (-20分)，失去挑戰資格</p>
+      <div
+        id="death-error-log"
+        style="
+          background: rgba(255, 255, 255, 0.9);
+          padding: 15px;
+          border-radius: 10px;
+          color: black;
+          max-width: 90%;
+          margin-top: 15px;
+        "
+      ></div>
+      <button
+        class="action-btn"
+        onclick="location.reload()"
+        style="margin-top: 20px; background: #555"
+      >
+        重新開始
+      </button>
+      <a href="index.html" style="color: #ccc; margin-top: 15px"
+        >🏠 回到數學天地主選單</a
+      >
     </div>
 
     <div id="overlay">
-        <a href="index.html" class="home-btn" style="position: absolute; top: 15px; left: 15px;">🏠 回主選單</a>
-        
-        <h1 style="color: #1c2833; margin-bottom: 15px; margin-top: 50px;">有趣的空間坐標</h1>
-        
-        <h2 id="final-score-text" class="hidden" style="color: var(--color-gold); margin-top: -10px; margin-bottom: 10px;"></h2>
-        <div id="end-error-log" class="hidden" style="background: #fffdf5; border: 2px dashed #e74c3c; padding: 15px; border-radius: 10px; max-width: 90%; margin: 0 auto 20px;"></div>
+      <a
+        href="index.html"
+        class="home-btn"
+        style="position: absolute; top: 15px; left: 15px"
+        >🏠 回主選單</a
+      >
+      <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 40px">
+        極限炸裂空間坐標
+      </h1>
+      <h2
+        id="final-score-text"
+        class="hidden"
+        style="color: #9b59b6; margin-top: -10px; margin-bottom: 10px"
+      ></h2>
+      <div
+        id="end-error-log"
+        class="hidden"
+        style="
+          background: #fffdf5;
+          border: 2px dashed #e74c3c;
+          padding: 15px;
+          border-radius: 10px;
+          max-width: 90%;
+          margin: 0 auto 20px;
+        "
+      ></div>
 
-        <div id="rules-box" class="rules-container">
-            <div class="rules-title">📜 遊戲規則與計分方式</div>
-            <hr class="rules-divider">
-            <ul class="rules-list">
-                <li><b style="color:#d35400;">挑戰時間：</b>總共 <b>90 秒</b>，請盡可能拿高分！</li>
-                <li><b style="color:#27ae60;">基本得分：</b>答對 +10 分，連續答對享有 Combo 加成！</li>
-                <li><b style="color:#8e44ad;">倒扣懲罰：</b>按錯送出會<b>漸進式扣分</b> (5分、10分...)。</li>
-                <li><b style="color:#2980b9;">難度進化：</b>總分達 <b>100分</b> 解鎖「進階階段(對稱與距離)」。</li>
-                <li><b style="color:#f39c12;">狂熱時間：</b>最後 30 秒難度全開，且<b>得分加倍</b>！</li>
-                <li><b style="color:#e74c3c;">神級錯題本：</b>按 PASS(扣20分)或答錯的題目，會收錄並反覆出題！</li>
-            </ul>
+      <div id="rules-box">
+        <h3>📜 遊戲規則與計分方式</h3>
+        <ul>
+          <li><b>極速輸入：</b>坐標題<b>不需打括號</b>，直接輸入數字即可。</li>
+          <li><b>挑戰時間：</b>總共 <b>90 秒</b>，最後 10 秒極限狂熱！</li>
+          <li>
+            <b style="color: #27ae60">基本得分：</b>答對 <b>+10 分</b>，連擊滿
+            10 觸發 FEVER！
+          </li>
+          <li>
+            <b style="color: #c0392b">倒扣懲罰：</b
+            >按錯或跳過會<b>漸進式扣分</b>，低於 <b>-20分</b> 出局！
+          </li>
+          <li>
+            <b style="color: #2980b9">地獄特訓：</b
+            >答對的不重出；錯的會<b>高機率重出</b>！連錯退回平面保底。
+          </li>
+          <li><b>狂熱時間：</b>最後 30 秒滿滿畢氏定理，且<b>得分加倍</b>！</li>
+        </ul>
+      </div>
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+        "
+      >
+        <div
+          id="leaderboards"
+          class="boards-container"
+          style="
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 25px;
+          "
+        >
+          <div class="board" id="daily-board" style="min-width: 250px">
+            <div class="board-row" style="justify-content: center">
+              成績連線中...
+            </div>
+          </div>
+          <div class="board" id="alltime-board" style="min-width: 250px">
+            <div class="board-row" style="justify-content: center">
+              成績連線中...
+            </div>
+          </div>
         </div>
 
-        <div id="leaderboard-container" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; width: 100%; max-width: 400px; padding: 0 10px; box-sizing: border-box;">
-            <div id="today-lb" style="flex:1; background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left;">載入中...</div>
-            <div id="alltime-lb" style="flex:1; background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left;">載入中...</div>
+        <div
+          id="start-ui-group"
+          style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+          "
+        >
+          <input
+            type="text"
+            id="player-name"
+            class="name-input"
+            placeholder="請輸入姓名或學號"
+            maxlength="10"
+            style="text-align: center; margin-bottom: 15px"
+          />
+          <button class="action-btn" onclick="startGame()">START GAME</button>
         </div>
-        
-        <input type="text" id="player-name" class="name-input" placeholder="請輸入姓名或學號" maxlength="10">
-        <button class="action-btn" onclick="startGame()" style="background: var(--btn-enter-bg);">START GAME</button>
+
+        <div
+          id="end-ui-group"
+          class="hidden"
+          style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-top: 10px;
+          "
+        >
+          <button
+            class="action-btn"
+            onclick="location.reload()"
+            style="background: #555; margin-bottom: 15px"
+          >
+            再玩一局 (重新開始)
+          </button>
+          <a
+            href="index.html"
+            style="
+              color: #666;
+              text-decoration: none;
+              font-weight: bold;
+              margin-top: 5px;
+            "
+            >🏠 回到數學天地主選單</a
+          >
+        </div>
+      </div>
     </div>
 
+    <div id="progress-container"><div id="progress-bar"></div></div>
     <div id="header">
-        <div class="stat-group"><div class="stat-label">STUDENT</div><div id="ui-name" class="stat-value" style="color: var(--text-gray);">---</div></div>
-        <div class="stat-group"><div class="stat-label">TIME</div><div id="ui-time" class="stat-value" style="color: var(--text-gray);">90</div></div>
-        <div class="stat-group"><div class="stat-label">SCORE</div><div id="ui-score" class="stat-value" style="color: var(--text-gray);">0</div></div>
+      <div class="stat-group">
+        <div class="stat-label">STUDENT</div>
+        <div id="ui-name" class="stat-value">---</div>
+      </div>
+      <div class="stat-group">
+        <div class="stat-label">TIME</div>
+        <div id="ui-time" class="stat-value" style="color: #e74c3c">90</div>
+      </div>
+      <div
+        class="stat-group"
+        style="
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+        "
+      >
+        <button
+          onclick="if(confirm('確定要放棄這局遊戲並返回主選單嗎？')) location.href='index.html'"
+          style="
+            background: #fae5e5;
+            color: #c0392b;
+            border: 1px solid #e74c3c;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
+            white-space: nowrap;
+          "
+        >
+          🚪 退出
+        </button>
+
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <div class="stat-label">SCORE</div>
+          <div id="ui-score" class="stat-value">0</div>
+        </div>
+      </div>
     </div>
-    
+
     <div id="combo-gauge-wrapper">
-        <div class="combo-label">COMBO</div>
-        <div id="combo-gauge-bg"><div id="combo-gauge-fill" style="background: var(--color-gold);"></div></div>
-        <div id="combo-gauge-text">0</div>
+      <div class="combo-label">COMBO</div>
+      <div id="combo-gauge-bg"><div id="combo-gauge-fill"></div></div>
+      <div id="combo-gauge-text">0</div>
     </div>
-    <div id="phase-indicator">🌱 基礎階段</div>
+    <div id="phase-indicator">🌱 基礎階段 (平面的投影與對稱)</div>
 
     <div id="display-area">
-        <div id="question-text" style="font-size: 24px; font-weight: bold; color: var(--text-gray);">題目讀取中...</div>
-        <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 15px; margin-bottom: 5px;">
-            <div style="font-size: 32px; font-weight: bold; color: var(--text-dark); line-height: 1;">=</div>
-            <div id="input-box" style="margin-top: 0; min-width: 120px;"></div>
-            <button onclick="skipQuestion()" style="background: #ffefd5; color: #d35400; border: 2px solid #f39c12; border-radius: 12px; font-size: 14px; font-weight: bold; padding: 6px 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2); white-space: nowrap; transition: 0.1s;">
-                PASS<br><span style="font-size:11px;">(-20分)</span>
-            </button>
-        </div>
+      <div id="question-text" style="font-size: 20px; color: var(--text-gray)">
+        題目讀取中...
+      </div>
+      <div
+        style="
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 12px;
+          margin-top: 15px;
+          margin-bottom: 5px;
+        "
+      >
+        <div id="input-box" style="margin-top: 0; min-width: 120px"></div>
+        <button
+          onclick="skipQuestion()"
+          style="
+            background: #ffefd5;
+            color: #d35400;
+            border: 2px solid #f39c12;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 6px 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2);
+            white-space: nowrap;
+            transition: 0.1s;
+          "
+        >
+          PASS<br /><span style="font-size: 11px">(-20分)</span>
+        </button>
+      </div>
     </div>
 
     <div id="keypad-container">
-        <div id="keypad">
-            <div class="key" onclick="input('7')">7</div>
-            <div class="key" onclick="input('8')">8</div>
-            <div class="key" onclick="input('9')">9</div>
-            <div class="key key-del" onclick="input('DEL')">⌫</div>
-            
-            <div class="key" onclick="input('4')">4</div>
-            <div class="key" onclick="input('5')">5</div>
-            <div class="key" onclick="input('6')">6</div>
-            
-            <div class="key" onclick="input('1')">1</div>
-            <div class="key" onclick="input('2')">2</div>
-            <div class="key" onclick="input('3')">3</div>
-            
-            <div class="key key-sqrt" onclick="input('√')" style="display: flex; align-items: center; justify-content: center;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 12h2.5l3.5 7 4.5-14h7" />
-                </svg>
+      <div id="keypad">
+        <div class="key" onclick="input('7')">7</div>
+        <div class="key" onclick="input('8')">8</div>
+        <div class="key" onclick="input('9')">9</div>
+        <div class="key key-del" onclick="input('DEL')">⌫</div>
+        <div class="key" onclick="input('4')">4</div>
+        <div class="key" onclick="input('5')">5</div>
+        <div class="key" onclick="input('6')">6</div>
+        <div class="key key-sqrt" onclick="input('√')" title="根號">
+          <span class="sqrt-box" style="font-size: 1.2em"
+            ><div class="sqrt-tick">
+              <svg viewBox="0 0 50 100" preserveAspectRatio="none">
+                <path
+                  d="M 5 60 L 15 60 L 30 95 L 48 5"
+                  stroke="currentColor"
+                  stroke-width="10"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
             </div>
-            
-            <div class="key" onclick="input('0')">0</div>
-            <div class="key key-op" onclick="input('-')">-</div>
-            <div class="key key-op" onclick="input('/')">/</div>
-            <div class="key key-op" onclick="input(',')">,</div>
-            
-            <div class="key key-enter" onclick="submitAnswer()">送出答案 (ENTER)</div>
+            <span class="sqrt-num" style="min-width: 0.6em"></span
+          ></span>
         </div>
+        <div class="key" onclick="input('1')">1</div>
+        <div class="key" onclick="input('2')">2</div>
+        <div class="key" onclick="input('3')">3</div>
+        <div class="key key-blue" onclick="input('-')">-</div>
+        <div class="key" onclick="input('0')">0</div>
+        <div class="key key-blue" onclick="input('/')">/</div>
+        <div
+          class="key key-blue"
+          style="grid-column: span 2; font-size: 32px"
+          onclick="input(',')"
+        >
+          ,
+        </div>
+        <div class="key key-enter" onclick="submitAnswer()">
+          送出答案 (ENTER)
+        </div>
+      </div>
     </div>
 
     <script src="common.js"></script>
     <script>
-        // ✨ 純化後的空間坐標題庫 (沒有中點、向量、內積)
-        const spaceQuestions = [
-            // Level 1: 基礎投影與距離
-            { q: "點 (3,4,5) 在 xy平面的投影點", a: "3,4,0", hint: "投影在 xy 平面，z 坐標變為 0", level: 1 },
-            { q: "點 (-2,1,4) 在 x軸的投影點", a: "-2,0,0", hint: "投影在 x 軸，y 與 z 坐標變為 0", level: 1 },
-            { q: "點 (3,4,5) 到 xy平面的距離", a: "5", hint: "找 z 坐標的絕對值", level: 1 },
-            { q: "點 (0,3,4) 到 x軸的距離", a: "5", hint: "√(3² + 4²) = 5", level: 1 },
-            { q: "點 (1,2,2) 到原點的距離", a: "3", hint: "√(1² + 2² + 2²) = 3", level: 1 },
+      const FORM_ID =
+        "1FAIpQLSdNKeKn6J_iYn09ujMGe9QJsMsN2CpnFVv5BOGHcV_ULa3_sA";
+      const ENTRY_NAME = "entry.487324200";
+      const ENTRY_SCORE = "entry.1586391108";
+      const CSV_URL =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
 
-            // Level 2: 對稱點與兩點距離
-            { q: "點 (1,2,3) 對 xy平面的對稱點", a: "1,2,-3", hint: "對 xy 平面對稱，z 坐標變號", level: 2 },
-            { q: "點 (2,-3,4) 對原點的對稱點", a: "-2,3,-4", hint: "對原點對稱，xyz 皆變號", level: 2 },
-            { q: "點 (1,2,3) 對 x軸的對稱點", a: "1,-2,-3", hint: "對 x 軸對稱，y 與 z 坐標變號", level: 2 },
-            { q: "點 A(1,2,3) 到 B(1,5,7) 的距離", a: "5", hint: "√(0² + 3² + 4²) = 5", level: 2 },
+      window.onload = () => {
+        loadGlobalLeaderboard(CSV_URL);
+      };
 
-            // Level 3: 進階距離
-            { q: "點 A(2,0,0) 到 B(0,3,0) 的距離", a: "√13", hint: "√(2² + 3²) = √13", level: 3 },
-            { q: "點 (3,4,12) 到原點的距離", a: "13", hint: "√(3² + 4² + 12²) = 13", level: 3 }
-        ];
+      let score = 0,
+        combo = 0,
+        consecutiveWrong = 0,
+        targetAns = "",
+        userInput = "",
+        currentQuestionStr = "";
+      let isCoordinateAns = false;
+      let currentHint = ""; // ✨ 新增的提示變數
 
-        let score = 0, combo = 0, consecutiveWrong = 0;
-        let targetAns = "", userInput = "", currentQuestionStr = "", currentHint = "";
-        let currentQuestionErrors = 0, currentMultiplier = 1;
-        let timer, startTime, lastTickSec = -1; const TIME_LIMIT = 90;
-        
-        let correctQuestionsSet = new Set();
-        let errorLogMap = new Map(); 
-        let activeWrongPool = [];
+      let currentQuestionErrors = 0,
+        currentMultiplier = 1;
+      let timer,
+        startTime,
+        lastTickSec = -1;
+      const TIME_LIMIT = 90;
 
-        // ✨ CSV 排行榜讀取邏輯
-        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
-        
-        function parseCSV(text) {
-            let p = "", row = [""], ret = [row], i = 0, r = 0, s = !0, l;
-            for (l of text) {
-                if ('"' === l) { if (s && l === p) row[i] += l; s = !s; }
-                else if ("," === l && s) l = row[++i] = "";
-                else if ("\n" === l && s) { if ("\r" === p) row[i] = row[i].slice(0, -1); row = ret[++r] = [(l = "")]; i = 0; }
-                else row[i] += l;
-                p = l;
-            }
-            return ret;
+      let correctQuestionsSet = new Set();
+      let errorLogMap = new Map();
+      let activeWrongPool = [];
+
+      function formatRoot(d2) {
+        let root = Math.sqrt(d2);
+        if (Number.isInteger(root)) return root.toString();
+        return `√${d2}`;
+      }
+
+      function getNewQuestion() {
+        let remain = startTime
+          ? TIME_LIMIT - (Date.now() - startTime) / 1000
+          : TIME_LIMIT;
+        let phaseStr = "";
+        let pool = [];
+
+        if (remain <= 30) {
+          currentMultiplier = 2;
+          phaseStr = "🔥 狂熱時間 (距離題全面解禁, 分數 x2)";
+          pool = [1, 2, 3];
+          document.getElementById("phase-indicator").style.color = "#c0392b";
+        } else if (consecutiveWrong >= 2) {
+          currentMultiplier = 1;
+          phaseStr = "🌱 基礎保底 (連續失誤，回歸平面題)";
+          pool = [1];
+          document.getElementById("phase-indicator").style.color = "#27ae60";
+        } else if (combo >= 3) {
+          currentMultiplier = 1;
+          phaseStr = "⚡ 乘勝追擊 (挑戰坐標軸與距離)";
+          pool = [2, 3];
+          document.getElementById("phase-indicator").style.color = "#d68910";
+        } else if (score >= 100) {
+          currentMultiplier = 1;
+          phaseStr = "⚡ 進階階段 (分數達標，解鎖坐標軸題型)";
+          pool = [1, 2];
+          document.getElementById("phase-indicator").style.color = "#d68910";
+        } else {
+          currentMultiplier = 1;
+          phaseStr = `🌱 基礎階段 (平面的投影與對稱)`;
+          pool = [1];
+          document.getElementById("phase-indicator").style.color = "#27ae60";
         }
 
-        async function fetchLeaderboard() {
-            try {
-                let res = await fetch(CSV_URL, { cache: "no-store" });
-                let text = await res.text();
-                let data = parseCSV(text);
-                let records = [];
-                for (let i = 1; i < data.length; i++) {
-                    if (data[i].length >= 3) {
-                        let dateStr = data[i][0];
-                        let name = data[i][1] || "";
-                        let score = parseInt(data[i][2]);
-                        if (!isNaN(score)) records.push({ dateStr, name, score });
-                    }
-                }
-
-                let allTime = [...records].sort((a, b) => b.score - a.score).slice(0, 5);
-
-                let todayObj = new Date();
-                let ty = todayObj.getFullYear();
-                let tm = todayObj.getMonth() + 1;
-                let td = todayObj.getDate();
-
-                let todayRecords = records.filter(r => {
-                    let rowDate = new Date(r.dateStr);
-                    if (!isNaN(rowDate)) {
-                        return rowDate.getFullYear() === ty && (rowDate.getMonth() + 1) === tm && rowDate.getDate() === td;
-                    } else {
-                        return r.dateStr.includes(`${ty}/${tm}/${td}`) || r.dateStr.includes(`${ty}/${String(tm).padStart(2,'0')}/${String(td).padStart(2,'0')}`);
-                    }
-                });
-                let todayTop = [...todayRecords].sort((a, b) => b.score - a.score).slice(0, 5);
-
-                renderLB("today-lb", todayTop, "🌟 今日前五名");
-                renderLB("alltime-lb", allTime, "🏆 歷史前五名");
-            } catch(e) {
-                document.getElementById("today-lb").innerHTML = "排行榜讀取失敗";
-                document.getElementById("alltime-lb").innerHTML = "排行榜讀取失敗";
-            }
+        let lastQ = currentQuestionStr;
+        let availableWrong = activeWrongPool.filter((item) => item.q !== lastQ);
+        if (availableWrong.length > 0 && Math.random() < 0.4) {
+          let idx = Math.floor(Math.random() * availableWrong.length);
+          currentQuestionStr = availableWrong[idx].q;
+          targetAns = availableWrong[idx].a;
+          isCoordinateAns = availableWrong[idx].isC;
+          currentHint = availableWrong[idx].hint; // ✨ 讀取提示
+          document.getElementById("phase-indicator").innerText = phaseStr;
+          document.getElementById(
+            "question-text"
+          ).innerHTML = `<span style="font-size:20px; color:var(--text-gray);">${
+            currentQuestionStr.split(" ")[0]
+          }</span><br>${currentQuestionStr.split(" ").slice(1).join(" ")} =`;
+          userInput = "";
+          currentQuestionErrors = 0;
+          renderInput();
+          return;
         }
 
-        function renderLB(id, list, title) {
-            let html = `<h4 style="margin: 0 0 8px 0; color: #d35400; font-size: 14px; text-align: center;">${title}</h4>`;
-            if (list.length === 0) {
-                html += `<div style="text-align:center; font-size:12px; color:#999;">尚無紀錄</div>`;
-            } else {
-                html += `<table class="lb-table">`;
-                list.forEach((item, index) => {
-                    // ✨ 拿掉字數限制，保留完整名稱 (只去除上傳時附加的錯題標記)
-                    let cleanName = item.name.split(" (")[0];
-                    // ✨ 拿掉 50px 限制與隱藏設定，改用 word-break 讓長名字自動換行不撐破版面
-                    html += `<tr>
-                        <td style="width: 15px; font-weight: bold; color: #7f8c8d; vertical-align: top;">${index+1}.</td>
-                        <td style="text-align: left; word-break: break-word; padding-right: 5px;">${cleanName}</td>
-                        <td style="text-align: right; font-weight: bold; color: #27ae60; vertical-align: top; white-space: nowrap;">${item.score}</td>
-                    </tr>`;
-                });
-                html += `</table>`;
-            }
-            document.getElementById(id).innerHTML = html;
-        }
+        let valid = false;
+        let attempts = 0;
+        let selectedQ = null;
+        let kwProj = `<strong style="color: #e74c3c; font-size: 1.1em;">投影點</strong>`;
+        let kwSymm = `<strong style="color: #2980b9; font-size: 1.1em;">對稱點</strong>`;
+        let kwDist = `<strong style="color: #d68910; font-size: 1.1em;">距離</strong>`;
 
-        // ✨ 完美復刻截圖的作答區根號樣式
-        function formatMath(str) {
-            if (!str) return "";
-            return String(str).replace(/√(\d*)/g, function(match, inner) {
-                if (!inner) return `<span style="font-family: math, serif; font-weight: bold;">&radic;</span>`;
-                return `<span style="white-space: nowrap; font-family: math, serif; font-weight: bold;">&radic;<span style="border-top: max(2px, 0.1em) solid currentColor; padding-top: 1px; margin-left: -0.1em;">${inner}</span></span>`;
+        while (!valid && attempts < 100) {
+          let x = 0,
+            y = 0,
+            z = 0;
+          while (x === 0 && y === 0 && z === 0) {
+            x = Math.floor(Math.random() * 11) - 5;
+            y = Math.floor(Math.random() * 11) - 5;
+            z = Math.floor(Math.random() * 11) - 5;
+          }
+          let questions = [];
+          let pointStr = `P(${x},${y},${z})`;
+
+          if (pool.includes(1)) {
+            questions.push({
+              q: `${pointStr} 在 xy平面的${kwProj}`,
+              a: `(${x},${y},0)`,
+              isC: true,
+              hint: "投影到xy平面，未出現的 z 變成 0",
             });
-        }
-
-        // ✨ 2. 最強計算容錯引擎：自動化簡與防呆比對
-        function evalMathStr(s) {
-            if (!s) return null;
-            if (!/^[0-9+\-*/().\s√]+$/.test(s)) return null;
-            let parsed = s.replace(/\s+/g, '').replace(/√(\d+)/g, 'Math.sqrt($1)');
-            if (parsed.endsWith('Math.sqrt()')) return null;
-            try {
-                let val = Function('"use strict";return (' + parsed + ')')();
-                return (typeof val === 'number' && !isNaN(val) && isFinite(val)) ? val : null;
-            } catch(e) { return null; }
-        }
-
-        function isMathEqual(inStr, tarStr) {
-            if (!inStr || !tarStr) return false;
-            let inParts = inStr.replace(/\s+/g, '').split(',');
-            let tarParts = tarStr.replace(/\s+/g, '').split(',');
-            if (inParts.length !== tarParts.length) return false;
-            for(let i = 0; i < inParts.length; i++){
-                let v1 = evalMathStr(inParts[i]);
-                let v2 = evalMathStr(tarParts[i]);
-                if (v1 === null || v2 === null) {
-                    if (inParts[i] !== tarParts[i]) return false;
-                } else {
-                    if (Math.abs(v1 - v2) > 1e-6) return false;
-                }
-            }
-            return true;
-        }
-
-        function getNewQuestion() {
-            let remain = startTime ? (TIME_LIMIT - ((Date.now() - startTime) / 1000)) : TIME_LIMIT;
-            let phaseStr = ""; let allowedLevels = []; 
-            
-            if (remain <= 30) {
-                currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (全難度解禁, 分數 x2)"; 
-                allowedLevels = [1, 2, 3]; document.getElementById('phase-indicator').style.color = "#c0392b";
-            } else if (consecutiveWrong >= 2) {
-                currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎)"; 
-                allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
-            } else if (score >= 120) {
-                currentMultiplier = 1; phaseStr = "⚡ 最終階段 (進階空間距離)"; 
-                allowedLevels = [3]; document.getElementById('phase-indicator').style.color = "#8e44ad";
-            } else if (combo >= 3 || score >= 50) {
-                currentMultiplier = 1; phaseStr = "⚡ 進階階段 (對稱點與距離)"; 
-                allowedLevels = [2, 3]; document.getElementById('phase-indicator').style.color = "#d68910";
-            } else {
-                currentMultiplier = 1; phaseStr = `🌱 基礎階段`; 
-                allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
-            }
-
-            // ✨ 1. 記住上一題，避免連續重複
-            let lastQ = currentQuestionStr; 
-
-            // ✨ 2. 錯題本抽題：40% 機率，且排除剛剛才出現的上一題
-            let availableWrong = activeWrongPool.filter(item => item.q !== lastQ);
-            if (availableWrong.length > 0 && Math.random() < 0.4) {
-                let idx = Math.floor(Math.random() * availableWrong.length);
-                let qData = availableWrong[idx];
-                currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
-                document.getElementById('phase-indicator').innerText = phaseStr;
-                document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr); 
-                userInput = ""; currentQuestionErrors = 0; renderInput(); return;
-            }
-
-            // ✨ 3. 正常抽題：排除「已答對的」以及「上一題」
-            let pool = spaceQuestions.filter(q => allowedLevels.includes(q.level) && !correctQuestionsSet.has(q.q) && q.q !== lastQ);
-            
-            // 題庫見底時的保底機制 (依序放寬條件，但優先排除上一題)
-            if (pool.length === 0) pool = spaceQuestions.filter(q => allowedLevels.includes(q.level) && q.q !== lastQ); 
-            if (pool.length === 0) pool = spaceQuestions.filter(q => !correctQuestionsSet.has(q.q) && q.q !== lastQ);
-            if (pool.length === 0) pool = spaceQuestions.filter(q => q.q !== lastQ);
-            if (pool.length === 0) pool = spaceQuestions; // 最終防呆
-
-            let selectedQ = pool[Math.floor(Math.random() * pool.length)];
-            currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; currentHint = selectedQ.hint;
-
-            document.getElementById('phase-indicator').innerText = phaseStr;
-            document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr); 
-            userInput = ""; currentQuestionErrors = 0; renderInput();
-        }
-        function renderInput() {
-            const box = document.getElementById('input-box'); 
-            box.innerHTML = formatMath(userInput); 
-            box.classList.remove('error-text', 'correct-flash');
-        }
-        function input(val) { if (val === 'DEL') userInput = userInput.slice(0, -1); else userInput += val; renderInput(); }
-
-        function generateErrorLogHTML() {
-            if (errorLogMap.size === 0) return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
-            let html = "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:16px; color:#444; margin:0; padding-left:20px;'>";
-            errorLogMap.forEach((data, qStr) => {
-                html += `<li style="margin-bottom:12px; line-height:1.5;">${formatMath(qStr)} <br><span style="color:#16a085; font-weight:bold;">➡ 正解: ${formatMath(data.ans)}</span><br><span style="color:#7f8c8d; font-size:14px;">💡 提示: ${formatMath(data.hint)}</span></li>`;
+            questions.push({
+              q: `${pointStr} 在 yz平面的${kwProj}`,
+              a: `(0,${y},${z})`,
+              isC: true,
+              hint: "投影到yz平面，未出現的 x 變成 0",
             });
-            return html + "</ul>";
+            questions.push({
+              q: `${pointStr} 在 zx平面的${kwProj}`,
+              a: `(${x},0,${z})`,
+              isC: true,
+              hint: "投影到zx平面，未出現的 y 變成 0",
+            });
+            questions.push({
+              q: `${pointStr} 對 xy平面的${kwSymm}`,
+              a: `(${x},${y},${-z})`,
+              isC: true,
+              hint: "對稱於xy平面，未出現的 z 變號",
+            });
+            questions.push({
+              q: `${pointStr} 對 yz平面的${kwSymm}`,
+              a: `(${-x},${y},${z})`,
+              isC: true,
+              hint: "對稱於yz平面，未出現的 x 變號",
+            });
+            questions.push({
+              q: `${pointStr} 對 zx平面的${kwSymm}`,
+              a: `(${x},${-y},${z})`,
+              isC: true,
+              hint: "對稱於zx平面，未出現的 y 變號",
+            });
+            questions.push({
+              q: `${pointStr} 到 xy平面的${kwDist}`,
+              a: `${Math.abs(z)}`,
+              isC: false,
+              hint: "到xy平面的距離，就是未出現的 z 的絕對值",
+            });
+            questions.push({
+              q: `${pointStr} 到 yz平面的${kwDist}`,
+              a: `${Math.abs(x)}`,
+              isC: false,
+              hint: "到yz平面的距離，就是未出現的 x 的絕對值",
+            });
+            questions.push({
+              q: `${pointStr} 到 zx平面的${kwDist}`,
+              a: `${Math.abs(y)}`,
+              isC: false,
+              hint: "到zx平面的距離，就是未出現的 y 的絕對值",
+            });
+          }
+          if (pool.includes(2)) {
+            questions.push({
+              q: `${pointStr} 在 x軸的${kwProj}`,
+              a: `(${x},0,0)`,
+              isC: true,
+              hint: "投影到x軸，只有 x 保留，y,z 皆為 0",
+            });
+            questions.push({
+              q: `${pointStr} 在 y軸的${kwProj}`,
+              a: `(0,${y},0)`,
+              isC: true,
+              hint: "投影到y軸，只有 y 保留，x,z 皆為 0",
+            });
+            questions.push({
+              q: `${pointStr} 在 z軸的${kwProj}`,
+              a: `(0,0,${z})`,
+              isC: true,
+              hint: "投影到z軸，只有 z 保留，x,y 皆為 0",
+            });
+            questions.push({
+              q: `${pointStr} 對 x軸的${kwSymm}`,
+              a: `(${x},${-y},${-z})`,
+              isC: true,
+              hint: "對稱於x軸，除了 x 以外，y,z 皆變號",
+            });
+            questions.push({
+              q: `${pointStr} 對 y軸的${kwSymm}`,
+              a: `(${-x},${y},${-z})`,
+              isC: true,
+              hint: "對稱於y軸，除了 y 以外，x,z 皆變號",
+            });
+            questions.push({
+              q: `${pointStr} 對 z軸的${kwSymm}`,
+              a: `(${-x},${-y},${z})`,
+              isC: true,
+              hint: "對稱於z軸，除了 z 以外，x,y 皆變號",
+            });
+            questions.push({
+              q: `${pointStr} 對 原點的${kwSymm}`,
+              a: `(${-x},${-y},${-z})`,
+              isC: true,
+              hint: "對稱於原點，x,y,z 全部變號",
+            });
+          }
+          if (pool.includes(3)) {
+            questions.push({
+              q: `${pointStr} 到 x軸的${kwDist}`,
+              a: formatRoot(y * y + z * z),
+              isC: false,
+              hint: "到x軸的距離 = √(y² + z²)",
+            });
+            questions.push({
+              q: `${pointStr} 到 y軸的${kwDist}`,
+              a: formatRoot(x * x + z * z),
+              isC: false,
+              hint: "到y軸的距離 = √(x² + z²)",
+            });
+            questions.push({
+              q: `${pointStr} 到 z軸的${kwDist}`,
+              a: formatRoot(x * x + y * y),
+              isC: false,
+              hint: "到z軸的距離 = √(x² + y²)",
+            });
+            questions.push({
+              q: `${pointStr} 到 原點的${kwDist}`,
+              a: formatRoot(x * x + y * y + z * z),
+              isC: false,
+              hint: "到原點的距離 = √(x² + y² + z²)",
+            });
+          }
+
+          selectedQ = questions[Math.floor(Math.random() * questions.length)];
+          if (!correctQuestionsSet.has(selectedQ.q) && selectedQ.q !== lastQ) {
+            valid = true;
+          }
+          attempts++;
         }
 
-        function checkDeath() {
-            if (score < -20) {
-                if(timer) clearInterval(timer); 
-                document.getElementById('death-error-log').innerHTML = generateErrorLogHTML(); 
-                document.getElementById('death-screen').classList.add('show'); 
-                document.getElementById('keypad-container').style.display = 'none'; 
-            }
+        document.getElementById("phase-indicator").innerText = phaseStr;
+        document.getElementById(
+          "question-text"
+        ).innerHTML = `<span style="font-size:20px; color:var(--text-gray);">${
+          selectedQ.q.split(" ")[0]
+        }</span><br>${selectedQ.q.split(" ").slice(1).join(" ")} =`;
+        currentQuestionStr = selectedQ.q;
+        targetAns = selectedQ.a;
+        isCoordinateAns = selectedQ.isC;
+        currentHint = selectedQ.hint; // ✨ 設定提示
+        userInput = "";
+        currentQuestionErrors = 0;
+        renderInput();
+      }
+
+      function renderInput() {
+        const box = document.getElementById("input-box");
+        let displayHTML = formatMathHTML(userInput);
+        if (isCoordinateAns) {
+          if (userInput === "") {
+            box.innerHTML = `<span style="color: #bdc3c7; opacity: 0.6;">( x , y , z )</span>`;
+          } else {
+            box.innerHTML = `( ${displayHTML} )`;
+          }
+        } else {
+          box.innerHTML = displayHTML;
+        }
+        box.classList.remove("error-text", "correct-flash");
+      }
+      function input(val) {
+        if (val === "DEL") userInput = userInput.slice(0, -1);
+        else userInput += val;
+        renderInput();
+      }
+
+      function generateErrorLogHTML() {
+        if (errorLogMap.size === 0)
+          return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
+        let html =
+          "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:15px; color:#444; margin:0; padding-left:20px;'>";
+        errorLogMap.forEach((data, qStr) => {
+          html += `<li style="margin-bottom:10px; line-height:1.4;">${qStr} <br><span style="color:#e67e22; font-weight:bold;">➡ 正解: ${data.ans}</span><br><span style="color:#7f8c8d; font-size:13px;">💡 提示: ${data.hint}</span></li>`;
+        });
+        return html + "</ul>";
+      }
+
+      function checkDeath() {
+        if (score < -20) {
+          clearInterval(timer);
+          document.getElementById("death-error-log").innerHTML =
+            generateErrorLogHTML();
+          document.getElementById("death-screen").classList.add("show");
+          document.getElementById("keypad-container").style.display = "none";
+        }
+      }
+
+      function triggerErrorEffect(isSkip = false) {
+        playWrong();
+        combo = 0;
+        consecutiveWrong++;
+
+        let displayAns = isCoordinateAns
+          ? `( ${formatMathHTML(targetAns)} )`
+          : formatMathHTML(targetAns);
+        errorLogMap.set(currentQuestionStr, {
+          ans: displayAns,
+          hint: currentHint,
+        });
+        if (!activeWrongPool.some((item) => item.q === currentQuestionStr)) {
+          activeWrongPool.push({
+            q: currentQuestionStr,
+            a: targetAns,
+            isC: isCoordinateAns,
+            hint: currentHint,
+          });
         }
 
-        function triggerErrorEffect() {
-            if (typeof playWrong === 'function') playWrong(); 
-            combo = 0; consecutiveWrong++; 
-            let h = typeof currentHint !== 'undefined' ? currentHint : "";
-            errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
-            if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
-                activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
-            }
+        const area = document.getElementById("display-area");
+        area.classList.remove("shake-animation");
+        void area.offsetWidth;
+        area.classList.add("shake-animation");
+        currentQuestionErrors++;
+        score -= currentQuestionErrors * 5 * currentMultiplier;
+        document.getElementById("input-box").classList.add("error-text");
+        flashScoreRed();
+        updateUI();
+        if (isSkip) showToast(`⏭️ 跳過！正解為：${displayAns}`, 2500);
+        else showToast(`❌ 答錯囉！請再試一次！`, 1200);
+        checkDeath();
+      }
 
-            const area = document.getElementById('display-area'); 
-            area.classList.remove('shake-animation'); void area.offsetWidth; area.classList.add('shake-animation');
-            currentQuestionErrors++; score -= (currentQuestionErrors * 5 * currentMultiplier); 
-            document.getElementById('input-box').classList.add('error-text'); 
-            if (typeof flashScoreRed === 'function') flashScoreRed(); 
-            updateUI();
-            if (typeof showToast === 'function') showToast(`❌ 答錯囉！再仔細想想！`, 1200); 
-            checkDeath(); 
+      function submitAnswer() {
+        if (userInput === "") return;
+        const box = document.getElementById("input-box");
+        let isCorrect = false;
+        if (isCoordinateAns) {
+          let cleanUser = userInput.replace(/[\s\(\)]/g, "");
+          let cleanTarget = targetAns.replace(/[\s\(\)]/g, "");
+          isCorrect = cleanUser === cleanTarget;
+        } else {
+          let userVal = evalMath(userInput);
+          let targetVal = evalMath(targetAns);
+          isCorrect =
+            !isNaN(userVal) &&
+            !isNaN(targetVal) &&
+            Math.abs(userVal - targetVal) < 1e-5;
         }
 
-        function submitAnswer() {
-            if (userInput === "") return; 
-            const box = document.getElementById('input-box');
-            
-            if (isMathEqual(userInput, targetAns)) {
-                if (currentQuestionErrors === 0) correctQuestionsSet.add(currentQuestionStr);
-                activeWrongPool = activeWrongPool.filter(item => item.q !== currentQuestionStr);
-                errorLogMap.delete(currentQuestionStr); 
+        if (isCorrect) {
+          correctQuestionsSet.add(currentQuestionStr);
+          activeWrongPool = activeWrongPool.filter(
+            (item) => item.q !== currentQuestionStr
+          );
 
-                if (typeof spawnComboParticle === 'function') spawnComboParticle(); 
-                consecutiveWrong = 0; 
-                if (combo >= 9) { 
-                    if (typeof playFeverCorrect === 'function') playFeverCorrect(); 
-                } else { 
-                    if (typeof playCorrect === 'function') playCorrect(); 
-                }
-                box.classList.add('correct-flash'); score += (10 + (combo * 2)) * currentMultiplier; combo++;
-                
-                if (combo >= 5) { 
-                    const body = document.body; 
-                    let intensity = Math.min(2 + (combo - 5), 10);
-                    body.style.setProperty('--shake-intensity', `${intensity}px`);
-                    body.classList.remove('progressive-shake'); 
-                    void body.offsetWidth; 
-                    body.classList.add('progressive-shake'); 
-                }
-                updateUI(); setTimeout(getNewQuestion, 150); 
-            } else { triggerErrorEffect(); }
+          spawnComboParticle();
+          consecutiveWrong = 0;
+          if (combo >= 9) playFeverCorrect();
+          else playCorrect();
+          box.classList.add("correct-flash");
+          score += (10 + combo * 2) * currentMultiplier;
+          combo++;
+          if (combo > 5) {
+            const body = document.body;
+            body.classList.remove("strong-shake-effect");
+            void body.offsetWidth;
+            body.classList.add("strong-shake-effect");
+          }
+          updateUI();
+          setTimeout(getNewQuestion, 150);
+        } else {
+          triggerErrorEffect();
         }
+      }
 
-        function skipQuestion() {
-            if (!document.getElementById('overlay').classList.contains('hidden')) return; 
-            let h = typeof currentHint !== 'undefined' ? currentHint : "";
-            errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
-            if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
-                activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
-            }
+      function skipQuestion() {
+        if (!document.getElementById("overlay").classList.contains("hidden"))
+          return;
+        triggerErrorEffect(true);
+        score -=
+          20 * currentMultiplier -
+          currentQuestionErrors * 5 * currentMultiplier;
+        updateUI();
+        checkDeath();
+        setTimeout(getNewQuestion, 450);
+      }
 
-            if (typeof playWrong === 'function') playWrong(); 
-            combo = 0; consecutiveWrong++; currentQuestionErrors++; 
-            score -= (20 * currentMultiplier) - (currentQuestionErrors * 5 * currentMultiplier); 
-            updateUI(); 
-            if (typeof showToast === 'function') showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500); 
-            checkDeath(); setTimeout(getNewQuestion, 450); 
+      function updateUI() {
+        document.getElementById("ui-score").innerText = score;
+        const comboFill = document.getElementById("combo-gauge-fill");
+        const comboText = document.getElementById("combo-gauge-text");
+        const inputBox = document.getElementById("input-box");
+        let fillPercent = Math.min((combo / 10) * 100, 100);
+        comboFill.style.width = fillPercent + "%";
+        comboText.classList.remove("bump-anim");
+        void comboText.offsetWidth;
+        if (combo > 0) comboText.classList.add("bump-anim");
+        if (combo === 0) {
+          comboText.innerHTML = "0";
+          comboText.style.color = "var(--text-gray)";
+          comboFill.classList.remove("fever-fill");
+          inputBox.classList.remove("fever-box");
+        } else if (combo < 10) {
+          comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`;
+          comboText.style.color = "#e67e22";
+          comboFill.classList.remove("fever-fill");
+          inputBox.classList.remove("fever-box");
+        } else {
+          comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`;
+          comboFill.classList.add("fever-fill");
+          inputBox.classList.add("fever-box");
         }
+      }
 
-        function updateUI() { 
-            document.getElementById('ui-score').innerText = score; 
-            const comboFill = document.getElementById('combo-gauge-fill'); 
-            const comboText = document.getElementById('combo-gauge-text'); 
-            const inputBox = document.getElementById('input-box');
-            let fillPercent = Math.min((combo / 10) * 100, 100); 
-            comboFill.style.width = fillPercent + "%";
-            comboText.classList.remove('bump-anim'); void comboText.offsetWidth; 
-            if(combo > 0) comboText.classList.add('bump-anim');
-            
-            if (combo === 0) { 
-                comboText.innerHTML = "0"; comboText.style.color = "var(--text-gray)"; 
-                comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box'); 
-            } else if (combo < 10) { 
-                comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`; 
-                comboText.style.color = "#9b59b6"; 
-                comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box');
-            } else { 
-                comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`; 
-                comboFill.classList.add('fever-fill'); inputBox.classList.add('fever-box'); 
-            }
-        }
+      function startGame() {
+        document.getElementById("player-name").blur();
+        window.scrollTo(0, 0);
+        initAudio();
+        const name =
+          document.getElementById("player-name").value.trim() || "Guest";
+        document.getElementById("ui-name").innerText = name;
+        document.getElementById("overlay").classList.add("hidden");
+        document.getElementById("death-screen").classList.remove("show");
+        document.getElementById("keypad-container").style.display = "block";
+        document
+          .getElementById("ui-time")
+          .classList.remove("timer-danger-extreme");
+        document.body.classList.remove("body-danger-flash");
 
-        function startGame() {
-            const nameInput = document.getElementById('player-name');
-            if (nameInput) nameInput.blur(); 
-            window.scrollTo(0, 0); 
-            if (typeof initAudio === 'function') initAudio(); 
-            
-            const name = nameInput.value.trim() || "Guest"; 
-            document.getElementById('ui-name').innerText = name;
-            document.getElementById('overlay').classList.add('hidden'); 
-            document.getElementById('death-screen').classList.remove('show'); 
-            document.getElementById('keypad-container').style.display = 'block'; 
-            document.getElementById('ui-time').classList.remove('timer-danger-extreme'); 
-            document.body.classList.remove('body-danger-flash');
-            
-            correctQuestionsSet.clear(); errorLogMap.clear(); activeWrongPool = []; 
-            score = 0; combo = 0; consecutiveWrong = 0; currentQuestionErrors = 0; 
-            updateUI();
-            
-            startTime = Date.now(); 
-            getNewQuestion();
-            
-            if (timer) clearInterval(timer);
-            timer = setInterval(() => {
-                let passed = (Date.now() - startTime) / 1000; 
-                let remain = TIME_LIMIT - passed;
-                let progressBar = document.getElementById('progress-bar');
-                if (progressBar) progressBar.style.width = (remain / TIME_LIMIT * 100) + "%"; 
-                let sec = Math.ceil(Math.max(0, remain));
-                const timeEl = document.getElementById('ui-time'); 
-                if (timeEl) timeEl.innerText = sec;
-                
-                if (sec <= 10 && sec > 0) { 
-                    if(timeEl) timeEl.classList.add('timer-danger-extreme'); 
-                    document.body.classList.add('body-danger-flash');
-                } else { 
-                    if(timeEl) timeEl.classList.remove('timer-danger-extreme'); 
-                    document.body.classList.remove('body-danger-flash'); 
-                }
-                
-                if (sec <= 10 && sec > 0 && sec !== lastTickSec) { 
-                    if (typeof playTick === 'function') playTick(); 
-                    lastTickSec = sec; 
-                }
-                
-                if (remain <= 0) { 
-                    if(timeEl) timeEl.classList.remove('timer-danger-extreme'); 
-                    document.body.classList.remove('body-danger-flash'); 
-                    clearInterval(timer); 
-                    endGame(); 
-                }
-            }, 50); 
-        }
+        correctQuestionsSet.clear();
+        errorLogMap.clear();
+        activeWrongPool = [];
+        score = 0;
+        combo = 0;
+        consecutiveWrong = 0;
+        currentQuestionErrors = 0;
+        updateUI();
+        startTime = Date.now();
+        getNewQuestion();
+        timer = setInterval(() => {
+          let passed = (Date.now() - startTime) / 1000;
+          let remain = TIME_LIMIT - passed;
+          document.getElementById("progress-bar").style.width =
+            (remain / TIME_LIMIT) * 100 + "%";
+          let sec = Math.ceil(Math.max(0, remain));
+          const timeEl = document.getElementById("ui-time");
+          timeEl.innerText = sec;
+          if (sec <= 10 && sec > 0) {
+            timeEl.classList.add("timer-danger-extreme");
+            document.body.classList.add("body-danger-flash");
+          } else {
+            timeEl.classList.remove("timer-danger-extreme");
+            document.body.classList.remove("body-danger-flash");
+          }
+          if (sec <= 10 && sec > 0 && sec !== lastTickSec) {
+            playTick();
+            lastTickSec = sec;
+          }
+          if (remain <= 0) {
+            timeEl.classList.remove("timer-danger-extreme");
+            document.body.classList.remove("body-danger-flash");
+            clearInterval(timer);
+            endGame();
+          }
+        }, 50);
+      }
 
-        function endGame() {
-            document.getElementById('overlay').classList.remove('hidden'); 
-            document.getElementById('final-score-text').classList.remove('hidden');
-            document.getElementById('final-score-text').innerText = `最終得分: ${score}`; 
-            document.getElementById('rules-box').classList.add('hidden'); 
-            const endLog = document.getElementById('end-error-log'); 
-            endLog.innerHTML = generateErrorLogHTML(); 
-            endLog.classList.remove('hidden');
-            window.scrollTo(0, 0);
-            
-            // 空間坐標維持純客戶端結算
-            document.getElementById('player-name').value = "練習結束！這是你的錯題本 👉"; 
-        }
+      function endGame() {
+        // --- 0. 切換按鈕：隱藏開始按鈕，顯示重新開始 ---
+        document.getElementById("start-ui-group").classList.add("hidden");
+        document.getElementById("end-ui-group").classList.remove("hidden");
 
-        // 載入頁面時自動抓取排行榜
-        window.onload = fetchLeaderboard;
+        // --- 1. 顯示結算 UI ---
+        document.getElementById("overlay").classList.remove("hidden");
+        document.getElementById("final-score-text").classList.remove("hidden");
+        document.getElementById(
+          "final-score-text"
+        ).innerText = `最終得分: ${score}`;
+        document.getElementById("rules-box").classList.add("hidden");
+
+        // --- 2. 顯示錯題本 (包含提示) ---
+        const endLog = document.getElementById("end-error-log");
+        endLog.innerHTML = generateErrorLogHTML();
+        endLog.classList.remove("hidden");
+        window.scrollTo(0, 0);
+
+        // --- 3. 準備上傳資料 ---
+        let name = document.getElementById("ui-name").innerText;
+        if (name === "---") name = "Guest";
+        document.getElementById("player-name").value = "成績傳送中...";
+
+        // 整理錯題小尾巴，放在名字後面
+        let wrongArray = Array.from(errorLogMap.keys()).map((q) =>
+          q.replace(/<[^>]*>?/gm, "")
+        );
+        let errorMsg =
+          wrongArray.length > 0
+            ? ` (錯題: ${wrongArray.join(", ")})`
+            : " (全對🌟)";
+        let finalNameForForm = name + errorMsg;
+
+        // --- 4. 暴力上傳法 (GET 拼接網址) ---
+        const submitUrl = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse?${ENTRY_NAME}=${encodeURIComponent(
+          finalNameForForm
+        )}&${ENTRY_SCORE}=${score}&submit=Submit`;
+
+        fetch(submitUrl, {
+          method: "GET",
+          mode: "no-cors",
+        })
+          .then(() => {
+            document.getElementById("player-name").value = "成績已送出！";
+            // ✨ 強制刷新排行榜
+            loadGlobalLeaderboard(CSV_URL, {
+              n: name,
+              s: score,
+              isToday: true,
+            });
+            setTimeout(
+              () => (document.getElementById("player-name").value = ""),
+              2000
+            );
+          })
+          .catch((err) => {
+            console.error("傳送失敗:", err);
+            document.getElementById("player-name").value = "傳送失敗，請截圖";
+          });
+      }
     </script>
-</body>
+  </body>
 </html>
