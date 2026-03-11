@@ -717,17 +717,26 @@
             document.getElementById('final-score-text').classList.remove('hidden');
             document.getElementById('final-score-text').innerText = `最終得分: ${score}`;
             document.getElementById('rules-box').classList.add('hidden'); 
-            
             window.scrollTo(0, 0);
             
-            const name = document.getElementById('player-name').value.trim() || "Guest";
+            const name = document.getElementById('player-name').value.trim();
+            
+            // 防呆：沒填名字或分數低於0，不上傳
+            if (!name || name === "Guest" || score <= 0) {
+                document.getElementById('player-name').value = "練習結束！未輸入姓名不列入排名";
+                return;
+            }
+
             document.getElementById('player-name').value = "成績傳送中..."; 
 
             const formID = "1FAIpQLSeCrdzV9erg41HjfjB3oBDZTMosCJZBIahPX5fa2EQqF-9SQQ"; 
             const entryName = "entry.1283303860"; 
             const entryScore = "entry.1797133454"; 
 
-            let finalNameForForm = name;
+            // 完美還原：將錯題紀錄加在名字後方
+            let wrongArray = activeWrongPool.map(item => item.q);
+            let errorMsg = wrongArray.length > 0 ? ` (錯題: ${wrongArray.join(', ')})` : " (全對無錯題!)";
+            let finalNameForForm = name + errorMsg;
 
             const submitURL = `https://docs.google.com/forms/d/e/${formID}/formResponse`;
             let formData = new URLSearchParams();
