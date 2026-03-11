@@ -309,7 +309,7 @@
                         let scoreRaw = parseInt(data[i][2]);
                         if(isNaN(scoreRaw)) continue;
 
-                        let cleanName = nameRaw.split(' (錯題:')[0].split(' (全對')[0].trim();
+                        let cleanName = nameRaw.split(' (')[0].trim();
                         let isToday = todayPatterns.some(p => timeRaw.startsWith(p));
                         ranks.push({ n: cleanName, s: scoreRaw, isToday: isToday });
                     }
@@ -320,13 +320,13 @@
                 let daily = ranks.filter(r => r.isToday).sort((a,b) => b.s - a.s).slice(0, 5);
                 let dailyHtml = "<h3>🌟 今日全班 Top 5</h3>";
                 if(daily.length === 0) dailyHtml += "<div class='board-row' style='justify-content:center;'>尚無紀錄</div>";
-                daily.forEach((r, i) => dailyHtml += `<div class="board-row"><span>${i+1}. ${r.n}</span><strong>${r.s}</strong></div>`);
+                daily.forEach((r, i) => dailyHtml += `<div class="board-row"><span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;">${i+1}. ${r.n}</span><strong>${r.s}</strong></div>`);
                 dailyBoard.innerHTML = dailyHtml;
 
                 let allTime = [...ranks].sort((a,b) => b.s - a.s).slice(0, 5);
                 let allTimeHtml = "<h3>🏆 歷史全班 Top 5</h3>";
                 if(allTime.length === 0) allTimeHtml += "<div class='board-row' style='justify-content:center;'>尚無紀錄</div>";
-                allTime.forEach((r, i) => allTimeHtml += `<div class="board-row"><span>${i+1}. ${r.n}</span><strong>${r.s}</strong></div>`);
+                allTime.forEach((r, i) => allTimeHtml += `<div class="board-row"><span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;">${i+1}. ${r.n}</span><strong>${r.s}</strong></div>`);
                 allTimeBoard.innerHTML = allTimeHtml;
 
             } catch(err) {
@@ -338,7 +338,7 @@
 
         window.onload = () => { loadGlobalLeaderboard(); };
 
-        // ✨ 這是你的舊版根號渲染引擎！
+        // ✨ 舊版純文字勾勾根號
         function formatMathHTML(str) {
             return str.replace(/√(\d*)/g, (match, num) => {
                 return `<span class="sqrt-box"><div class="sqrt-tick"><svg viewBox="0 0 50 100" preserveAspectRatio="none"><path d="M 5 60 L 15 60 L 30 95 L 48 5"/></svg></div><span class="sqrt-num">${num}</span></span>`;
@@ -374,7 +374,6 @@
         function spawnComboParticle() {
             const startEl = document.getElementById('input-box');
             const endEl = document.getElementById('combo-gauge-text');
-            
             if (!startEl || !endEl) return;
             
             const startRect = startEl.getBoundingClientRect();
@@ -395,7 +394,6 @@
             particle.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             
             document.body.appendChild(particle);
-            
             void particle.offsetWidth;
             
             particle.style.left = (endRect.left + endRect.width / 2) + 'px';
@@ -406,7 +404,7 @@
             setTimeout(() => { particle.remove(); }, 400);
         }
 
-        // ✨ 這是你的最新版容錯計算引擎 (1/√2 自動算對！)
+        // ✨ 最新版容錯計算引擎 (1/√2 自動算對！)
         function evalMathStr(s) {
             if (!s) return null;
             if (!/^[0-9+\-*/().\s√]+$/.test(s)) return null;
@@ -435,6 +433,7 @@
             return true;
         }
 
+        // ✨ 廣義角產生器專用字典
         const trigMap = {
             0: {sin: "0", cos: "1", tan: "0"}, 30: {sin: "1/2", cos: "√3/2", tan: "√3/3"}, 45: {sin: "√2/2", cos: "√2/2", tan: "1"},
             60: {sin: "√3/2", cos: "1/2", tan: "√3"}, 90: {sin: "1", cos: "0"}, 120: {sin: "√3/2", cos: "-1/2", tan: "-√3"},
@@ -449,19 +448,11 @@
         let currentQuestionErrors = 0, currentMultiplier = 1;
         let timer, startTime, lastTickSec = -1;
         const TIME_LIMIT = 90;
-        let wrongQuestionsSet = new Set(); 
-        let activeWrongPool = [];
+        
+        // ✨ 重要：修復未宣告導致當機的變數
+        let activeWrongPool = []; 
         let correctQuestionsSet = new Set();
-
-        let score = 0, combo = 0, targetAns = "", userInput = "", currentQuestionStr = "";
-        let currentQuestionErrors = 0, currentMultiplier = 1;
-        let timer, startTime, lastTickSec = -1;
-        const TIME_LIMIT = 90;
-        let wrongQuestionsSet = new Set(); 
-        let activeWrongPool = [];
-        let correctQuestionsSet = new Set();
-        const ADVANCED_THRESHOLD = 100; 
-
+        
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.innerHTML = msg; 
@@ -469,29 +460,28 @@
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
-        // ✨ 這是包含最新「防連續重複出題」機制的引擎
+        // ✨ 結合廣義角＋防重複出題機制
         function getNewQuestion() {
             let remain = startTime ? (TIME_LIMIT - ((Date.now() - startTime) / 1000)) : TIME_LIMIT;
             let phaseStr = "", loop = 0;
             
-            // 判斷階段與 loop (用來產生負角或大角度)
             if (remain <= 30) {
-                currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (最後30秒: 分數 x2, 超廣義角)"; 
-                loop = Math.floor(Math.random() * 5) - 2; // 產生 -2 ~ +2 圈的角度
+                currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (分數x2, 超廣義角)"; 
+                loop = Math.floor(Math.random() * 5) - 2; 
                 document.getElementById('phase-indicator').style.color = "#c0392b";
             } else if (score >= 100) {
-                currentMultiplier = 1; phaseStr = "⚡ 進階階段 (分數達標，出現負角)"; 
-                loop = Math.floor(Math.random() * 2) - 1; // 產生 -1 ~ 0 圈的角度
+                currentMultiplier = 1; phaseStr = "⚡ 進階階段 (出現負角)"; 
+                loop = Math.floor(Math.random() * 2) - 1; 
                 document.getElementById('phase-indicator').style.color = "#d68910";
             } else {
                 currentMultiplier = 1; phaseStr = `🌱 基礎階段 (達 100 分進階)`; 
-                loop = 0; // 只考 0~360 度
+                loop = 0; 
                 document.getElementById('phase-indicator').style.color = "#27ae60";
             }
 
             let lastQ = currentQuestionStr; 
 
-            // 錯題本抽題：40% 機率，且排除剛剛才出現的上一題
+            // 錯題本抽題 (40%機率，且不是上一題)
             let availableWrong = activeWrongPool.filter(item => item.q !== lastQ);
             if (availableWrong.length > 0 && Math.random() < 0.4) {
                 let idx = Math.floor(Math.random() * availableWrong.length);
@@ -502,7 +492,7 @@
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
-            // 動態產生全新題目：排除「上一題」與「已答對的題」
+            // 動態產生全新題目 (不是上一題，且還沒答對過)
             let valid = false;
             let attempts = 0;
             let func, baseAngle, realAngle, tempQuestionStr;
@@ -514,7 +504,6 @@
                 if (trigMap[baseAngle][func] !== undefined) {
                     realAngle = baseAngle + (loop * 360);
                     tempQuestionStr = `${func} ${realAngle}°`;
-                    
                     if (tempQuestionStr !== lastQ && !correctQuestionsSet.has(tempQuestionStr)) {
                         valid = true;
                     }
@@ -522,8 +511,7 @@
                 attempts++;
             }
 
-
-            // 終極防呆
+            // 最終防呆保底
             if (!valid) tempQuestionStr = `${func} ${realAngle}°`;
 
             currentQuestionStr = tempQuestionStr;
@@ -563,8 +551,7 @@
             area.classList.remove('shake-animation'); void area.offsetWidth; area.classList.add('shake-animation');
             currentQuestionErrors++; score -= (currentQuestionErrors * 5 * currentMultiplier); 
             document.getElementById('input-box').classList.add('error-text');
-            flashScoreRed(); updateUI();
-            checkDeath(); 
+            flashScoreRed(); updateUI(); checkDeath(); 
         }
 
         function submitAnswer() {
@@ -576,9 +563,7 @@
                 activeWrongPool = activeWrongPool.filter(item => item.q !== currentQuestionStr);
 
                 spawnComboParticle();
-
-                if (combo >= 9) { playFeverCorrect(); } 
-                else { playCorrect(); }
+                if (combo >= 9) { playFeverCorrect(); } else { playCorrect(); }
                 
                 box.classList.add('correct-flash');
                 score += (10 + (combo * 2)) * currentMultiplier; combo++;
@@ -589,7 +574,6 @@
                     void body.offsetWidth; 
                     body.classList.add('strong-shake-effect');
                 }
-
                 updateUI(); setTimeout(getNewQuestion, 150); 
             } else {
                 triggerErrorEffect();
@@ -606,8 +590,7 @@
             
             playWrong(); combo = 0; currentQuestionErrors++;
             score -= (20 * currentMultiplier) - (currentQuestionErrors * 5 * currentMultiplier); 
-            updateUI(); 
-            checkDeath(); 
+            updateUI(); checkDeath(); 
             setTimeout(getNewQuestion, 400); 
         }
 
@@ -618,7 +601,6 @@
 
         function updateUI() { 
             document.getElementById('ui-score').innerText = score; 
-            
             const comboFill = document.getElementById('combo-gauge-fill');
             const comboText = document.getElementById('combo-gauge-text');
             const inputBox = document.getElementById('input-box');
@@ -631,19 +613,15 @@
             if(combo > 0) comboText.classList.add('bump-anim');
             
             if (combo === 0) {
-                comboText.innerHTML = "0";
-                comboText.style.color = "var(--text-gray)";
-                comboFill.classList.remove('fever-fill');
-                inputBox.classList.remove('fever-box'); 
+                comboText.innerHTML = "0"; comboText.style.color = "var(--text-gray)";
+                comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box'); 
             } else if (combo < 10) {
                 comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`;
                 comboText.style.color = "#e67e22";
-                comboFill.classList.remove('fever-fill');
-                inputBox.classList.remove('fever-box');
+                comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box');
             } else {
                 comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`;
-                comboFill.classList.add('fever-fill'); 
-                inputBox.classList.add('fever-box'); 
+                comboFill.classList.add('fever-fill'); inputBox.classList.add('fever-box'); 
             }
         }
 
@@ -705,17 +683,20 @@
             document.getElementById('rules-box').classList.add('hidden'); 
             window.scrollTo(0, 0);
             
-            const name = document.getElementById('player-name').value.trim();
-
+            const name = document.getElementById('player-name').value.trim() || "Guest";
+            if (name === "Guest" || score <= 0) {
+                document.getElementById('player-name').value = "練習結束！";
+                return;
+            }
+            
             document.getElementById('player-name').value = "成績傳送中..."; 
 
             const formID = "1FAIpQLSeCrdzV9erg41HjfjB3oBDZTMosCJZBIahPX5fa2EQqF-9SQQ"; 
             const entryName = "entry.1283303860"; 
             const entryScore = "entry.1797133454"; 
 
-            // 完美還原：將錯題紀錄加在名字後方
             let wrongArray = activeWrongPool.map(item => item.q);
-            let errorMsg = wrongArray.length > 0 ? ` (錯題: ${wrongArray.join(', ')})` : " (全對無錯題!)";
+            let errorMsg = wrongArray.length > 0 ? ` (錯題:${wrongArray.length}題)` : " (全對🌟)";
             let finalNameForForm = name + errorMsg;
 
             const submitURL = `https://docs.google.com/forms/d/e/${formID}/formResponse`;
