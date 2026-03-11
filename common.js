@@ -33,7 +33,9 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
     return;
   }
   try {
-    let res = await fetch(csvUrl, { cache: "no-store" });
+    let res = await fetch(csvUrl + "&t=" + new Date().getTime(), {
+      cache: "no-store",
+    });
     let text = await res.text();
     let data = parseCSV(text);
     let ranks = [];
