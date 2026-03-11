@@ -3,138 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>超好玩的三角比 - 數學領域展開</title>
-    <link rel="stylesheet" href="style.css">
+    <title>三角比遊戲</title>
     <style>
         :root {
-            --bg-main: #f7f9fc; --text-dark: #1c2833; --text-gray: #7f8c8d; --color-gold: #27ae60; 
-            --btn-white: #ffffff; --btn-del-bg: #fae5e5; --btn-del-text: #c0392b; 
+            --bg-main: #f8f9fa; --text-dark: #1c2833; --text-gray: #95a5a6; --color-gold: #d4ac73;
+            --btn-white: #ffffff; --btn-blue-bg: #eaf2f8; --btn-blue-text: #2980b9;
+            --btn-del-bg: #fae5e5; --btn-del-text: #c0392b; --btn-sqrt-bg: #fdf2e3; --btn-sqrt-text: #d68910;
             --btn-enter-bg: #2ecc71; --btn-enter-text: #ffffff;
-            --shake-intensity: 2px; 
-            --fever-color: #e74c3c; 
-        }
-        
-        #keypad {
-            display: grid !important;
-            grid-template-columns: repeat(4, 1fr) !important;
-            grid-auto-rows: min(10vh, 60px);
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .key { font-size: 26px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; cursor: pointer; font-weight: bold; color: #2c3e50;}
-        .key:active { transform: scale(0.95); }
-        
-        .key-del { grid-row: span 2; background-color: var(--btn-del-bg) !important; color: var(--btn-del-text) !important; font-size: 28px; }
-        .key-sqrt { grid-row: span 2; background-color: #fef5e7 !important; color: #d35400 !important; font-size: 28px; }
-        .key-op { background-color: #ebf5fb !important; color: #2980b9 !important; font-size: 30px; }
-        .key-enter { font-size: 20px; font-weight: bold; grid-column: 1 / -1 !important; background-color: var(--btn-enter-bg) !important; color: var(--btn-enter-text) !important; letter-spacing: 2px; }
-
-        @keyframes progressiveShake {
-            0% { transform: translate(var(--shake-intensity), var(--shake-intensity)) rotate(0deg); }
-            25% { transform: translate(calc(var(--shake-intensity) * -1), 0) rotate(1deg); }
-            50% { transform: translate(var(--shake-intensity), calc(var(--shake-intensity) * -1)) rotate(-1deg); }
-            75% { transform: translate(calc(var(--shake-intensity) * -1), var(--shake-intensity)) rotate(0deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
-        .progressive-shake { animation: progressiveShake 0.4s ease-in-out; }
-
-        @keyframes feverBgRed {
-            0%, 100% { background-color: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); }
-            50% { background-color: #c0392b; box-shadow: 0 0 25px rgba(192, 57, 43, 0.9); }
-        }
-        .fever-fill { animation: feverBgRed 0.4s infinite !important; }
-        @keyframes popRed {
-            from { transform: scale(1); }
-            to { transform: scale(1.15); color: #c0392b; }
-        }
-        .fever-text {
-            animation: popRed 0.3s infinite alternate;
-            color: var(--fever-color) !important; 
-            font-weight: 900; 
-            display: inline-block;
-        }
-        .fever-box {
-            border-color: var(--fever-color) !important;
-            box-shadow: 0 0 15px rgba(231, 76, 60, 0.4) !important;
         }
 
-        .rules-container {
-            border: 2px dashed #d4af37; border-radius: 12px; padding: 15px 20px; text-align: left; background: #fffcf5; margin-bottom: 15px;
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: var(--bg-main); 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            height: 100dvh; 
+            width: 100vw;
+            overflow: hidden; 
+            touch-action: manipulation; 
+            position: relative; 
+            padding-top: env(safe-area-inset-top); 
+            padding-bottom: env(safe-area-inset-bottom); 
+            box-sizing: border-box;
+            transition: box-shadow 0.3s;
         }
-        .rules-title {
-            color: #d4af37; text-align: center; margin-top: 0; font-size: 18px; font-weight: bold;
-        }
-        .rules-divider { border: 0; height: 1px; background: #f1e5bc; margin-bottom: 12px; }
-        .rules-list { color: #555; font-size: 14px; line-height: 1.6; padding-left: 20px; margin-bottom: 0; }
         
-        .lb-table { width: 100%; font-size: 13px; border-collapse: collapse; margin-top: 5px;}
-        .lb-table td { padding: 3px 0; border-bottom: 1px solid #eee;}
-        .lb-table tr:last-child td { border-bottom: none; }
+        #progress-container { width: 100%; height: 6px; background: #e0e0e0; flex-shrink: 0; }
+        #progress-bar { height: 100%; width: 100%; background: var(--color-gold); transition: width 0.1s linear; }
+
+        #header { display: flex; justify-content: space-between; padding: 12px 20px 8px; background: var(--bg-main); flex-shrink: 0; position: relative;}
+        
+        /* ✨ 新增：回到主選單按鈕樣式 */
+        .home-btn { position: absolute; left: 10px; top: 10px; background: #555; color: white; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 14px; font-weight: bold; z-index: 10;}
+        .home-btn:hover { background: #333; }
+
+        .stat-group { display: flex; flex-direction: column; align-items: center; flex: 1; text-align: center; margin-top: 15px;}
+        .stat-label { font-size: 10px; color: var(--text-gray); font-weight: 900; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .stat-value { font-size: 22px; font-weight: 800; color: var(--color-gold); transition: color 0.3s; }
+
+        #combo-gauge-wrapper { 
+            display: flex; align-items: center; width: 90%; max-width: 500px; 
+            margin: 0 auto 5px; gap: 10px; flex-shrink: 0; padding: 0 10px; box-sizing: border-box;
+        }
+        .combo-label { font-size: 12px; font-weight: 900; color: var(--text-gray); font-style: italic; letter-spacing: 1px;}
+        #combo-gauge-bg { 
+            flex: 1; height: 16px; background: #e0e0e0; border-radius: 12px; 
+            overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); 
+        }
+        #combo-gauge-fill { 
+            height: 100%; width: 0%; background: linear-gradient(90deg, #f39c12, #e67e22); 
+            transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-radius: 12px; 
+        }
+        #combo-gauge-text { 
+            font-size: 18px; font-weight: 900; color: var(--text-gray); 
+            min-width: 45px; text-align: left; transition: 0.2s;
+        }
+
+        @keyframes gauge-bump {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.4); color: #f39c12; text-shadow: 0 0 10px #f1c40f;}
+            100% { transform: scale(1); }
+        }
+        .bump-anim { animation: gauge-bump 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        #phase-indicator { text-align: center; font-size: 14px; font-weight: bold; color: #e67e22; height: 20px; margin-top: 2px; transition: 0.3s; flex-shrink: 0;}
+
+        #display-area { flex: 1; display: flex; justify-content: center; align-items: center; font-size: 38px; font-weight: 800; color: var(--text-dark); gap: 15px; margin-bottom: -5px; min-height: 0; }
+        #input-box { min-width: 90px; height: 55px; background: #eefdf4; border-radius: 10px; border-bottom: 4px solid var(--text-dark); display: flex; justify-content: center; align-items: center; font-size: 32px; color: var(--text-dark); padding: 0 10px; transition: 0.2s; }
+        
+        .sqrt-box { display: inline-flex; align-items: stretch; white-space: nowrap; margin: 0 0.05em; }
+        .sqrt-tick { width: 0.55em; }
+        .sqrt-tick svg { width: 100%; height: 100%; display: block; stroke: currentColor; stroke-width: 10; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        .sqrt-num { border-top: 0.08em solid currentColor; padding-top: 0.05em; padding-right: 0.05em; min-width: 0.5em; display: inline-block; }
+
+        .error-text { color: #e74c3c !important; background: #fae5e5 !important; }
+        .correct-flash { background: #d4efdf !important; transform: scale(1.05); }
+        
+        /* 錯誤搖晃 */
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px) rotate(-1deg); } 40%, 80% { transform: translateX(5px) rotate(1deg); } }
+        .shake-animation { animation: shake 0.3s ease-in-out; }
+
+        /* ✨ 新增：全畫面強力震動特效 (超過5連擊觸發) */
+        @keyframes strong-shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .strong-shake-effect { animation: strong-shake 0.4s; }
+
+        @keyframes extreme-pulse {
+            0% { transform: scale(1); text-shadow: 0 0 5px rgba(231,76,60,0.5); color: #e74c3c; }
+            50% { transform: scale(1.6); text-shadow: 0 0 20px rgba(231,76,60,1); color: #c0392b; }
+            100% { transform: scale(1); text-shadow: 0 0 5px rgba(231,76,60,0.5); color: #e74c3c; }
+        }
+        .timer-danger-extreme { animation: extreme-pulse 0.5s infinite !important; font-weight: 900 !important; }
+        @keyframes body-flash {
+            0% { box-shadow: inset 0 0 0px transparent; }
+            50% { box-shadow: inset 0 0 40px rgba(231, 76, 60, 0.35); }
+            100% { box-shadow: inset 0 0 0px transparent; }
+        }
+        .body-danger-flash { animation: body-flash 0.5s infinite; }
+
+        @keyframes fever-text-anim {
+            0% { transform: scale(1) rotate(-3deg); color: #f1c40f; text-shadow: 0 0 8px #e67e22; }
+            100% { transform: scale(1.15) rotate(3deg); color: #e74c3c; text-shadow: 0 0 15px #f39c12, 0 0 8px #e74c3c; }
+        }
+        .fever-text { animation: fever-text-anim 0.2s infinite alternate; font-weight: 900; display: inline-block; }
+        @keyframes move-gradient { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .fever-fill {
+            background: linear-gradient(90deg, #e74c3c, #f1c40f, #e74c3c, #f1c40f) !important;
+            background-size: 200% 100% !important;
+            animation: move-gradient 0.8s linear infinite !important;
+            box-shadow: 0 0 10px #e74c3c;
+        }
+        @keyframes fever-box-anim {
+            0% { box-shadow: 0 0 10px #f1c40f, inset 0 0 10px rgba(241,196,15,0.1); border-bottom-color: #f1c40f;}
+            100% { box-shadow: 0 0 25px #e74c3c, inset 0 0 20px rgba(231,76,60,0.2); border-bottom-color: #e74c3c;}
+        }
+        .fever-box { animation: fever-box-anim 0.3s infinite alternate !important; background: #fffdf5 !important; }
+
+        #toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(44, 62, 80, 0.95); color: white; padding: 10px 20px; border-radius: 30px; font-size: 20px; font-weight: bold; opacity: 0; pointer-events: none; transition: opacity 0.3s, top 0.3s; z-index: 50; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 5px;}
+        #toast.show { opacity: 1; top: 100px; }
+
+        .skip-container { text-align: center; margin-bottom: 10px; flex-shrink: 0; }
+        .skip-btn { background: #fdf2e3; color: #d68910; border: 1px solid #f5b041; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.1s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .skip-btn:active { transform: scale(0.95); background: #f8c471; color: white; }
+
+        #keypad-container { padding: 10px 15px 15px 15px; background: var(--bg-main); flex-shrink: 0; transition: 0.3s;}
+        #keypad { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, min(12vh, 60px)); gap: 10px; max-width: 500px; margin: 0 auto; }
+        .key { background: var(--btn-white); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 26px; font-weight: 700; color: var(--text-dark); box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; user-select: none; transition: transform 0.1s; position: relative; }
+        .key:active { transform: scale(0.92); }
+        .key-del { grid-column: 4; grid-row: 1 / span 2; background: var(--btn-del-bg); color: var(--btn-del-text); font-size: 28px;}
+        .key-sqrt { grid-column: 4; grid-row: 3 / span 2; background: var(--btn-sqrt-bg); padding: 0; color: var(--btn-sqrt-text); }
+        .key-blue { background: var(--btn-blue-bg); color: var(--btn-blue-text); font-size: 32px;}
+        .key-enter { grid-column: 1 / span 4; background: var(--btn-enter-bg); color: var(--btn-enter-text); font-size: 22px; letter-spacing: 2px; text-transform: uppercase; }
+
+        #overlay { position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(255,255,255,0.98); z-index: 100; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; overflow-y: auto; padding: 40px 0; -webkit-overflow-scrolling: touch; }
+        .hidden { display: none !important; }
+        input.name-input { font-size: 20px; padding: 12px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 20px; width: 70%; max-width: 300px; text-align: center; outline: none; -webkit-appearance: none; }
+        input.name-input:focus { border-color: var(--color-gold); }
+        button.action-btn { background: var(--color-gold); color: white; border: none; padding: 15px 50px; font-size: 20px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(212,172,115,0.4); margin-bottom: 30px; -webkit-appearance: none; }
+        
+        #rules-box { background: #ffffff; border: 2px dashed var(--color-gold); border-radius: 12px; padding: 12px 20px; margin-bottom: 25px; width: 80%; max-width: 400px; font-size: 13px; color: #444; line-height: 1.6; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        #rules-box h3 { margin: 0 0 8px 0; color: #d68910; text-align: center; font-size: 16px; border-bottom: 1px solid #f9e79f; padding-bottom: 5px;}
+        #rules-box ul { margin: 0; padding-left: 20px; }
+        #rules-box li { margin-bottom: 6px; }
+
+        .boards-container { display: flex; gap: 15px; width: 90%; max-width: 600px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;}
+        .board { background: #fdf2e3; padding: 15px; border-radius: 12px; flex: 1; min-width: 250px; box-sizing: border-box; }
+        .board h3 { margin: 0 0 10px 0; color: #d68910; text-align: center; font-size: 16px; border-bottom: 1px solid #f5cba7; padding-bottom: 5px;}
+        .board-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #555; }
+
+        #author-credit { position: fixed; bottom: max(4px, env(safe-area-inset-bottom)); right: 8px; font-size: 12px; font-weight: bold; color: rgba(28, 40, 51, 0.75); background-color: rgba(248, 249, 250, 0.6); padding: 4px 8px; border-radius: 8px; z-index: 5; pointer-events: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
+        /* ✨ 新增：死亡畫面遮罩 */
+        #death-screen { position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+        #death-screen.show { opacity: 1; pointer-events: auto; }
+        #death-screen h1 { color: #e74c3c; font-size: 50px; margin-bottom: 10px; text-shadow: 0 0 20px #e74c3c; }
+        
     </style>
 </head>
 <body>
+
     <div id="toast">答案提示區</div>
+    <div id="author-credit">作者：帥哥江子緯老師</div>
+
     <div id="death-screen">
         <h1>💀 你已經死了</h1>
-        <p>分數過低 (-20分)，當場死亡</p>
-        <div id="death-error-log" style="background: rgba(255,255,255,0.9); padding: 15px; border-radius: 10px; color: black; max-width: 90%; margin-top: 15px;"></div>
+        <p>分數過低 (-20分)，失去挑戰資格</p>
         <button class="action-btn" onclick="location.reload()" style="margin-top: 20px; background: #555;">重新開始</button>
-        <a href="index.html" style="color: #ccc; margin-top: 15px; display: block;">🏠 回到數學天地主選單</a>
+        <a href="index.html" style="color: #ccc; margin-top: 15px;">🏠 回到數學天地主選單</a>
     </div>
 
     <div id="overlay">
         <a href="index.html" class="home-btn" style="position: absolute; top: 15px; left: 15px;">🏠 回主選單</a>
-        <h1 style="color: #1c2833; margin-bottom: 15px; margin-top: 40px;">神奇三角函數！</h1>
         
+        <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 40px;">好玩的廣義角三角比</h1>
+        <h2 id="final-score-text" class="hidden" style="color: #d4ac73; margin-top: -10px; margin-bottom: 15px;"></h2>
         
-
-        <h2 id="final-score-text" class="hidden" style="color: var(--color-gold); margin-top: -10px; margin-bottom: 10px;"></h2>
-        <div id="end-error-log" class="hidden" style="background: #fffdf5; border: 2px dashed #e74c3c; padding: 15px; border-radius: 10px; max-width: 90%; margin: 0 auto 20px;"></div>
-
-        <div id="rules-box" class="rules-container">
-            <div class="rules-title">📜 遊戲規則與計分方式</div>
-            <hr class="rules-divider">
-            <ul class="rules-list">
-                <li><b style="color:#d35400;">挑戰時間：</b>總共 <b>90 秒</b>，請盡可能拿高分！</li>
-                <li><b style="color:#27ae60;">基本得分：</b>答對 +10 分，連續答對享有 Combo 加成！</li>
+        <div id="rules-box">
+            <h3>📜 遊戲規則與計分方式</h3>
+            <ul>
+                <li><b style="color:#d35400;">挑戰時間：</b>總共 <b>90 秒</b>，最後 10 秒極限狂熱！</li>
+                <li><b style="color:#27ae60;">基本得分：</b>答對 +10 分，滿 10 連擊觸發 FEVER 狀態！</li>
                 <li><b style="color:#8e44ad;">倒扣懲罰：</b>按錯送出會<b>漸進式扣分</b> (5分、10分...)。</li>
-                <li><b style="color:#2980b9;">難度進化：</b>總分達 <b>100分</b> 解鎖「進階階段(包含負角)」。</li>
+                <li><b style="color:#e74c3c;">死亡機制：</b>若總分低於 <b>-20分</b> 將直接出局！</li>
+                <li><b style="color:#2980b9;">難度進化：</b>總分達 <b>100分</b> 解鎖「進階階段 (包含負角)」。</li>
                 <li><b style="color:#f39c12;">狂熱時間：</b>最後 30 秒角度無限制，且<b>得分加倍</b>！</li>
-                <li><b style="color:#e74c3c;">神級錯題本：</b>按 PASS(扣20分)或答錯的題目，會收錄並反覆出題！</li>
             </ul>
         </div>
 
-        <div id="leaderboard-container" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; width: 100%; max-width: 400px; padding: 0 10px; box-sizing: border-box;">
-            <div id="today-lb" style="flex:1; background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left;">載入中...</div>
-            <div id="alltime-lb" style="flex:1; background: #fff; border-radius: 8px; padding: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left;">載入中...</div>
+        <div id="leaderboards" class="boards-container">
+            <div class="board" id="daily-board"><div class="board-row" style="justify-content:center;">成績連線中...</div></div>
+            <div class="board" id="alltime-board"><div class="board-row" style="justify-content:center;">成績連線中...</div></div>
         </div>
-        
+
         <input type="text" id="player-name" class="name-input" placeholder="請輸入姓名或學號" maxlength="10">
-        <button class="action-btn" onclick="startGame()" style="background: var(--btn-enter-bg);">START GAME</button>
+        <button class="action-btn" onclick="startGame()">START GAME</button>
     </div>
 
+    <div id="progress-container"><div id="progress-bar"></div></div>
+
     <div id="header">
-        <div class="stat-group"><div class="stat-label">STUDENT</div><div id="ui-name" class="stat-value" style="color: var(--text-gray);">---</div></div>
-        <div class="stat-group"><div class="stat-label">TIME</div><div id="ui-time" class="stat-value" style="color: var(--text-gray);">90</div></div>
-        <div class="stat-group"><div class="stat-label">SCORE</div><div id="ui-score" class="stat-value" style="color: var(--text-gray);">0</div></div>
+        <div class="stat-group"><div class="stat-label">STUDENT</div><div id="ui-name" class="stat-value">---</div></div>
+        <div class="stat-group"><div class="stat-label">TIME</div><div id="ui-time" class="stat-value" style="color: #e74c3c;">90</div></div>
+        <div class="stat-group"><div class="stat-label">SCORE</div><div id="ui-score" class="stat-value">0</div></div>
     </div>
     
     <div id="combo-gauge-wrapper">
         <div class="combo-label">COMBO</div>
-        <div id="combo-gauge-bg"><div id="combo-gauge-fill" style="background: var(--color-gold);"></div></div>
+        <div id="combo-gauge-bg">
+            <div id="combo-gauge-fill"></div>
+        </div>
         <div id="combo-gauge-text">0</div>
     </div>
-    <div id="phase-indicator">🌱 基礎階段 (連對3題解鎖進階)</div>
+
+    <div id="phase-indicator">🌱 基礎階段 (0~360度)</div>
 
     <div id="display-area">
-        <div id="question-text" style="font-size: 26px; font-weight: bold; color: var(--text-gray);">題目讀取中...</div>
-        <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 15px; margin-bottom: 5px;">
-            <div style="font-size: 32px; font-weight: bold; color: var(--text-dark); line-height: 1;">=</div>
-            <div id="input-box" style="margin-top: 0; min-width: 120px;"></div>
-            <button onclick="skipQuestion()" style="background: #ffefd5; color: #d35400; border: 2px solid #f39c12; border-radius: 12px; font-size: 14px; font-weight: bold; padding: 6px 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2); white-space: nowrap; transition: 0.1s;">
-                PASS<br><span style="font-size:11px;">(-20分)</span>
-            </button>
-        </div>
+        <div id="question-text">cos 300° =</div>
+        <div id="input-box"></div>
+    </div>
+
+    <div class="skip-container">
+        <button class="skip-btn" onclick="skipQuestion()">PASS 跳過 (-20分)</button>
     </div>
 
     <div id="keypad-container">
@@ -143,11 +246,9 @@
             <div class="key" onclick="input('8')">8</div>
             <div class="key" onclick="input('9')">9</div>
             <div class="key key-del" onclick="input('DEL')">⌫</div>
-            
             <div class="key" onclick="input('4')">4</div>
             <div class="key" onclick="input('5')">5</div>
             <div class="key" onclick="input('6')">6</div>
-            
             <div class="key" onclick="input('1')">1</div>
             <div class="key" onclick="input('2')">2</div>
             <div class="key" onclick="input('3')">3</div>
@@ -158,121 +259,154 @@
                     <span class="sqrt-num" style="min-width: 0.8em;"></span>
                 </span>
             </div>
-            
+
             <div class="key" onclick="input('0')">0</div>
-            <div class="key key-op" onclick="input('-')">-</div>
-            <div class="key key-op" onclick="input('/')">/</div>
-            
+            <div class="key key-blue" onclick="input('-')">-</div>
+            <div class="key key-blue" onclick="input('/')">/</div>
             <div class="key key-enter" onclick="submitAnswer()">送出答案 (ENTER)</div>
         </div>
     </div>
 
-    <script src="common.js"></script>
     <script>
-        const trigQuestions = [
-            { q: "sin 30°", a: "1/2", hint: "畫 30-60-90 三角形！對邊/斜邊 = 1/2", level: 1 },
-            { q: "cos 60°", a: "1/2", hint: "畫 30-60-90 三角形！鄰邊/斜邊 = 1/2", level: 1 },
-            { q: "tan 45°", a: "1", hint: "畫 45-45-90 三角形！對邊/鄰邊 = 1/1 = 1", level: 1 },
-            { q: "sin 45°", a: "√2/2", hint: "1/√2 ➡ 有理化變成 √2/2", level: 1 },
-            { q: "cos 0°", a: "1", hint: "角度為 0，鄰邊=斜邊 ➡ cos=1", level: 1 },
-            { q: "sin 90°", a: "1", hint: "角度為 90，對邊=斜邊 ➡ sin=1", level: 2 },
-            { q: "cos 180°", a: "-1", hint: "第二象限角，鄰邊方向相反 ➡ cos=-1", level: 2 },
-            { q: "sin(-30°)", a: "-1/2", hint: "sin(-θ) = -sinθ ➡ -sin 30° = -1/2", level: 2 },
-            { q: "tan 240°", a: "√3", hint: "第三象限角，tan=對邊/鄰邊=(-√3)/(-1) = √3", level: 2 },
-            { q: "sin 120°", a: "√3/2", hint: "第二象限角，對邊>0 ➡ sin 120 = sin 60 = √3/2", level: 3 },
-            { q: "cos 150°", a: "-√3/2", hint: "第二象限角，cos<0 ➡ cos 150 = -cos 30 = -√3/2", level: 3 },
-            { q: "sin 315°", a: "-√2/2", hint: "第四象限角，對邊<0 ➡ sin 315 = -sin 45 = -√2/2", level: 3 },
-            { q: "tan(-60°)", a: "-√3", hint: "tan(-θ) = -tanθ ➡ -tan 60° = -√3", level: 3 }
-        ];
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv"; 
 
-        let score = 0, combo = 0, consecutiveWrong = 0;
-        let targetAns = "", userInput = "", currentQuestionStr = "", currentHint = "";
-        let currentQuestionErrors = 0, currentMultiplier = 1;
-        let timer, startTime, lastTickSec = -1; const TIME_LIMIT = 90;
-        
-        let correctQuestionsSet = new Set();
-        let errorLogMap = new Map(); 
-        let activeWrongPool = [];
-
-        // ✨ CSV 排行榜讀取邏輯
-        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
-        
         function parseCSV(text) {
-            let p = "", row = [""], ret = [row], i = 0, r = 0, s = !0, l;
+            let p = '', row = [''], ret = [row], i = 0, r = 0, s = !0, l;
             for (l of text) {
-                if ('"' === l) { if (s && l === p) row[i] += l; s = !s; }
-                else if ("," === l && s) l = row[++i] = "";
-                else if ("\n" === l && s) { if ("\r" === p) row[i] = row[i].slice(0, -1); row = ret[++r] = [(l = "")]; i = 0; }
+                if ('"' === l) { if (s && l === p) row[i] += l; s = !s; } 
+                else if (',' === l && s) l = row[++i] = '';
+                else if ('\n' === l && s) { if ('\r' === p) row[i] = row[i].slice(0, -1); row = ret[++r] = [l = '']; i = 0; } 
                 else row[i] += l;
                 p = l;
             }
             return ret;
         }
 
-        async function fetchLeaderboard() {
+        async function loadGlobalLeaderboard(newRecord = null) {
+            const dailyBoard = document.getElementById('daily-board');
+            const allTimeBoard = document.getElementById('alltime-board');
+
+            if (!CSV_URL || !CSV_URL.startsWith("http")) {
+                dailyBoard.innerHTML = "<div class='board-row' style='justify-content:center; color:#e74c3c;'>尚未綁定資料庫</div>";
+                allTimeBoard.innerHTML = "<div class='board-row' style='justify-content:center; color:#e74c3c;'>尚未綁定資料庫</div>";
+                return;
+            }
+
             try {
                 let res = await fetch(CSV_URL, { cache: "no-store" });
                 let text = await res.text();
                 let data = parseCSV(text);
-                let records = [];
-                for (let i = 1; i < data.length; i++) {
-                    if (data[i].length >= 3) {
-                        let dateStr = data[i][0];
-                        let name = data[i][1] || "";
-                        let score = parseInt(data[i][2]);
-                        if (!isNaN(score)) records.push({ dateStr, name, score });
+                
+                let ranks = [];
+                let todayObj = new Date();
+                let y = todayObj.getFullYear(), m = todayObj.getMonth() + 1, d = todayObj.getDate();
+                let todayPatterns = [`${y}/${m}/${d}`, `${y}/${String(m).padStart(2,'0')}/${String(d).padStart(2,'0')}`, `${y}-${m}-${d}`, `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`];
+
+                for(let i=1; i<data.length; i++) {
+                    if(data[i].length >= 3) {
+                        let timeRaw = data[i][0] || "";
+                        let nameRaw = data[i][1] || "";
+                        let scoreRaw = parseInt(data[i][2]);
+                        if(isNaN(scoreRaw)) continue;
+
+                        let cleanName = nameRaw.split(' (錯題:')[0].split(' (全對')[0].trim();
+                        let isToday = todayPatterns.some(p => timeRaw.startsWith(p));
+                        ranks.push({ n: cleanName, s: scoreRaw, isToday: isToday });
                     }
                 }
 
-                let allTime = [...records].sort((a, b) => b.score - a.score).slice(0, 5);
+                if (newRecord) ranks.push(newRecord);
 
-                let todayObj = new Date();
-                let ty = todayObj.getFullYear();
-                let tm = todayObj.getMonth() + 1;
-                let td = todayObj.getDate();
+                let daily = ranks.filter(r => r.isToday).sort((a,b) => b.s - a.s).slice(0, 5);
+                let dailyHtml = "<h3>🌟 今日全班 Top 5</h3>";
+                if(daily.length === 0) dailyHtml += "<div class='board-row' style='justify-content:center;'>尚無紀錄</div>";
+                daily.forEach((r, i) => dailyHtml += `<div class="board-row"><span>${i+1}. ${r.n}</span><strong>${r.s}</strong></div>`);
+                dailyBoard.innerHTML = dailyHtml;
 
-                let todayRecords = records.filter(r => {
-                    let rowDate = new Date(r.dateStr);
-                    if (!isNaN(rowDate)) {
-                        return rowDate.getFullYear() === ty && (rowDate.getMonth() + 1) === tm && rowDate.getDate() === td;
-                    } else {
-                        return r.dateStr.includes(`${ty}/${tm}/${td}`) || r.dateStr.includes(`${ty}/${String(tm).padStart(2,'0')}/${String(td).padStart(2,'0')}`);
-                    }
-                });
-                let todayTop = [...todayRecords].sort((a, b) => b.score - a.score).slice(0, 5);
+                let allTime = [...ranks].sort((a,b) => b.s - a.s).slice(0, 5);
+                let allTimeHtml = "<h3>🏆 歷史全班 Top 5</h3>";
+                if(allTime.length === 0) allTimeHtml += "<div class='board-row' style='justify-content:center;'>尚無紀錄</div>";
+                allTime.forEach((r, i) => allTimeHtml += `<div class="board-row"><span>${i+1}. ${r.n}</span><strong>${r.s}</strong></div>`);
+                allTimeBoard.innerHTML = allTimeHtml;
 
-                renderLB("today-lb", todayTop, "🌟 今日前五名");
-                renderLB("alltime-lb", allTime, "🏆 歷史前五名");
-            } catch(e) {
-                document.getElementById("today-lb").innerHTML = "排行榜讀取失敗";
-                document.getElementById("alltime-lb").innerHTML = "排行榜讀取失敗";
+            } catch(err) {
+                console.log("Leaderboard fetch error", err);
+                dailyBoard.innerHTML = "<div class='board-row' style='justify-content:center;'>讀取失敗，請重新整理</div>";
+                allTimeBoard.innerHTML = "<div class='board-row' style='justify-content:center;'>讀取失敗，請重新整理</div>";
             }
         }
 
-        function renderLB(id, list, title) {
-            let html = `<h3 style="margin: 0 0 10px 0; color: #d68910; text-align: center; font-size: 16px; border-bottom: 1px solid #f5cba7; padding-bottom: 5px;">${title}</h3>`;
-            if (list.length === 0) {
-                html += `<div class='board-row' style='justify-content:center; display: flex; margin-bottom: 5px; font-size: 14px; color: #555;'>尚無紀錄</div>`;
-            } else {
-                list.forEach((item, index) => {
-                    let cleanName = item.name.split(" (")[0];
-                    html += `<div class="board-row" style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #555;">
-                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70%;">${index+1}. ${cleanName}</span>
-                        <strong style="color: var(--text-dark);">${item.score}</strong>
-                    </div>`;
-                });
-            }
-            document.getElementById(id).innerHTML = html;
-        }
+        window.onload = () => { loadGlobalLeaderboard(); };
 
-        // ✨ 完美復刻截圖的作答區根號樣式 (粗體數學字＋粗細一致的 border-top)
-        function formatMath(str) {
-            if (!str) return "";
-            return String(str).replace(/√(\d*)/g, (match, num) => {
-                return `<span class="sqrt-box" style="display: inline-flex; align-items: stretch; white-space: nowrap; margin: 0 0.05em;"><div class="sqrt-tick" style="width: 0.55em;"><svg viewBox="0 0 50 100" preserveAspectRatio="none" style="width: 100%; height: 100%; display: block; stroke: currentColor; stroke-width: 10; fill: none; stroke-linecap: round; stroke-linejoin: round;"><path d="M 5 60 L 15 60 L 30 95 L 48 5"/></svg></div><span class="sqrt-num" style="border-top: 0.08em solid currentColor; padding-top: 0.05em; padding-right: 0.05em; min-width: 0.5em; display: inline-block;">${num}</span></span>`;
+        // ✨ 這是你的舊版根號渲染引擎！
+        function formatMathHTML(str) {
+            return str.replace(/√(\d*)/g, (match, num) => {
+                return `<span class="sqrt-box"><div class="sqrt-tick"><svg viewBox="0 0 50 100" preserveAspectRatio="none"><path d="M 5 60 L 15 60 L 30 95 L 48 5"/></svg></div><span class="sqrt-num">${num}</span></span>`;
             });
         }
 
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        function playTone(freq, type, duration, vol=0.1) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+        function playCorrect() { playTone(600, 'sine', 0.1); setTimeout(()=>playTone(800, 'sine', 0.2), 100); }
+        function playWrong() { playTone(200, 'sawtooth', 0.3, 0.2); }
+        function playTick() { playTone(1000, 'square', 0.05, 0.02); }
+        
+        function playFeverCorrect() {
+            if (!audioCtx) return;
+            playTone(800, 'sine', 0.05);
+            setTimeout(()=>playTone(1000, 'sine', 0.05), 60);
+            setTimeout(()=>playTone(1200, 'sine', 0.1), 120);
+        }
+
+        function spawnComboParticle() {
+            const startEl = document.getElementById('input-box');
+            const endEl = document.getElementById('combo-gauge-text');
+            
+            if (!startEl || !endEl) return;
+            
+            const startRect = startEl.getBoundingClientRect();
+            const endRect = endEl.getBoundingClientRect();
+            
+            const particle = document.createElement('div');
+            particle.innerText = "+1";
+            particle.style.position = 'fixed';
+            particle.style.left = (startRect.left + startRect.width / 2) + 'px';
+            particle.style.top = startRect.top + 'px';
+            particle.style.transform = 'translate(-50%, -50%)';
+            particle.style.color = '#e67e22';
+            particle.style.fontWeight = '900';
+            particle.style.fontSize = '26px';
+            particle.style.textShadow = '0 0 10px #f1c40f';
+            particle.style.zIndex = '9999';
+            particle.style.pointerEvents = 'none';
+            particle.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            
+            document.body.appendChild(particle);
+            
+            void particle.offsetWidth;
+            
+            particle.style.left = (endRect.left + endRect.width / 2) + 'px';
+            particle.style.top = (endRect.top + endRect.height / 2) + 'px';
+            particle.style.opacity = '0';
+            particle.style.transform = 'translate(-50%, -50%) scale(0.2)';
+            
+            setTimeout(() => { particle.remove(); }, 400);
+        }
+
+        // ✨ 這是你的最新版容錯計算引擎 (1/√2 自動算對！)
         function evalMathStr(s) {
             if (!s) return null;
             if (!/^[0-9+\-*/().\s√]+$/.test(s)) return null;
@@ -301,16 +435,46 @@
             return true;
         }
 
-       function getNewQuestion() {
+        const trigQuestions = [
+            { q: "sin 30°", a: "1/2", level: 1 },
+            { q: "cos 60°", a: "1/2", level: 1 },
+            { q: "tan 45°", a: "1", level: 1 },
+            { q: "sin 45°", a: "√2/2", level: 1 },
+            { q: "cos 0°", a: "1", level: 1 },
+            { q: "sin 90°", a: "1", level: 2 },
+            { q: "cos 180°", a: "-1", level: 2 },
+            { q: "sin(-30°)", a: "-1/2", level: 2 },
+            { q: "tan 240°", a: "√3", level: 2 },
+            { q: "sin 120°", a: "√3/2", level: 3 },
+            { q: "cos 150°", a: "-√3/2", level: 3 },
+            { q: "sin 315°", a: "-√2/2", level: 3 },
+            { q: "tan(-60°)", a: "-√3", level: 3 }
+        ];
+
+        let score = 0, combo = 0, targetAns = "", userInput = "", currentQuestionStr = "";
+        let currentQuestionErrors = 0, currentMultiplier = 1;
+        let timer, startTime, lastTickSec = -1;
+        const TIME_LIMIT = 90;
+        let wrongQuestionsSet = new Set(); 
+        let activeWrongPool = [];
+        let correctQuestionsSet = new Set();
+        const ADVANCED_THRESHOLD = 100; 
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = msg; 
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // ✨ 這是包含最新「防連續重複出題」機制的引擎
+        function getNewQuestion() {
             let remain = startTime ? (TIME_LIMIT - ((Date.now() - startTime) / 1000)) : TIME_LIMIT;
             let phaseStr = ""; let allowedLevels = []; 
             
             if (remain <= 30) {
                 currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (全難度解禁, 分數 x2)"; 
                 allowedLevels = [1, 2, 3]; document.getElementById('phase-indicator').style.color = "#c0392b";
-            } else if (consecutiveWrong >= 2) {
-                currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，回歸基礎三角)"; 
-                allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
             } else if (score >= 120) {
                 currentMultiplier = 1; phaseStr = "⚡ 最終階段 (高角度與特殊角考驗)"; 
                 allowedLevels = [3]; document.getElementById('phase-indicator').style.color = "#8e44ad";
@@ -322,78 +486,63 @@
                 allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
             }
 
-            // ✨ 1. 記住上一題，避免連續重複
             let lastQ = currentQuestionStr; 
 
-            // ✨ 2. 錯題本抽題：40% 機率，且排除剛剛才出現的上一題
             let availableWrong = activeWrongPool.filter(item => item.q !== lastQ);
             if (availableWrong.length > 0 && Math.random() < 0.4) {
                 let idx = Math.floor(Math.random() * availableWrong.length);
                 let qData = availableWrong[idx];
-                currentQuestionStr = qData.q; targetAns = qData.a; currentHint = qData.h;
+                currentQuestionStr = qData.q; targetAns = qData.a; 
                 document.getElementById('phase-indicator').innerText = phaseStr;
-                document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr);
+                document.getElementById('question-text').innerHTML = formatMathHTML(currentQuestionStr) + " =";
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
-            // ✨ 3. 正常抽題：排除「已答對的」以及「上一題」
             let pool = trigQuestions.filter(q => allowedLevels.includes(q.level) && !correctQuestionsSet.has(q.q) && q.q !== lastQ);
             
-            // 題庫見底時的保底機制 (依序放寬條件，但優先排除上一題)
             if (pool.length === 0) pool = trigQuestions.filter(q => allowedLevels.includes(q.level) && q.q !== lastQ); 
             if (pool.length === 0) pool = trigQuestions.filter(q => !correctQuestionsSet.has(q.q) && q.q !== lastQ);
             if (pool.length === 0) pool = trigQuestions.filter(q => q.q !== lastQ);
-            if (pool.length === 0) pool = trigQuestions; // 最終防呆
+            if (pool.length === 0) pool = trigQuestions; 
 
             let selectedQ = pool[Math.floor(Math.random() * pool.length)];
-            currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; currentHint = selectedQ.hint;
+            currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; 
 
             document.getElementById('phase-indicator').innerText = phaseStr;
-            document.getElementById('question-text').innerHTML = formatMath(currentQuestionStr); 
+            document.getElementById('question-text').innerHTML = formatMathHTML(currentQuestionStr) + " ="; 
             userInput = ""; currentQuestionErrors = 0; renderInput();
         }
 
         function renderInput() {
-            const box = document.getElementById('input-box'); 
-            box.innerHTML = formatMath(userInput); 
+            const box = document.getElementById('input-box');
+            box.innerHTML = formatMathHTML(userInput);
             box.classList.remove('error-text', 'correct-flash');
         }
-        function input(val) { if (val === 'DEL') userInput = userInput.slice(0, -1); else userInput += val; renderInput(); }
 
-        function generateErrorLogHTML() {
-            if (errorLogMap.size === 0) return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
-            let html = "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:16px; color:#444; margin:0; padding-left:20px;'>";
-            errorLogMap.forEach((data, qStr) => {
-                html += `<li style="margin-bottom:12px; line-height:1.5;">${formatMath(qStr)} <br><span style="color:#16a085; font-weight:bold;">➡ 正解: ${formatMath(data.ans)}</span><br><span style="color:#7f8c8d; font-size:14px;">💡 提示: ${formatMath(data.hint)}</span></li>`;
-            });
-            return html + "</ul>";
+        function input(val) {
+            if (val === 'DEL') userInput = userInput.slice(0, -1);
+            else userInput += val;
+            renderInput();
         }
 
         function checkDeath() {
             if (score < -20) {
-                if(timer) clearInterval(timer); 
-                document.getElementById('death-error-log').innerHTML = generateErrorLogHTML(); 
-                document.getElementById('death-screen').classList.add('show'); 
+                clearInterval(timer);
+                document.getElementById('death-screen').classList.add('show');
                 document.getElementById('keypad-container').style.display = 'none'; 
             }
         }
 
         function triggerErrorEffect() {
-            if (typeof playWrong === 'function') playWrong(); 
-            combo = 0; consecutiveWrong++; 
-            let h = typeof currentHint !== 'undefined' ? currentHint : "";
-            errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
+            playWrong(); combo = 0; 
             if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
-                activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
+                activeWrongPool.push({ q: currentQuestionStr, a: targetAns });
             }
-
-            const area = document.getElementById('display-area'); 
+            const area = document.getElementById('display-area');
             area.classList.remove('shake-animation'); void area.offsetWidth; area.classList.add('shake-animation');
             currentQuestionErrors++; score -= (currentQuestionErrors * 5 * currentMultiplier); 
-            document.getElementById('input-box').classList.add('error-text'); 
-            if (typeof flashScoreRed === 'function') flashScoreRed(); 
-            updateUI();
-            if (typeof showToast === 'function') showToast(`❌ 答錯囉！再仔細想想！`, 1200); 
+            document.getElementById('input-box').classList.add('error-text');
+            flashScoreRed(); updateUI();
             checkDeath(); 
         }
 
@@ -404,115 +553,124 @@
             if (isMathEqual(userInput, targetAns)) {
                 if (currentQuestionErrors === 0) correctQuestionsSet.add(currentQuestionStr);
                 activeWrongPool = activeWrongPool.filter(item => item.q !== currentQuestionStr);
-                errorLogMap.delete(currentQuestionStr); 
 
-                if (typeof spawnComboParticle === 'function') spawnComboParticle(); 
-                consecutiveWrong = 0; 
-                if (combo >= 9) { 
-                    if (typeof playFeverCorrect === 'function') playFeverCorrect(); 
-                } else { 
-                    if (typeof playCorrect === 'function') playCorrect(); 
-                }
-                box.classList.add('correct-flash'); score += (10 + (combo * 2)) * currentMultiplier; combo++;
+                spawnComboParticle();
+
+                if (combo >= 9) { playFeverCorrect(); } 
+                else { playCorrect(); }
                 
-                if (combo >= 5) { 
-                    const body = document.body; 
-                    let intensity = Math.min(2 + (combo - 5), 10);
-                    body.style.setProperty('--shake-intensity', `${intensity}px`);
-                    body.classList.remove('progressive-shake'); 
+                box.classList.add('correct-flash');
+                score += (10 + (combo * 2)) * currentMultiplier; combo++;
+                
+                if (combo > 5) {
+                    const body = document.body;
+                    body.classList.remove('strong-shake-effect');
                     void body.offsetWidth; 
-                    body.classList.add('progressive-shake'); 
+                    body.classList.add('strong-shake-effect');
                 }
+
                 updateUI(); setTimeout(getNewQuestion, 150); 
-            } else { triggerErrorEffect(); }
+            } else {
+                triggerErrorEffect();
+            }
         }
 
         function skipQuestion() {
             if (!document.getElementById('overlay').classList.contains('hidden')) return; 
-            let h = typeof currentHint !== 'undefined' ? currentHint : "";
-            errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
+            showToast(`正確答案是: ${formatMathHTML(targetAns)}`); 
+            
             if (!activeWrongPool.some(item => item.q === currentQuestionStr)) {
-                activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
+                activeWrongPool.push({ q: currentQuestionStr, a: targetAns });
             }
-
-            if (typeof playWrong === 'function') playWrong(); 
-            combo = 0; consecutiveWrong++; currentQuestionErrors++; 
+            
+            playWrong(); combo = 0; currentQuestionErrors++;
             score -= (20 * currentMultiplier) - (currentQuestionErrors * 5 * currentMultiplier); 
             updateUI(); 
-            if (typeof showToast === 'function') showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500); 
-            checkDeath(); setTimeout(getNewQuestion, 450); 
+            checkDeath(); 
+            setTimeout(getNewQuestion, 400); 
+        }
+
+        function flashScoreRed() {
+            const scoreElement = document.getElementById('ui-score');
+            scoreElement.style.color = '#e74c3c'; setTimeout(() => scoreElement.style.color = 'var(--color-gold)', 300);
         }
 
         function updateUI() { 
             document.getElementById('ui-score').innerText = score; 
-            const comboFill = document.getElementById('combo-gauge-fill'); 
-            const comboText = document.getElementById('combo-gauge-text'); 
+            
+            const comboFill = document.getElementById('combo-gauge-fill');
+            const comboText = document.getElementById('combo-gauge-text');
             const inputBox = document.getElementById('input-box');
-            let fillPercent = Math.min((combo / 10) * 100, 100); 
+            
+            let fillPercent = Math.min((combo / 10) * 100, 100);
             comboFill.style.width = fillPercent + "%";
-            comboText.classList.remove('bump-anim'); void comboText.offsetWidth; 
+            
+            comboText.classList.remove('bump-anim');
+            void comboText.offsetWidth; 
             if(combo > 0) comboText.classList.add('bump-anim');
             
-            if (combo === 0) { 
-                comboText.innerHTML = "0"; comboText.style.color = "var(--text-gray)"; 
-                comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box'); 
-            } else if (combo < 10) { 
-                comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`; 
-                comboText.style.color = "#27ae60"; 
-                comboFill.classList.remove('fever-fill'); inputBox.classList.remove('fever-box');
-            } else { 
-                comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`; 
-                comboFill.classList.add('fever-fill'); inputBox.classList.add('fever-box'); 
+            if (combo === 0) {
+                comboText.innerHTML = "0";
+                comboText.style.color = "var(--text-gray)";
+                comboFill.classList.remove('fever-fill');
+                inputBox.classList.remove('fever-box'); 
+            } else if (combo < 10) {
+                comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`;
+                comboText.style.color = "#e67e22";
+                comboFill.classList.remove('fever-fill');
+                inputBox.classList.remove('fever-box');
+            } else {
+                comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`;
+                comboFill.classList.add('fever-fill'); 
+                inputBox.classList.add('fever-box'); 
             }
         }
 
         function startGame() {
-            const nameInput = document.getElementById('player-name');
-            if (nameInput) nameInput.blur(); 
+            document.getElementById('player-name').blur();
             window.scrollTo(0, 0); 
-            if (typeof initAudio === 'function') initAudio(); 
             
-            const name = nameInput.value.trim() || "Guest"; 
+            initAudio(); 
+            const name = document.getElementById('player-name').value.trim() || "Guest";
             document.getElementById('ui-name').innerText = name;
-            document.getElementById('overlay').classList.add('hidden'); 
+            
+            document.getElementById('overlay').classList.add('hidden');
             document.getElementById('death-screen').classList.remove('show'); 
             document.getElementById('keypad-container').style.display = 'block'; 
-            document.getElementById('ui-time').classList.remove('timer-danger-extreme'); 
+            document.getElementById('ui-time').classList.remove('timer-danger-extreme');
             document.body.classList.remove('body-danger-flash');
             
-            correctQuestionsSet.clear(); errorLogMap.clear(); activeWrongPool = []; 
-            score = 0; combo = 0; consecutiveWrong = 0; currentQuestionErrors = 0; 
+            correctQuestionsSet.clear(); activeWrongPool = []; 
+            score = 0; combo = 0; currentQuestionErrors = 0;
             updateUI();
             
-            startTime = Date.now(); 
+            startTime = Date.now();
             getNewQuestion();
             
             if (timer) clearInterval(timer);
             timer = setInterval(() => {
-                let passed = (Date.now() - startTime) / 1000; 
+                let passed = (Date.now() - startTime) / 1000;
                 let remain = TIME_LIMIT - passed;
-                let progressBar = document.getElementById('progress-bar');
-                if (progressBar) progressBar.style.width = (remain / TIME_LIMIT * 100) + "%"; 
+                
+                document.getElementById('progress-bar').style.width = (remain / TIME_LIMIT * 100) + "%";
                 let sec = Math.ceil(Math.max(0, remain));
-                const timeEl = document.getElementById('ui-time'); 
-                if (timeEl) timeEl.innerText = sec;
                 
-                if (sec <= 10 && sec > 0) { 
-                    if(timeEl) timeEl.classList.add('timer-danger-extreme'); 
+                const timeEl = document.getElementById('ui-time');
+                timeEl.innerText = sec;
+                
+                if (sec <= 10 && sec > 0) {
+                    timeEl.classList.add('timer-danger-extreme');
                     document.body.classList.add('body-danger-flash');
-                } else { 
-                    if(timeEl) timeEl.classList.remove('timer-danger-extreme'); 
-                    document.body.classList.remove('body-danger-flash'); 
+                } else {
+                    timeEl.classList.remove('timer-danger-extreme');
+                    document.body.classList.remove('body-danger-flash');
                 }
                 
-                if (sec <= 10 && sec > 0 && sec !== lastTickSec) { 
-                    if (typeof playTick === 'function') playTick(); 
-                    lastTickSec = sec; 
-                }
+                if (sec <= 10 && sec > 0 && sec !== lastTickSec) { playTick(); lastTickSec = sec; }
                 
                 if (remain <= 0) { 
-                    if(timeEl) timeEl.classList.remove('timer-danger-extreme'); 
-                    document.body.classList.remove('body-danger-flash'); 
+                    timeEl.classList.remove('timer-danger-extreme'); 
+                    document.body.classList.remove('body-danger-flash');
                     clearInterval(timer); 
                     endGame(); 
                 }
@@ -520,21 +678,37 @@
         }
 
         function endGame() {
-            document.getElementById('overlay').classList.remove('hidden'); 
+            document.getElementById('overlay').classList.remove('hidden');
             document.getElementById('final-score-text').classList.remove('hidden');
-            document.getElementById('final-score-text').innerText = `最終得分: ${score}`; 
+            document.getElementById('final-score-text').innerText = `最終得分: ${score}`;
             document.getElementById('rules-box').classList.add('hidden'); 
-            const endLog = document.getElementById('end-error-log'); 
-            endLog.innerHTML = generateErrorLogHTML(); 
-            endLog.classList.remove('hidden');
+            
             window.scrollTo(0, 0);
             
-            // 由於三角比尚未綁定上傳表單，這裡僅保留本地畫面結算
-            document.getElementById('player-name').value = "練習結束！這是你的錯題本 👉"; 
-        }
+            const name = document.getElementById('player-name').value.trim() || "Guest";
+            document.getElementById('player-name').value = "成績傳送中..."; 
 
-        // 載入頁面時自動抓取排行榜
-        window.onload = fetchLeaderboard;
+            const formID = "1FAIpQLSeCrdzV9erg41HjfjB3oBDZTMosCJZBIahPX5fa2EQqF-9SQQ"; 
+            const entryName = "entry.1283303860"; 
+            const entryScore = "entry.1797133454"; 
+
+            let finalNameForForm = name;
+
+            const submitURL = `https://docs.google.com/forms/d/e/${formID}/formResponse`;
+            let formData = new URLSearchParams();
+            formData.append(entryName, finalNameForForm); 
+            formData.append(entryScore, score);
+
+            fetch(submitURL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData.toString() })
+            .then(() => {
+                document.getElementById('player-name').value = "成績已送出！"; 
+                loadGlobalLeaderboard({ n: name, s: score, isToday: true });
+                setTimeout(() => { document.getElementById('player-name').style.display = 'none'; }, 2000);
+            }).catch((error) => {
+                console.error('傳送失敗', error);
+                document.getElementById('player-name').value = "傳送失敗，請截圖給老師";
+            });
+        }
     </script>
 </body>
 </html>
