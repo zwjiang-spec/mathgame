@@ -494,8 +494,8 @@ button.action-btn {
 .boards-container {
   display: flex;
   gap: 15px;
-  width: 90%;
-  max-width: 600px;
+  width: 80%;
+  max-width: 400px;
   margin-bottom: 20px;
   flex-wrap: wrap;
   justify-content: center;
