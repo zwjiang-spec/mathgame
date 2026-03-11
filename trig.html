@@ -522,20 +522,6 @@
                 attempts++;
             }
 
-            // 保底機制：如果該階段題目快被抽光了，就放寬標準(只排除上一題)
-            if (!valid) {
-                attempts = 0;
-                while(!valid && attempts < 100) {
-                    func = funcs[Math.floor(Math.random() * funcs.length)];
-                    baseAngle = baseAngles[Math.floor(Math.random() * baseAngles.length)];
-                    if (trigMap[baseAngle][func] !== undefined) {
-                        realAngle = baseAngle + (loop * 360);
-                        tempQuestionStr = `${func} ${realAngle}°`;
-                        if (tempQuestionStr !== lastQ) valid = true;
-                    }
-                    attempts++;
-                }
-            }
 
             // 終極防呆
             if (!valid) tempQuestionStr = `${func} ${realAngle}°`;
