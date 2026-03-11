@@ -706,12 +706,6 @@
             window.scrollTo(0, 0);
             
             const name = document.getElementById('player-name').value.trim();
-            
-            // 防呆：沒填名字或分數低於0，不上傳
-            if (!name || name === "Guest" || score <= 0) {
-                document.getElementById('player-name').value = "練習結束！未輸入姓名不列入排名";
-                return;
-            }
 
             document.getElementById('player-name').value = "成績傳送中..."; 
 
