@@ -435,21 +435,23 @@
             return true;
         }
 
-        const trigQuestions = [
-            { q: "sin 30°", a: "1/2", level: 1 },
-            { q: "cos 60°", a: "1/2", level: 1 },
-            { q: "tan 45°", a: "1", level: 1 },
-            { q: "sin 45°", a: "√2/2", level: 1 },
-            { q: "cos 0°", a: "1", level: 1 },
-            { q: "sin 90°", a: "1", level: 2 },
-            { q: "cos 180°", a: "-1", level: 2 },
-            { q: "sin(-30°)", a: "-1/2", level: 2 },
-            { q: "tan 240°", a: "√3", level: 2 },
-            { q: "sin 120°", a: "√3/2", level: 3 },
-            { q: "cos 150°", a: "-√3/2", level: 3 },
-            { q: "sin 315°", a: "-√2/2", level: 3 },
-            { q: "tan(-60°)", a: "-√3", level: 3 }
-        ];
+        const trigMap = {
+            0: {sin: "0", cos: "1", tan: "0"}, 30: {sin: "1/2", cos: "√3/2", tan: "√3/3"}, 45: {sin: "√2/2", cos: "√2/2", tan: "1"},
+            60: {sin: "√3/2", cos: "1/2", tan: "√3"}, 90: {sin: "1", cos: "0"}, 120: {sin: "√3/2", cos: "-1/2", tan: "-√3"},
+            135: {sin: "√2/2", cos: "-√2/2", tan: "-1"}, 150: {sin: "1/2", cos: "-√3/2", tan: "-√3/3"}, 180: {sin: "0", cos: "-1", tan: "0"},
+            210: {sin: "-1/2", cos: "-√3/2", tan: "√3/3"}, 225: {sin: "-√2/2", cos: "-√2/2", tan: "1"}, 240: {sin: "-√3/2", cos: "-1/2", tan: "√3"},
+            270: {sin: "-1", cos: "0"}, 300: {sin: "-√3/2", cos: "1/2", tan: "-√3"}, 315: {sin: "-√2/2", cos: "√2/2", tan: "-1"}, 330: {sin: "-1/2", cos: "√3/2", tan: "-√3/3"}
+        };
+        const baseAngles = Object.keys(trigMap).map(Number);
+        const funcs = ['sin', 'cos', 'tan'];
+
+        let score = 0, combo = 0, targetAns = "", userInput = "", currentQuestionStr = "";
+        let currentQuestionErrors = 0, currentMultiplier = 1;
+        let timer, startTime, lastTickSec = -1;
+        const TIME_LIMIT = 90;
+        let wrongQuestionsSet = new Set(); 
+        let activeWrongPool = [];
+        let correctQuestionsSet = new Set();
 
         let score = 0, combo = 0, targetAns = "", userInput = "", currentQuestionStr = "";
         let currentQuestionErrors = 0, currentMultiplier = 1;
@@ -470,24 +472,26 @@
         // ✨ 這是包含最新「防連續重複出題」機制的引擎
         function getNewQuestion() {
             let remain = startTime ? (TIME_LIMIT - ((Date.now() - startTime) / 1000)) : TIME_LIMIT;
-            let phaseStr = ""; let allowedLevels = []; 
+            let phaseStr = "", loop = 0;
             
+            // 判斷階段與 loop (用來產生負角或大角度)
             if (remain <= 30) {
-                currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (全難度解禁, 分數 x2)"; 
-                allowedLevels = [1, 2, 3]; document.getElementById('phase-indicator').style.color = "#c0392b";
-            } else if (score >= 120) {
-                currentMultiplier = 1; phaseStr = "⚡ 最終階段 (高角度與特殊角考驗)"; 
-                allowedLevels = [3]; document.getElementById('phase-indicator').style.color = "#8e44ad";
-            } else if (combo >= 3 || score >= 50) {
-                currentMultiplier = 1; phaseStr = "⚡ 進階階段 (情境與多象限練習)"; 
-                allowedLevels = [2, 3]; document.getElementById('phase-indicator').style.color = "#d68910";
+                currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (最後30秒: 分數 x2, 超廣義角)"; 
+                loop = Math.floor(Math.random() * 5) - 2; // 產生 -2 ~ +2 圈的角度
+                document.getElementById('phase-indicator').style.color = "#c0392b";
+            } else if (score >= 100) {
+                currentMultiplier = 1; phaseStr = "⚡ 進階階段 (分數達標，出現負角)"; 
+                loop = Math.floor(Math.random() * 2) - 1; // 產生 -1 ~ 0 圈的角度
+                document.getElementById('phase-indicator').style.color = "#d68910";
             } else {
-                currentMultiplier = 1; phaseStr = `🌱 基礎階段 (連對3題解鎖進階)`; 
-                allowedLevels = [1]; document.getElementById('phase-indicator').style.color = "#27ae60";
+                currentMultiplier = 1; phaseStr = `🌱 基礎階段 (達 100 分進階)`; 
+                loop = 0; // 只考 0~360 度
+                document.getElementById('phase-indicator').style.color = "#27ae60";
             }
 
             let lastQ = currentQuestionStr; 
 
+            // 錯題本抽題：40% 機率，且排除剛剛才出現的上一題
             let availableWrong = activeWrongPool.filter(item => item.q !== lastQ);
             if (availableWrong.length > 0 && Math.random() < 0.4) {
                 let idx = Math.floor(Math.random() * availableWrong.length);
@@ -498,15 +502,46 @@
                 userInput = ""; currentQuestionErrors = 0; renderInput(); return;
             }
 
-            let pool = trigQuestions.filter(q => allowedLevels.includes(q.level) && !correctQuestionsSet.has(q.q) && q.q !== lastQ);
-            
-            if (pool.length === 0) pool = trigQuestions.filter(q => allowedLevels.includes(q.level) && q.q !== lastQ); 
-            if (pool.length === 0) pool = trigQuestions.filter(q => !correctQuestionsSet.has(q.q) && q.q !== lastQ);
-            if (pool.length === 0) pool = trigQuestions.filter(q => q.q !== lastQ);
-            if (pool.length === 0) pool = trigQuestions; 
+            // 動態產生全新題目：排除「上一題」與「已答對的題」
+            let valid = false;
+            let attempts = 0;
+            let func, baseAngle, realAngle, tempQuestionStr;
 
-            let selectedQ = pool[Math.floor(Math.random() * pool.length)];
-            currentQuestionStr = selectedQ.q; targetAns = selectedQ.a; 
+            while(!valid && attempts < 100) {
+                func = funcs[Math.floor(Math.random() * funcs.length)];
+                baseAngle = baseAngles[Math.floor(Math.random() * baseAngles.length)];
+                
+                if (trigMap[baseAngle][func] !== undefined) {
+                    realAngle = baseAngle + (loop * 360);
+                    tempQuestionStr = `${func} ${realAngle}°`;
+                    
+                    if (tempQuestionStr !== lastQ && !correctQuestionsSet.has(tempQuestionStr)) {
+                        valid = true;
+                    }
+                }
+                attempts++;
+            }
+
+            // 保底機制：如果該階段題目快被抽光了，就放寬標準(只排除上一題)
+            if (!valid) {
+                attempts = 0;
+                while(!valid && attempts < 100) {
+                    func = funcs[Math.floor(Math.random() * funcs.length)];
+                    baseAngle = baseAngles[Math.floor(Math.random() * baseAngles.length)];
+                    if (trigMap[baseAngle][func] !== undefined) {
+                        realAngle = baseAngle + (loop * 360);
+                        tempQuestionStr = `${func} ${realAngle}°`;
+                        if (tempQuestionStr !== lastQ) valid = true;
+                    }
+                    attempts++;
+                }
+            }
+
+            // 終極防呆
+            if (!valid) tempQuestionStr = `${func} ${realAngle}°`;
+
+            currentQuestionStr = tempQuestionStr;
+            targetAns = trigMap[baseAngle][func];
 
             document.getElementById('phase-indicator').innerText = phaseStr;
             document.getElementById('question-text').innerHTML = formatMathHTML(currentQuestionStr) + " ="; 
