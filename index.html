@@ -310,6 +310,37 @@
     </style>
   </head>
   <body>
+    <div id="maintenance-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(247, 249, 252, 0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; backdrop-filter: blur(5px);">
+        <div style="background: #fff; border: 4px dashed #e74c3c; border-radius: 20px; padding: 40px 30px; width: 80%; max-width: 400px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); animation: float 2s ease-in-out infinite;">
+            <div style="font-size: 60px; margin-bottom: 10px;">🚧</div>
+            <h1 style="color: #c0392b; font-size: 32px; font-weight: 900; margin: 0 0 15px 0; letter-spacing: 2px;">系統維修中</h1>
+            <p style="color: #2c3e50; font-size: 18px; font-weight: bold; line-height: 1.6; margin: 0;">
+                為了提供更完美的遊戲體驗<br>
+                數學領域展開正在進行系統升級！
+            </p>
+            <div style="margin-top: 25px; padding: 15px; background: #fdf2e3; border-radius: 10px; border-left: 5px solid #f39c12;">
+                <span style="color: #d35400; font-size: 20px; font-weight: 900;">預計明天 18:00 結束更新</span>
+            </div>
+            <p style="color: #7f8c8d; font-size: 15px; margin-top: 20px; font-weight: bold;">
+                請同學們稍後再回來挑戰 🔥
+            </p>
+        </div>
+        <style>
+            @keyframes float {
+                0% { transform: translateY(0px); }
+                50% { transform: translateY(-10px); }
+                100% { transform: translateY(0px); }
+            }
+            body { overflow: hidden; } /* 維修時禁止畫面上下滑動 */
+        </style>
+    </div>
+    ```
+
+### 💡 為什麼用這個方法？
+1. **防護力 100%**：`z-index: 9999` 會讓這塊擋板浮在最高層，學生按不到後面的任何遊戲連結。
+2. **無痛復原**：你不需要去辛苦地隱藏原本的按鈕或連結，明天 18:00 之後，只要把這段註解包起來的代碼**直接刪除**，遊戲大廳就立刻重新開張！
+
+你可以貼上去後重整看看，畫面會有一個微微呼吸浮動的精美維修面板，非常專業！
     <div id="version-btn" onclick="toggleUpdateLog()">v2.1.0 更新日誌</div>
 
     <div id="update-modal">
