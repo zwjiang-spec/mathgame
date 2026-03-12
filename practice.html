@@ -881,6 +881,7 @@
       function submitAnswer() {
         if (userInput === "") return;
         const box = document.getElementById("input-box");
+        if (box.classList.contains("correct-flash") || box.classList.contains("error-text")) return;
         let isCorrect = false;
         if (isCoordinateAns) {
           let cleanUser = userInput.replace(/[\s\(\)]/g, "");
