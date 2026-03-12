@@ -835,7 +835,7 @@
       function submitAnswer() {
         if (userInput === "") return;
         const box = document.getElementById("input-box");
-
+        if (box.classList.contains("correct-flash") || box.classList.contains("error-text")) return;
         if (isMathEqual(userInput, targetAns)) {
           if (currentQuestionErrors === 0)
             correctQuestionsSet.add(currentQuestionStr);
