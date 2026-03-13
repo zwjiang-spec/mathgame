@@ -24,6 +24,65 @@
         --btn-enter-bg: #2ecc71;
         --btn-enter-text: #ffffff;
       }
+      /* ✨ 💀 專屬地獄模式的變色與鍵盤擴充 */
+      body.hell-theme {
+        background-color: #050000;
+        background-image: linear-gradient(
+            rgba(192, 57, 43, 0.08) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(192, 57, 43, 0.08) 1px, transparent 1px);
+        color: #e0e0e0;
+      }
+      body.hell-theme #overlay {
+        background: rgba(10, 2, 2, 0.95);
+        border: 1px solid #c0392b;
+        box-shadow: 0 0 30px rgba(192, 57, 43, 0.3);
+      }
+      body.hell-theme h1 {
+        color: #ff4d4d;
+        text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+      }
+      body.hell-theme #question-text {
+        color: #ff6b6b !important;
+      }
+      body.hell-theme .key {
+        background: #1a1a1a;
+        color: #ddd;
+        border: 1px solid #444;
+      }
+      body.hell-theme .key-blue {
+        background: #4a0000;
+        color: #ffcccc;
+      }
+      body.hell-theme .key-sqrt {
+        background: #3a1a00;
+        color: #ffb07c;
+      }
+      body.hell-theme .key-enter {
+        background: #800000;
+        color: white;
+      }
+
+      /* ✨ 鍵盤無縫變形魔法 (保護你原本最完美的比例) */
+      .hell-key {
+        display: none !important; /* 一般模式隱藏地獄按鍵 */
+      }
+      body.hell-theme .hell-key {
+        display: flex !important; /* 地獄模式浮現 */
+      }
+      .normal-key {
+        display: flex !important;
+      }
+      body.hell-theme .normal-key {
+        display: none !important; /* 地獄模式隱藏一般按鍵 */
+      }
+      .key-blank {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
@@ -278,13 +337,29 @@
         <div class="key" onclick="input('7')">7</div>
         <div class="key" onclick="input('8')">8</div>
         <div class="key" onclick="input('9')">9</div>
-        <div class="key key-del" onclick="input('DEL')">⌫</div>
+        <div class="key key-del" onclick="input('DEL')">
+          <svg
+            viewBox="0 0 24 24"
+            width="24"
+            height="24"
+            stroke="currentColor"
+            stroke-width="2"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+            <line x1="18" y1="9" x2="12" y2="15"></line>
+            <line x1="12" y1="9" x2="18" y2="15"></line>
+          </svg>
+        </div>
+
         <div class="key" onclick="input('4')">4</div>
         <div class="key" onclick="input('5')">5</div>
         <div class="key" onclick="input('6')">6</div>
         <div class="key key-sqrt" onclick="input('√')" title="根號">
-          <span class="sqrt-box" style="font-size: 1.2em"
-            ><div class="sqrt-tick">
+          <span class="sqrt-box" style="font-size: 1.2em">
+            <div class="sqrt-tick">
               <svg viewBox="0 0 50 100" preserveAspectRatio="none">
                 <path
                   d="M 5 60 L 15 60 L 30 95 L 48 5"
@@ -296,23 +371,46 @@
                 />
               </svg>
             </div>
-            <span class="sqrt-num" style="min-width: 0.6em"></span
-          ></span>
+            <span class="sqrt-num" style="min-width: 0.6em"></span>
+          </span>
         </div>
+
         <div class="key" onclick="input('1')">1</div>
         <div class="key" onclick="input('2')">2</div>
         <div class="key" onclick="input('3')">3</div>
         <div class="key key-blue" onclick="input('-')">-</div>
+
         <div class="key" onclick="input('0')">0</div>
         <div class="key key-blue" onclick="input('/')">/</div>
         <div
-          class="key key-blue"
+          class="key key-blue normal-key"
           style="grid-column: span 2; font-size: 32px"
           onclick="input(',')"
         >
           ,
         </div>
-        <div class="key key-enter" onclick="submitAnswer()">
+        <div class="key key-blue hell-key" onclick="input('(')">(</div>
+        <div class="key key-blue hell-key" onclick="input(')')">)</div>
+
+        <div
+          class="key key-enter normal-key"
+          style="grid-column: span 4"
+          onclick="submitAnswer()"
+        >
+          送出答案 (ENTER)
+        </div>
+        <div
+          class="key key-blue hell-key"
+          style="grid-column: span 2"
+          onclick="input('+')"
+        >
+          +
+        </div>
+        <div
+          class="key key-enter hell-key"
+          style="grid-column: span 2"
+          onclick="submitAnswer()"
+        >
           送出答案 (ENTER)
         </div>
       </div>
@@ -350,6 +448,108 @@
         330: { sin: "-1/2", cos: "√3/2", tan: "-√3/3" },
       };
       const baseAngles = Object.keys(trigMap).map(Number);
+
+      // ✨ 判斷是否為地獄模式
+      const urlParams = new URLSearchParams(window.location.search);
+      const isHellMode = urlParams.get("mode") === "hell";
+
+      if (isHellMode) {
+        document.body.classList.add("hell-theme");
+        document.querySelector("h1").innerHTML = `💀 夢魘的三角比`;
+      }
+
+      // 💀 地獄 15度 家族題庫
+      const hell15Map = {
+        15: { sin: "(√6-√2)/4", cos: "(√6+√2)/4", tan: "2-√3" },
+        75: { sin: "(√6+√2)/4", cos: "(√6-√2)/4", tan: "2+√3" },
+        105: { sin: "(√6+√2)/4", cos: "-(√6-√2)/4", tan: "-2-√3" },
+        165: { sin: "(√6-√2)/4", cos: "-(√6+√2)/4", tan: "-2+√3" },
+        195: { sin: "-(√6-√2)/4", cos: "-(√6+√2)/4", tan: "2-√3" },
+        255: { sin: "-(√6+√2)/4", cos: "-(√6-√2)/4", tan: "2+√3" },
+        285: { sin: "-(√6+√2)/4", cos: "(√6-√2)/4", tan: "-2-√3" },
+        345: { sin: "-(√6-√2)/4", cos: "(√6+√2)/4", tan: "-2+√3" },
+      };
+      const base15Angles = Object.keys(hell15Map).map(Number);
+
+      // 💀 地獄 18度 家族題庫
+      const hell18List = [
+        { f: "sin", a: 18, ans: "(√5-1)/4", h: "sin 18°" },
+        { f: "cos", a: 36, ans: "(√5+1)/4", h: "cos 36°" },
+        { f: "sin", a: 54, ans: "(√5+1)/4", h: "sin 54° = cos 36°" },
+        { f: "cos", a: 72, ans: "(√5-1)/4", h: "cos 72° = sin 18°" },
+        {
+          f: "sin",
+          a: 162,
+          ans: "(√5-1)/4",
+          h: "第二象限 sin 為正，參考角 18°",
+        },
+        {
+          f: "cos",
+          a: 144,
+          ans: "-(√5+1)/4",
+          h: "第二象限 cos 為負，參考角 36°",
+        },
+        {
+          f: "sin",
+          a: 126,
+          ans: "(√5+1)/4",
+          h: "第二象限 sin 為正，參考角 54°",
+        },
+        {
+          f: "cos",
+          a: 108,
+          ans: "-(√5-1)/4",
+          h: "第二象限 cos 為負，參考角 72°",
+        },
+        {
+          f: "sin",
+          a: 198,
+          ans: "-(√5-1)/4",
+          h: "第三象限 sin 為負，參考角 18°",
+        },
+        {
+          f: "cos",
+          a: 216,
+          ans: "-(√5+1)/4",
+          h: "第三象限 cos 為負，參考角 36°",
+        },
+        {
+          f: "sin",
+          a: 234,
+          ans: "-(√5+1)/4",
+          h: "第三象限 sin 為負，參考角 54°",
+        },
+        {
+          f: "cos",
+          a: 252,
+          ans: "-(√5-1)/4",
+          h: "第三象限 cos 為負，參考角 72°",
+        },
+        {
+          f: "sin",
+          a: 342,
+          ans: "-(√5-1)/4",
+          h: "第四象限 sin 為負，參考角 18°",
+        },
+        {
+          f: "cos",
+          a: 324,
+          ans: "(√5+1)/4",
+          h: "第四象限 cos 為正，參考角 36°",
+        },
+        {
+          f: "sin",
+          a: 306,
+          ans: "-(√5+1)/4",
+          h: "第四象限 sin 為負，參考角 54°",
+        },
+        {
+          f: "cos",
+          a: 288,
+          ans: "(√5-1)/4",
+          h: "第四象限 cos 為正，參考角 72°",
+        },
+      ];
       const funcs = ["sin", "cos", "tan"];
 
       let score = 0,
@@ -358,7 +558,7 @@
         targetAns = "",
         userInput = "",
         currentQuestionStr = "";
-      let currentHint = ""; // ✨ 我們新增的提示變數加在這裡了！
+      let currentHint = "";
 
       let currentQuestionErrors = 0,
         currentMultiplier = 1;
@@ -367,7 +567,6 @@
         lastTickSec = -1;
       const TIME_LIMIT = 90;
 
-      // ✨ 新增的三大管理陣列 (對的集合、錯題清單、高機率錯題池)
       let correctQuestionsSet = new Set();
       let errorLogMap = new Map();
       let activeWrongPool = [];
@@ -378,44 +577,67 @@
           : TIME_LIMIT;
         let phaseStr = "",
           loop = 0;
-        let func, baseAngle, realAngle;
         let valid = false,
           attempts = 0;
 
-        if (remain <= 30) {
-          currentMultiplier = 2;
-          phaseStr = "🔥 狂熱時間 (最後30秒: 分數 x2, 超廣義角)";
-          loop = Math.floor(Math.random() * 5) - 2;
-          document.getElementById("phase-indicator").style.color = "#c0392b";
-        } else if (consecutiveWrong >= 2) {
-          currentMultiplier = 1;
-          phaseStr = "🌱 基礎保底 (連續失誤，幫你找回手感)";
-          loop = 0;
-          document.getElementById("phase-indicator").style.color = "#27ae60";
-        } else if (combo >= 3) {
-          currentMultiplier = 1;
-          phaseStr = "⚡ 乘勝追擊 (挑戰負角與廣義角)";
-          loop = Math.floor(Math.random() * 3) - 1;
-          document.getElementById("phase-indicator").style.color = "#d68910";
-        } else if (score >= 100) {
-          currentMultiplier = 1;
-          phaseStr = "⚡ 進階階段 (分數達標，解鎖負角)";
-          loop = Math.floor(Math.random() * 2) - 1;
-          document.getElementById("phase-indicator").style.color = "#d68910";
+        // --- 💀 模式分流：階段與難度判定 ---
+        if (isHellMode) {
+          if (remain <= 30) {
+            currentMultiplier = 3;
+            phaseStr = "🔥 領域展開 (15°/18° 極限同界角)";
+            loop = Math.floor(Math.random() * 5) - 2;
+            if (loop === 0) loop = 1;
+            document.getElementById("phase-indicator").style.color = "#c0392b";
+          } else if (score >= 60 || remain <= 60) {
+            currentMultiplier = 2;
+            phaseStr = "💀 夢魘階段 (15°與18°換角)";
+            loop = 0;
+            document.getElementById("phase-indicator").style.color = "#8e44ad";
+          } else {
+            currentMultiplier = 1.5;
+            phaseStr = "🌪️ 暴風前夕 (進階廣義角)";
+            loop = Math.floor(Math.random() * 5) - 2;
+            if (loop === 0) loop = 1;
+            document.getElementById("phase-indicator").style.color = "#d68910";
+          }
         } else {
-          currentMultiplier = 1;
-          phaseStr = `🌱 基礎階段 (連對3題解鎖進階)`;
-          loop = 0;
-          document.getElementById("phase-indicator").style.color = "#27ae60";
+          // 🟢 一般模式
+          if (remain <= 30) {
+            currentMultiplier = 2;
+            phaseStr = "🔥 狂熱時間 (最後30秒: 分數 x2, 超廣義角)";
+            loop = Math.floor(Math.random() * 5) - 2;
+            document.getElementById("phase-indicator").style.color = "#c0392b";
+          } else if (consecutiveWrong >= 2) {
+            currentMultiplier = 1;
+            phaseStr = "🌱 基礎保底 (連續失誤，幫你找回手感)";
+            loop = 0;
+            document.getElementById("phase-indicator").style.color = "#27ae60";
+          } else if (combo >= 3) {
+            currentMultiplier = 1;
+            phaseStr = "⚡ 乘勝追擊 (挑戰負角與廣義角)";
+            loop = Math.floor(Math.random() * 3) - 1;
+            document.getElementById("phase-indicator").style.color = "#d68910";
+          } else if (score >= 100) {
+            currentMultiplier = 1;
+            phaseStr = "⚡ 進階階段 (分數達標，解鎖負角)";
+            loop = Math.floor(Math.random() * 2) - 1;
+            document.getElementById("phase-indicator").style.color = "#d68910";
+          } else {
+            currentMultiplier = 1;
+            phaseStr = `🌱 基礎階段 (連對3題解鎖進階)`;
+            loop = 0;
+            document.getElementById("phase-indicator").style.color = "#27ae60";
+          }
         }
 
+        // --- 錯題池出題邏輯 ---
         let lastQ = currentQuestionStr;
         let availableWrong = activeWrongPool.filter((item) => item.q !== lastQ);
         if (availableWrong.length > 0 && Math.random() < 0.4) {
           let idx = Math.floor(Math.random() * availableWrong.length);
           currentQuestionStr = availableWrong[idx].q;
           targetAns = availableWrong[idx].a;
-          currentHint = availableWrong[idx].hint; // 讀取錯題的提示
+          currentHint = availableWrong[idx].hint;
           document.getElementById("phase-indicator").innerText = phaseStr;
           document.getElementById(
             "question-text"
@@ -426,62 +648,90 @@
           return;
         }
 
+        // --- 隨機生題邏輯 ---
+        let func, baseAngle, realAngle;
         while (!valid && attempts < 100) {
-          func = funcs[Math.floor(Math.random() * 3)];
-          baseAngle = baseAngles[Math.floor(Math.random() * baseAngles.length)];
-          if (trigMap[baseAngle][func] !== undefined) {
-            realAngle = baseAngle + loop * 360;
-            let tempQuestionStr = `${func} ${realAngle}°`;
-            if (
-              !correctQuestionsSet.has(tempQuestionStr) &&
-              tempQuestionStr !== lastQ
-            ) {
-              valid = true;
-              currentQuestionStr = tempQuestionStr;
-              targetAns = trigMap[baseAngle][func];
+          if (isHellMode && (score >= 60 || remain <= 60)) {
+            if (Math.random() < 0.6) {
+              func = funcs[Math.floor(Math.random() * 3)];
+              baseAngle =
+                base15Angles[Math.floor(Math.random() * base15Angles.length)];
+              targetAns = hell15Map[baseAngle][func];
+              currentHint = "利用和差角公式展開：15° = 60°-45° 或 45°-30°";
+            } else {
+              let qObj =
+                hell18List[Math.floor(Math.random() * hell18List.length)];
+              func = qObj.f;
+              baseAngle = qObj.a;
+              targetAns = qObj.ans;
+              currentHint = qObj.h;
             }
+          } else {
+            func = funcs[Math.floor(Math.random() * 3)];
+            baseAngle =
+              baseAngles[Math.floor(Math.random() * baseAngles.length)];
+            if (trigMap[baseAngle][func] !== undefined) {
+              targetAns = trigMap[baseAngle][func];
+              realAngle = baseAngle + loop * 360;
+              let modAngle = ((realAngle % 360) + 360) % 360;
+              let h = "";
+              if (realAngle !== modAngle) h += `同界角 ${modAngle}°。 `;
+              if (
+                modAngle === 0 ||
+                modAngle === 90 ||
+                modAngle === 180 ||
+                modAngle === 270
+              ) {
+                h += `象限角，直接看單位圓坐標。`;
+              } else {
+                let quad, ref, sign;
+                if (modAngle < 90) {
+                  quad = "一";
+                  ref = modAngle;
+                  sign = "正";
+                } else if (modAngle < 180) {
+                  quad = "二";
+                  ref = 180 - modAngle;
+                  sign = func === "sin" ? "正" : "負";
+                } else if (modAngle < 270) {
+                  quad = "三";
+                  ref = modAngle - 180;
+                  sign = func === "tan" ? "正" : "負";
+                } else {
+                  quad = "四";
+                  ref = 360 - modAngle;
+                  sign = func === "cos" ? "正" : "負";
+                }
+                h += `第${quad}象限 (${func}為${sign})，參考角 ${ref}°。`;
+              }
+              currentHint = h;
+            } else {
+              attempts++;
+              continue;
+            }
+          }
+
+          realAngle = baseAngle + loop * 360;
+          let displayAngleStr =
+            realAngle < 0 ? `(${realAngle}°)` : `${realAngle}°`;
+          let tempQuestionStr = `${func}${displayAngleStr}`;
+
+          if (
+            !correctQuestionsSet.has(tempQuestionStr) &&
+            tempQuestionStr !== lastQ
+          ) {
+            valid = true;
+            currentQuestionStr = tempQuestionStr;
           }
           attempts++;
         }
+
         if (!valid) {
           realAngle = baseAngle + loop * 360;
-          currentQuestionStr = `${func} ${realAngle}°`;
-          targetAns = trigMap[baseAngle][func];
+          let displayAngleStr =
+            realAngle < 0 ? `(${realAngle}°)` : `${realAngle}°`;
+          currentQuestionStr = `${func}${displayAngleStr}`;
         }
-
-        // ✨ 自動產生三角比的教學提示
-        let modAngle = ((realAngle % 360) + 360) % 360;
-        let h = "";
-        if (realAngle !== modAngle) h += `同界角 ${modAngle}°。 `;
-        if (
-          modAngle === 0 ||
-          modAngle === 90 ||
-          modAngle === 180 ||
-          modAngle === 270
-        ) {
-          h += `象限角，直接看單位圓坐標。`;
-        } else {
-          let quad, ref, sign;
-          if (modAngle < 90) {
-            quad = "一";
-            ref = modAngle;
-            sign = "正";
-          } else if (modAngle < 180) {
-            quad = "二";
-            ref = 180 - modAngle;
-            sign = func === "sin" ? "正" : "負";
-          } else if (modAngle < 270) {
-            quad = "三";
-            ref = modAngle - 180;
-            sign = func === "tan" ? "正" : "負";
-          } else {
-            quad = "四";
-            ref = 360 - modAngle;
-            sign = func === "cos" ? "正" : "負";
-          }
-          h += `第${quad}象限 (${func}為${sign})，參考角 ${ref}°。`;
-        }
-        currentHint = h;
 
         document.getElementById("phase-indicator").innerText = phaseStr;
         document.getElementById(
@@ -528,7 +778,6 @@
         playWrong();
         combo = 0;
         consecutiveWrong++;
-        // 儲存答案與提示
         errorLogMap.set(currentQuestionStr, {
           ans: formatMathHTML(targetAns),
           hint: currentHint,
@@ -555,10 +804,22 @@
         checkDeath();
       }
 
+      // ✨ 防連點鎖：使用 isProcessing 變數，防禦手速過快的玩家
+      let isProcessing = false;
+
       function submitAnswer() {
-        if (userInput === "") return;
+        if (userInput === "" || isProcessing) return;
+
+        // 取得輸入框
         const box = document.getElementById("input-box");
-        if (box.classList.contains("correct-flash") || box.classList.contains("error-text")) return;
+        if (
+          box.classList.contains("correct-flash") ||
+          box.classList.contains("error-text")
+        )
+          return;
+
+        isProcessing = true; // 上鎖
+
         let userVal = evalMath(userInput);
         let targetVal = evalMath(targetAns);
         let isCorrect =
@@ -567,7 +828,6 @@
           Math.abs(userVal - targetVal) < 1e-5;
 
         if (isCorrect) {
-          // ✨ 答對了！放入正確集合，並從錯題池中移除
           correctQuestionsSet.add(currentQuestionStr);
           activeWrongPool = activeWrongPool.filter(
             (item) => item.q !== currentQuestionStr
@@ -575,11 +835,9 @@
 
           spawnComboParticle();
           consecutiveWrong = 0;
-          if (combo >= 9) {
-            playFeverCorrect();
-          } else {
-            playCorrect();
-          }
+          if (combo >= 9) playFeverCorrect();
+          else playCorrect();
+
           box.classList.add("correct-flash");
           score += (10 + combo * 2) * currentMultiplier;
           combo++;
@@ -590,22 +848,36 @@
             body.classList.add("strong-shake-effect");
           }
           updateUI();
-          setTimeout(getNewQuestion, 150);
+          setTimeout(() => {
+            getNewQuestion();
+            isProcessing = false; // 出完下一題解鎖
+          }, 150);
         } else {
           triggerErrorEffect();
+          setTimeout(() => {
+            isProcessing = false;
+          }, 300); // 答錯延遲解鎖
         }
       }
 
       function skipQuestion() {
-        if (!document.getElementById("overlay").classList.contains("hidden"))
+        if (
+          !document.getElementById("overlay").classList.contains("hidden") ||
+          isProcessing
+        )
           return;
+        isProcessing = true; // 上鎖
+
         triggerErrorEffect(true);
         score -=
           20 * currentMultiplier -
           currentQuestionErrors * 5 * currentMultiplier;
         updateUI();
         checkDeath();
-        setTimeout(getNewQuestion, 450);
+        setTimeout(() => {
+          getNewQuestion();
+          isProcessing = false; // 出完下一題解鎖
+        }, 450);
       }
 
       function updateUI() {
@@ -639,6 +911,7 @@
         document.getElementById("player-name").blur();
         window.scrollTo(0, 0);
         initAudio();
+
         const name =
           document.getElementById("player-name").value.trim() || "Guest";
         document.getElementById("ui-name").innerText = name;
@@ -650,7 +923,6 @@
           .classList.remove("timer-danger-extreme");
         document.body.classList.remove("body-danger-flash");
 
-        // ✨ 清空狀態
         correctQuestionsSet.clear();
         errorLogMap.clear();
         activeWrongPool = [];
@@ -661,6 +933,7 @@
         updateUI();
         startTime = Date.now();
         getNewQuestion();
+
         timer = setInterval(() => {
           let passed = (Date.now() - startTime) / 1000;
           let remain = TIME_LIMIT - passed;
@@ -691,8 +964,17 @@
 
       function endGame() {
         document.getElementById("start-ui-group").classList.add("hidden");
-        document.getElementById("end-ui-group").classList.remove("hidden");
-        // --- 1. 顯示結算 UI ---
+        const endGroup = document.getElementById("end-ui-group");
+        endGroup.classList.remove("hidden");
+
+        const restartBtn = endGroup.querySelector("button");
+        if (restartBtn) {
+          restartBtn.disabled = true;
+          restartBtn.innerText = "⏳ 成績上傳中...請稍候";
+          restartBtn.style.opacity = "0.5";
+          restartBtn.style.cursor = "not-allowed";
+        }
+
         document.getElementById("overlay").classList.remove("hidden");
         document.getElementById("final-score-text").classList.remove("hidden");
         document.getElementById(
@@ -700,18 +982,15 @@
         ).innerText = `最終得分: ${score}`;
         document.getElementById("rules-box").classList.add("hidden");
 
-        // --- 2. 顯示錯題本 (包含提示) ---
         const endLog = document.getElementById("end-error-log");
         endLog.innerHTML = generateErrorLogHTML();
         endLog.classList.remove("hidden");
         window.scrollTo(0, 0);
 
-        // --- 3. 準備上傳資料 ---
         let name = document.getElementById("ui-name").innerText;
         if (name === "---") name = "Guest";
         document.getElementById("player-name").value = "成績傳送中...";
 
-        // 整理錯題小尾巴，放在名字後面
         let wrongArray = Array.from(errorLogMap.keys()).map((q) =>
           q.replace(/<[^>]*>?/gm, "")
         );
@@ -721,24 +1000,36 @@
             : " (全對🌟)";
         let finalNameForForm = name + errorMsg;
 
-        // --- 4. 暴力上傳法 (GET 拼接網址) ---
-        // 這是最穩定的方法，直接模擬瀏覽器送出表單
-        const submitUrl = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse?${ENTRY_NAME}=${encodeURIComponent(
-          finalNameForForm
-        )}&${ENTRY_SCORE}=${score}&submit=Submit`;
+        // ✨ 升級為超穩定 POST 上傳法，無懼錯題太長
+        const submitUrl = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
+        const formData = new URLSearchParams();
+        formData.append(ENTRY_NAME, finalNameForForm);
+        formData.append(ENTRY_SCORE, score);
+        formData.append("submit", "Submit");
 
         fetch(submitUrl, {
-          method: "GET",
+          method: "POST",
           mode: "no-cors",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: formData.toString(),
         })
           .then(() => {
             document.getElementById("player-name").value = "成績已送出！";
-            // ✨ 強制刷新排行榜 (加上時間戳記破解快取)
             loadGlobalLeaderboard(CSV_URL, {
               n: name,
               s: score,
               isToday: true,
             });
+
+            if (restartBtn) {
+              restartBtn.disabled = false;
+              restartBtn.innerText = "再玩一局 (重新開始)";
+              restartBtn.style.opacity = "1";
+              restartBtn.style.cursor = "pointer";
+            }
+
             setTimeout(
               () => (document.getElementById("player-name").value = ""),
               2000
@@ -747,6 +1038,12 @@
           .catch((err) => {
             console.error("傳送失敗:", err);
             document.getElementById("player-name").value = "傳送失敗，請截圖";
+            if (restartBtn) {
+              restartBtn.disabled = false;
+              restartBtn.innerText = "上傳失敗，點此重新開始";
+              restartBtn.style.opacity = "1";
+              restartBtn.style.cursor = "pointer";
+            }
           });
       }
     </script>
