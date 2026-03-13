@@ -237,48 +237,7 @@
     </div>
 
     <div id="keypad-container">
-      <div id="keypad">
-        <div class="key" onclick="input('7')">7</div>
-        <div class="key" onclick="input('8')">8</div>
-        <div class="key" onclick="input('9')">9</div>
-        <div class="key key-del" onclick="input('DEL')">⌫</div>
-        <div class="key" onclick="input('4')">4</div>
-        <div class="key" onclick="input('5')">5</div>
-        <div class="key" onclick="input('6')">6</div>
-        <div class="key key-sqrt" onclick="input('√')" title="根號">
-          <span class="sqrt-box" style="font-size: 1.2em"
-            ><div class="sqrt-tick">
-              <svg viewBox="0 0 50 100" preserveAspectRatio="none">
-                <path
-                  d="M 5 60 L 15 60 L 30 95 L 48 5"
-                  stroke="currentColor"
-                  stroke-width="10"
-                  fill="none"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </div>
-            <span class="sqrt-num" style="min-width: 0.6em"></span
-          ></span>
-        </div>
-        <div class="key" onclick="input('1')">1</div>
-        <div class="key" onclick="input('2')">2</div>
-        <div class="key" onclick="input('3')">3</div>
-        <div class="key key-blue" onclick="input('-')">-</div>
-        <div class="key" onclick="input('0')">0</div>
-        <div class="key key-blue" onclick="input('/')">/</div>
-        <div
-          class="key key-blue"
-          style="grid-column: span 2; font-size: 32px"
-          onclick="input(',')"
-        >
-          ,
-        </div>
-        <div class="key key-enter" onclick="submitAnswer()">
-          送出答案 (ENTER)
-        </div>
-      </div>
+      <div id="keypad"></div>
     </div>
 
     <script src="common.js"></script>
@@ -881,7 +840,11 @@
       function submitAnswer() {
         if (userInput === "") return;
         const box = document.getElementById("input-box");
-        if (box.classList.contains("correct-flash") || box.classList.contains("error-text")) return;
+        if (
+          box.classList.contains("correct-flash") ||
+          box.classList.contains("error-text")
+        )
+          return;
         let isCorrect = false;
         if (isCoordinateAns) {
           let cleanUser = userInput.replace(/[\s\(\)]/g, "");
