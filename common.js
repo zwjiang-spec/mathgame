@@ -257,8 +257,8 @@ function renderKeypad(containerId) {
     <div class="key key-blue hell-key" onclick="input('(')">(</div>
     <div class="key key-blue hell-key" onclick="input(')')">)</div>
     
-    <div class="key key-enter normal-key" style="grid-column: span 4" onclick="submitAnswer()">送出答案 (ENTER)</div>
+    <div class="key key-enter normal-key" style="grid-column: span 4" onclick="submitAnswer()">ENTER</div>
     <div class="key key-blue hell-key" style="grid-column: span 2" onclick="input('+')">+</div>
-    <div class="key key-enter hell-key" style="grid-column: span 2" onclick="submitAnswer()">送出答案 (ENTER)</div>
+    <div class="key key-enter hell-key" style="grid-column: span 2" onclick="submitAnswer()">ENTER</div>
   `;
 }
