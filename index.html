@@ -70,7 +70,7 @@
         letter-spacing: normal;
       }
 
-      /* ✨ 模式切換頁籤樣式 */
+      /* ✨ 模式切換頁籤樣式 (改為三個) */
       .tabs {
         display: flex;
         background: #e0e0e0;
@@ -80,10 +80,10 @@
       }
       .tab-btn {
         flex: 1;
-        padding: 12px;
+        padding: 10px 5px;
         border: none;
         background: none;
-        font-size: 16px;
+        font-size: 14px; /* 稍微縮小字體以容納三個按鈕 */
         font-weight: bold;
         color: #7f8c8d;
         cursor: pointer;
@@ -93,6 +93,11 @@
         background: #2c3e50;
         color: white;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      /* 地獄模式按鈕被選中時的特殊顏色 */
+      #btn-hell.active {
+        background: #c0392b;
+        color: white;
       }
 
       .content-section {
@@ -189,6 +194,21 @@
       .btn-arrow {
         font-size: 1.2em;
         opacity: 0.7;
+      }
+
+      /* ✨ 獨立的地獄卡片專屬樣式 */
+      .btn-hell-theme {
+        background: #1a1a1a !important;
+        border: 2px solid #c0392b;
+        box-shadow: 0 0 15px rgba(192, 57, 43, 0.4);
+      }
+      .btn-hell-theme .btn-text,
+      .btn-hell-theme .btn-arrow {
+        color: #ff4d4d;
+      }
+      .btn-hell-theme:hover {
+        background: #000000 !important;
+        box-shadow: 0 0 20px rgba(192, 57, 43, 0.8);
       }
 
       /* ✨ 勾選框樣式 */
@@ -319,16 +339,93 @@
         color: #444;
         line-height: 1.6;
       }
+
+      /* ✨ 意見回饋懸浮按鈕 */
+      .feedback-btn {
+        position: fixed;
+        bottom: 15px;
+        right: 15px;
+        background: #f39c12;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: bold;
+        text-decoration: none;
+        box-shadow: 0 4px 10px rgba(243, 156, 18, 0.4);
+        transition: all 0.2s;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .feedback-btn:hover {
+        background: #e67e22;
+        transform: scale(1.05) translateY(-2px);
+        box-shadow: 0 6px 15px rgba(243, 156, 18, 0.6);
+      }
+      /* ✨ 💀 領域展開：全網頁地獄主題變色特效 */
+      body {
+        transition: background-color 0.5s ease, background-image 0.5s ease;
+      }
+      .main-container,
+      h1,
+      .tabs,
+      .tab-btn {
+        transition: all 0.5s ease;
+      }
+
+      body.hell-theme {
+        background-color: #050000;
+        background-image: linear-gradient(
+            rgba(192, 57, 43, 0.08) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(192, 57, 43, 0.08) 1px, transparent 1px);
+      }
+      body.hell-theme .main-container {
+        background: rgba(15, 5, 5, 0.95);
+        box-shadow: 0 10px 40px rgba(192, 57, 43, 0.4);
+        border: 1px solid #5a1010;
+      }
+      body.hell-theme h1 {
+        color: #ff4d4d;
+        text-shadow: 0 0 15px rgba(255, 77, 77, 0.4);
+      }
+      body.hell-theme .tabs {
+        background: #1a1a1a;
+      }
+      body.hell-theme .tab-btn {
+        color: #7f8c8d;
+      }
+      body.hell-theme .tab-btn.active {
+        background: #c0392b;
+        color: white;
+        box-shadow: 0 4px 10px rgba(192, 57, 43, 0.5);
+      }
+      body.hell-theme .checkbox-group {
+        background: #111;
+        border-color: #333;
+      }
+      body.hell-theme .check-item {
+        color: #ccc;
+      }
     </style>
   </head>
   <body>
     <div id="version-btn" onclick="toggleUpdateLog()">v2.5.0 更新日誌</div>
 
+    <a
+      href="https://forms.gle/pDzjWcsPBi2pwJ869"
+      target="_blank"
+      class="feedback-btn"
+    >
+      💡 意見回饋
+    </a>
     <div id="update-modal">
       <div class="modal-content">
         <span class="close-btn" onclick="toggleUpdateLog()">×</span>
         <h2>🚀 版本更新日誌</h2>
-
         <div class="update-item">
           <span class="version-tag">v2.5.0</span>
           <span class="date-tag">史詩級大升級！</span>
@@ -348,25 +445,11 @@
             <li>修復了一些煩人的蟲子。</li>
           </ul>
         </div>
-
-        <div class="update-item">
-          <span class="version-tag" style="background: #95a5a6">v2.0.0</span>
-          <span class="date-tag">經典回顧</span>
-          <ul>
-            <li>自由勾選多個單元進行混和測驗。</li>
-            <li>連對觸發進階題。</li>
-            <li>通關或出局後，將為你統整所有錯題。</li>
-            <li>跳過時畫面上方會短暫彈出「正確答案」提示。</li>
-            <li>雙模式頁籤切換。</li>
-          </ul>
-        </div>
       </div>
     </div>
+
     <div class="main-container">
-      <h1>
-        <span class="teacher"></span>
-        數學領域展開
-      </h1>
+      <h1><span class="teacher"></span>數學領域展開</h1>
 
       <div class="tabs">
         <button
@@ -375,6 +458,9 @@
           id="btn-ranked"
         >
           🏆 單元競賽
+        </button>
+        <button class="tab-btn" onclick="switchTab('hell')" id="btn-hell">
+          💀 地獄模式
         </button>
         <button
           class="tab-btn"
@@ -386,13 +472,17 @@
       </div>
 
       <div id="content-ranked" class="content-section active">
-        <a href="trig.html" class="menu-btn btn-trig">
+        <div
+          onclick="window.location.href='trig.html?mode=normal'"
+          class="menu-btn btn-trig"
+        >
           <div
             style="
               display: flex;
               flex-direction: column;
               text-align: left;
               gap: 4px;
+              width: 100%;
             "
           >
             <div class="btn-text">
@@ -410,15 +500,18 @@
             </div>
           </div>
           <div class="btn-arrow">▶</div>
-        </a>
-
-        <a href="space.html" class="menu-btn btn-space">
+        </div>
+        <div
+          onclick="window.location.href='space.html?mode=normal'"
+          class="menu-btn btn-space"
+        >
           <div
             style="
               display: flex;
               flex-direction: column;
               text-align: left;
               gap: 4px;
+              width: 100%;
             "
           >
             <div class="btn-text">
@@ -436,15 +529,18 @@
             </div>
           </div>
           <div class="btn-arrow">▶</div>
-        </a>
-
-        <a href="perm.html" class="menu-btn btn-perm">
+        </div>
+        <div
+          onclick="window.location.href='perm.html?mode=normal'"
+          class="menu-btn btn-perm"
+        >
           <div
             style="
               display: flex;
               flex-direction: column;
               text-align: left;
               gap: 4px;
+              width: 100%;
             "
           >
             <div class="btn-text">
@@ -462,13 +558,90 @@
             </div>
           </div>
           <div class="btn-arrow">▶</div>
-        </a>
-
-        <a href="#" class="menu-btn btn-locked">
+        </div>
+        <div class="menu-btn btn-locked">
           <div class="btn-text">
             <span class="level-icon">🔒</span> 敬請期待...
           </div>
-        </a>
+        </div>
+      </div>
+
+      <div id="content-hell" class="content-section">
+        <div
+          onclick="window.location.href='trig.html?mode=hell'"
+          class="menu-btn btn-hell-theme"
+        >
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              text-align: left;
+              gap: 4px;
+              width: 100%;
+            "
+          >
+            <div class="btn-text">
+              <span class="level-icon">💀</span> 死亡廣義三角比
+            </div>
+            <div
+              id="top-hell-trig"
+              style="font-size: 13px; font-weight: normal; color: #e74c3c"
+            >
+              👑 地獄霸主：讀取中...
+            </div>
+          </div>
+          <div class="btn-arrow">▶</div>
+        </div>
+        <div
+          onclick="window.location.href='space.html?mode=hell'"
+          class="menu-btn btn-hell-theme"
+        >
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              text-align: left;
+              gap: 4px;
+              width: 100%;
+            "
+          >
+            <div class="btn-text">
+              <span class="level-icon">💀</span> 虛無的空間坐標
+            </div>
+            <div
+              id="top-hell-space"
+              style="font-size: 13px; font-weight: normal; color: #e74c3c"
+            >
+              👑 地獄霸主：讀取中...
+            </div>
+          </div>
+          <div class="btn-arrow">▶</div>
+        </div>
+        <div
+          onclick="window.location.href='perm.html?mode=hell'"
+          class="menu-btn btn-hell-theme"
+        >
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              text-align: left;
+              gap: 4px;
+              width: 100%;
+            "
+          >
+            <div class="btn-text">
+              <span class="level-icon">💀</span> 混沌的排列組合
+            </div>
+            <div
+              id="top-hell-perm"
+              style="font-size: 13px; font-weight: normal; color: #e74c3c"
+            >
+              👑 地獄霸主：讀取中...
+            </div>
+          </div>
+          <div class="btn-arrow">▶</div>
+        </div>
       </div>
 
       <div id="content-practice" class="content-section">
@@ -476,15 +649,18 @@
           自由勾選想混合練習的單元：
         </p>
         <div class="checkbox-group">
-          <label class="check-item">
-            <input type="checkbox" id="chk-trig" checked /> 超好玩的三角比
-          </label>
-          <label class="check-item">
-            <input type="checkbox" id="chk-space" checked /> 有趣的空間坐標
-          </label>
-          <label class="check-item">
-            <input type="checkbox" id="chk-perm" checked /> 神奇的排列組合
-          </label>
+          <label class="check-item"
+            ><input type="checkbox" id="chk-trig" checked />
+            超好玩的三角比</label
+          >
+          <label class="check-item"
+            ><input type="checkbox" id="chk-space" checked />
+            有趣的空間坐標</label
+          >
+          <label class="check-item"
+            ><input type="checkbox" id="chk-perm" checked />
+            神奇的排列組合</label
+          >
         </div>
         <button class="menu-btn btn-practice" onclick="startPractice()">
           🔥 開始綜合練習
@@ -502,14 +678,22 @@
           : modal.classList.add("show");
       }
 
+      // ✨ 更新為支援三個頁籤的切換邏輯
+      // ✨ 更新為支援三個頁籤與「地獄領域展開」的切換邏輯
       function switchTab(tabId) {
-        document.getElementById("btn-ranked").classList.remove("active");
-        document.getElementById("btn-practice").classList.remove("active");
-        document.getElementById("content-ranked").classList.remove("active");
-        document.getElementById("content-practice").classList.remove("active");
-
+        ["ranked", "hell", "practice"].forEach((id) => {
+          document.getElementById("btn-" + id).classList.remove("active");
+          document.getElementById("content-" + id).classList.remove("active");
+        });
         document.getElementById("btn-" + tabId).classList.add("active");
         document.getElementById("content-" + tabId).classList.add("active");
+
+        // 💀 判斷是否點擊了地獄模式，如果是，給 body 加上黑化標籤
+        if (tabId === "hell") {
+          document.body.classList.add("hell-theme");
+        } else {
+          document.body.classList.remove("hell-theme");
+        }
       }
 
       function startPractice() {
@@ -528,13 +712,23 @@
         window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
       }
 
-      // ✨ 自動抓取最高分數的腳本 (加入排列組合)
+      // ==========================================
+      // 📊 排行榜資料庫 (CSV 網址區)
+      // ==========================================
+
+      // 一般模式的 CSV
       const TRIG_CSV =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
       const SPACE_CSV =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
       const PERM_CSV =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwQuA4SuPuNdHk6sUV9yyOU9g6z7uKNqIPsQw0Rj8u8g6-2WTLRMW-oeFhLRbiw2v7Oiz8v2g1XwNP/pub?output=csv";
+
+      // 💀 地獄模式的 CSV (老師你之後要幫地獄模式建新的 Google 表單，再把 CSV 貼過來替換這三行)
+      // 目前先暫時用一般的資料庫代替，免得顯示空白
+      const HELL_TRIG_CSV = TRIG_CSV;
+      const HELL_SPACE_CSV = SPACE_CSV;
+      const HELL_PERM_CSV = PERM_CSV;
 
       function parseCSV(text) {
         let p = "",
@@ -559,11 +753,10 @@
         return ret;
       }
 
-      // ✨ 全新進化：抓取前三名並加上金銀銅牌
-      async function loadTopScore(url, elementId) {
+      // ✨ 進化版 loadTopScore：加入 limit 參數控制顯示人數
+      async function loadTopScore(url, elementId, limit = 3) {
         const el = document.getElementById(elementId);
         try {
-          // 加上時間戳記，強迫破解 Google 快取
           let res = await fetch(url + "&t=" + new Date().getTime(), {
             cache: "no-store",
           });
@@ -576,8 +769,6 @@
               let nameRaw = data[i][1] || "";
               let scoreRaw = parseInt(data[i][2]);
               if (isNaN(scoreRaw)) continue;
-
-              // 濾掉名稱後面的錯題標記
               let cleanName = nameRaw
                 .split(" (錯題:")[0]
                 .split(" (全對")[0]
@@ -587,20 +778,25 @@
             }
           }
 
-          // 依照分數由高到低排序，並取前三名
-          let top3 = records.sort((a, b) => b.score - a.score).slice(0, 3);
+          // 依照分數排序並依照 limit 取前幾名
+          let topList = records
+            .sort((a, b) => b.score - a.score)
+            .slice(0, limit);
 
-          if (top3.length > 0) {
-            // 使用 Flexbox 橫向排列，設計成現代感的「小膠囊標籤」樣式
+          if (topList.length > 0) {
             let html = `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">`;
             let medals = ["🥇", "🥈", "🥉"];
-            let colors = ["#ffd700", "#e0e0e0", "#ffb07c"]; // 針對深色按鈕優化的亮色金銀銅
+            let colors = ["#ffd700", "#e0e0e0", "#ffb07c"];
 
-            top3.forEach((player, index) => {
+            topList.forEach((player, index) => {
+              // 為了地獄模式的第一名加上皇冠
+              let icon = limit === 1 ? "👑" : medals[index];
+              let textColor = limit === 1 ? "#ff4d4d" : colors[index];
+
               html += `<div style="background: rgba(0, 0, 0, 0.15); padding: 3px 6px; border-radius: 6px; font-size: 11px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.1);">
-                         ${medals[index]}
+                         ${icon}
                          <span style="max-width: 55px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: white;" title="${player.name}">${player.name}</span>
-                         <span style="color: ${colors[index]}; font-weight: bold;">${player.score}</span>
+                         <span style="color: ${textColor}; font-weight: bold;">${player.score}</span>
                        </div>`;
             });
             html += `</div>`;
@@ -615,9 +811,15 @@
 
       // 網頁載入時立刻抓資料
       window.onload = () => {
-        loadTopScore(TRIG_CSV, "top-trig");
-        loadTopScore(SPACE_CSV, "top-space");
-        loadTopScore(PERM_CSV, "top-perm");
+        // 一般模式 (取前 3 名)
+        loadTopScore(TRIG_CSV, "top-trig", 3);
+        loadTopScore(SPACE_CSV, "top-space", 3);
+        loadTopScore(PERM_CSV, "top-perm", 3);
+
+        // 地獄模式 (只取第 1 名)
+        loadTopScore(HELL_TRIG_CSV, "top-hell-trig", 1);
+        loadTopScore(HELL_SPACE_CSV, "top-hell-space", 1);
+        loadTopScore(HELL_PERM_CSV, "top-hell-perm", 1);
       };
     </script>
   </body>
