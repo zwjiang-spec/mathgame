@@ -218,3 +218,47 @@ function playFeverCorrect() {
   setTimeout(() => playTone(1000, "sine", 0.05), 60);
   setTimeout(() => playTone(1200, "sine", 0.1), 120);
 }
+
+// ✨ 動態生成虛擬鍵盤 (支援一般/地獄模式無縫切換)
+function renderKeypad(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="key" onclick="input('7')">7</div>
+    <div class="key" onclick="input('8')">8</div>
+    <div class="key" onclick="input('9')">9</div>
+    <div class="key key-del" onclick="input('DEL')">
+      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+    </div>
+    
+    <div class="key" onclick="input('4')">4</div>
+    <div class="key" onclick="input('5')">5</div>
+    <div class="key" onclick="input('6')">6</div>
+    <div class="key key-sqrt" onclick="input('√')" title="根號">
+      <span class="sqrt-box" style="font-size: 1.2em">
+        <div class="sqrt-tick">
+          <svg viewBox="0 0 50 100" preserveAspectRatio="none">
+            <path d="M 5 60 L 15 60 L 30 95 L 48 5" stroke="currentColor" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <span class="sqrt-num" style="min-width: 0.6em"></span>
+      </span>
+    </div>
+    
+    <div class="key" onclick="input('1')">1</div>
+    <div class="key" onclick="input('2')">2</div>
+    <div class="key" onclick="input('3')">3</div>
+    <div class="key key-blue" onclick="input('-')">-</div>
+    
+    <div class="key" onclick="input('0')">0</div>
+    <div class="key key-blue" onclick="input('/')">/</div>
+    <div class="key key-blue normal-key" style="grid-column: span 2; font-size: 32px" onclick="input(',')">,</div>
+    <div class="key key-blue hell-key" onclick="input('(')">(</div>
+    <div class="key key-blue hell-key" onclick="input(')')">)</div>
+    
+    <div class="key key-enter normal-key" style="grid-column: span 4" onclick="submitAnswer()">送出答案 (ENTER)</div>
+    <div class="key key-blue hell-key" style="grid-column: span 2" onclick="input('+')">+</div>
+    <div class="key key-enter hell-key" style="grid-column: span 2" onclick="submitAnswer()">送出答案 (ENTER)</div>
+  `;
+}
