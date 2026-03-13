@@ -333,87 +333,7 @@
     </div>
 
     <div id="keypad-container">
-      <div id="keypad">
-        <div class="key" onclick="input('7')">7</div>
-        <div class="key" onclick="input('8')">8</div>
-        <div class="key" onclick="input('9')">9</div>
-        <div class="key key-del" onclick="input('DEL')">
-          <svg
-            viewBox="0 0 24 24"
-            width="24"
-            height="24"
-            stroke="currentColor"
-            stroke-width="2"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
-            <line x1="18" y1="9" x2="12" y2="15"></line>
-            <line x1="12" y1="9" x2="18" y2="15"></line>
-          </svg>
-        </div>
-
-        <div class="key" onclick="input('4')">4</div>
-        <div class="key" onclick="input('5')">5</div>
-        <div class="key" onclick="input('6')">6</div>
-        <div class="key key-sqrt" onclick="input('√')" title="根號">
-          <span class="sqrt-box" style="font-size: 1.2em">
-            <div class="sqrt-tick">
-              <svg viewBox="0 0 50 100" preserveAspectRatio="none">
-                <path
-                  d="M 5 60 L 15 60 L 30 95 L 48 5"
-                  stroke="currentColor"
-                  stroke-width="10"
-                  fill="none"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </div>
-            <span class="sqrt-num" style="min-width: 0.6em"></span>
-          </span>
-        </div>
-
-        <div class="key" onclick="input('1')">1</div>
-        <div class="key" onclick="input('2')">2</div>
-        <div class="key" onclick="input('3')">3</div>
-        <div class="key key-blue" onclick="input('-')">-</div>
-
-        <div class="key" onclick="input('0')">0</div>
-        <div class="key key-blue" onclick="input('/')">/</div>
-        <div
-          class="key key-blue normal-key"
-          style="grid-column: span 2; font-size: 32px"
-          onclick="input(',')"
-        >
-          ,
-        </div>
-        <div class="key key-blue hell-key" onclick="input('(')">(</div>
-        <div class="key key-blue hell-key" onclick="input(')')">)</div>
-
-        <div
-          class="key key-enter normal-key"
-          style="grid-column: span 4"
-          onclick="submitAnswer()"
-        >
-          送出答案 (ENTER)
-        </div>
-        <div
-          class="key key-blue hell-key"
-          style="grid-column: span 2"
-          onclick="input('+')"
-        >
-          +
-        </div>
-        <div
-          class="key key-enter hell-key"
-          style="grid-column: span 2"
-          onclick="submitAnswer()"
-        >
-          送出答案 (ENTER)
-        </div>
-      </div>
+      <div id="keypad"></div>
     </div>
 
     <script src="common.js"></script>
@@ -426,6 +346,9 @@
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
 
       window.onload = () => {
+        // ✨ 一行指令，直接從 common.js 召喚完美鍵盤！
+        renderKeypad("keypad");
+
         loadGlobalLeaderboard(CSV_URL);
       };
 
@@ -455,7 +378,26 @@
 
       if (isHellMode) {
         document.body.classList.add("hell-theme");
-        document.querySelector("h1").innerHTML = `💀 夢魘的三角比`;
+
+        // 1. 更改大標題為「死亡廣義三角比」
+        const overlayTitle = document.querySelector("#overlay h1");
+        if (overlayTitle) {
+          overlayTitle.innerHTML = `💀 死亡廣義三角比`;
+        }
+
+        // 2. 將規則區塊替換為地獄專屬宣告
+        const rulesBox = document.getElementById("rules-box");
+        if (rulesBox) {
+          rulesBox.innerHTML = `
+            <h3 style="color: #ff4d4d; border-bottom: 1px solid #ff4d4d; padding-bottom: 5px;">💀 遊戲規則與計分方式</h3>
+            <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; font-weight: bold; margin-top: 15px;">
+              歡迎來到地獄，所有規則都跟一般模式一樣，但題目會讓你想死。
+            </p>
+          `;
+          // 順便把規則框的背景變成暗紅色，增加壓迫感
+          rulesBox.style.background = "rgba(40, 0, 0, 0.6)";
+          rulesBox.style.border = "1px solid #c0392b";
+        }
       }
 
       // 💀 地獄 15度 家族題庫
@@ -820,12 +762,31 @@
 
         isProcessing = true; // 上鎖
 
-        let userVal = evalMath(userInput);
-        let targetVal = evalMath(targetAns);
-        let isCorrect =
-          !isNaN(userVal) &&
-          !isNaN(targetVal) &&
-          Math.abs(userVal - targetVal) < 1e-5;
+        let isCorrect = false;
+
+        // 🛡️ 第一道防線：字串完全比對 (最精準！)
+        // 只要學生打的字串跟題庫一模一樣 (例如 "(√5-1)/4")，直接給過！
+        if (userInput === targetAns) {
+          isCorrect = true;
+        } else {
+          // 🛡️ 第二道防線：數值計算比對 (容錯機制)
+          // 萬一學生打的順序不一樣，我們用更強大的方法解析它
+          try {
+            let safeUser = userInput.replace(/√(\d+)/g, "Math.sqrt($1)");
+            let safeTarget = targetAns.replace(/√(\d+)/g, "Math.sqrt($1)");
+            let userVal = eval(safeUser);
+            let targetVal = eval(safeTarget);
+            if (
+              !isNaN(userVal) &&
+              !isNaN(targetVal) &&
+              Math.abs(userVal - targetVal) < 1e-5
+            ) {
+              isCorrect = true;
+            }
+          } catch (e) {
+            isCorrect = false;
+          }
+        }
 
         if (isCorrect) {
           correctQuestionsSet.add(currentQuestionStr);
