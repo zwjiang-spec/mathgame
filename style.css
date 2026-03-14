@@ -565,3 +565,22 @@ button.action-btn {
   margin-bottom: 10px;
   text-shadow: 0 0 20px #e74c3c;
 }
+/* ✨ 鍵盤無縫變形魔法 (全域通用，保護完美比例) */
+.hell-key {
+  display: none !important; /* 一般模式隱藏地獄按鍵 */
+}
+body.hell-theme .hell-key {
+  display: flex !important; /* 地獄模式浮現 */
+}
+.normal-key {
+  display: flex !important;
+}
+body.hell-theme .normal-key {
+  display: none !important; /* 地獄模式隱藏一般按鍵 */
+}
+.key-blank {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
