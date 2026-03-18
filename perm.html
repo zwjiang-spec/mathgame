@@ -899,14 +899,19 @@
         checkDeath();
       }
 
+      let isProcessing = false;
+
       function submitAnswer() {
-        if (userInput === "") return;
+        if (userInput === "" || isProcessing) return;
         const box = document.getElementById("input-box");
         if (
           box.classList.contains("correct-flash") ||
           box.classList.contains("error-text")
         )
           return;
+
+        isProcessing = true; // 上鎖
+
         if (isMathEqual(userInput, targetAns)) {
           if (currentQuestionErrors === 0)
             correctQuestionsSet.add(currentQuestionStr);
@@ -935,17 +940,44 @@
             body.classList.add("progressive-shake");
           }
           updateUI();
-          setTimeout(getNewQuestion, 150);
+          setTimeout(() => {
+            getNewQuestion();
+            isProcessing = false; // 出完下一題解鎖
+          }, 150);
         } else {
           triggerErrorEffect();
+
+          // ✨ 答錯延遲 400 毫秒後自動清空輸入框
+          setTimeout(() => {
+            userInput = "";
+            renderInput();
+            isProcessing = false;
+          }, 400);
         }
       }
 
       function skipQuestion() {
-        if (!document.getElementById("overlay").classList.contains("hidden"))
+        if (
+          !document.getElementById("overlay").classList.contains("hidden") ||
+          isProcessing
+        )
           return;
+
+        isProcessing = true; // 跳過也上鎖
+
         let h = typeof currentHint !== "undefined" ? currentHint : "";
-        errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: h });
+
+        // 跳過一樣算錯一次，記錄次數
+        if (errorLogMap.has(currentQuestionStr)) {
+          errorLogMap.get(currentQuestionStr).count++;
+        } else {
+          errorLogMap.set(currentQuestionStr, {
+            ans: targetAns,
+            hint: h,
+            count: 1,
+          });
+        }
+
         if (!activeWrongPool.some((item) => item.q === currentQuestionStr)) {
           activeWrongPool.push({ q: currentQuestionStr, a: targetAns, h: h });
         }
@@ -961,7 +993,11 @@
         if (typeof showToast === "function")
           showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500);
         checkDeath();
-        setTimeout(getNewQuestion, 450);
+
+        setTimeout(() => {
+          getNewQuestion();
+          isProcessing = false; // 出完下一題解鎖
+        }, 450);
       }
 
       function updateUI() {
