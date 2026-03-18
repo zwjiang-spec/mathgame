@@ -270,7 +270,9 @@
           // --- 📊 統計數據 ---
           let maxScore = -999;
           let deathCount = 0;
-          let uniqueWrongs = new Map(); // 用 Map 幫錯題去重複
+
+          // ✨ 建立統計引擎
+          let errorStatsMap = new Map();
 
           let historyHTML = "";
 
@@ -279,59 +281,66 @@
             if (rec.score > maxScore) maxScore = rec.score;
             if (rec.status === "dead" || rec.score <= -20) deathCount++;
 
-            // 收集錯題 (去重複)
-            if (rec.wrongLog && rec.wrongLog.length > 0) {
+            // ✨ 跨場次錯題收集與統計 (不論是 dead 還是 clear 都算進去)
+            if (rec.wrongLog && Array.isArray(rec.wrongLog)) {
               rec.wrongLog.forEach((w) => {
-                if (!uniqueWrongs.has(w.question)) {
-                  uniqueWrongs.set(w.question, w);
+                // 有些舊資料可能欄位名稱不同，做個相容性處理
+                let qText = w.question || w.q;
+                let qAns = w.answer || w.ans;
+                let qHint = w.hint || "無提示";
+                let qCount = w.count || 1; // 如果單場錯了多次也算進去
+
+                if (errorStatsMap.has(qText)) {
+                  errorStatsMap.get(qText).totalCount += qCount;
+                } else {
+                  errorStatsMap.set(qText, {
+                    answer: qAns,
+                    hint: qHint,
+                    totalCount: qCount,
+                  });
                 }
               });
             }
 
-            // 產生歷史紀錄列表 (最多顯示前 10 筆)
+            // --- 歷史紀錄列表生成 (這段維持您原本的邏輯) ---
             let dateStr = rec.timestamp
-              ? rec.timestamp
-                  .toDate()
-                  .toLocaleString("zh-TW", {
-                    month: "numeric",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+              ? rec.timestamp.toDate().toLocaleString("zh-TW", {
+                  month: "numeric",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
               : "剛剛";
 
-            // ✨ 自動翻譯單元名稱與圖示
             let unitLabel = "🎮 未知";
             if (rec.unit === "trig") unitLabel = "📐 三角";
             else if (rec.unit === "space") unitLabel = "🚀 空間";
             else if (rec.unit === "perm") unitLabel = "🎲 排列";
             else if (rec.unit === "practice") unitLabel = "💪 練習";
 
-            // ✨ 判斷模式
             let modeIcon =
               rec.mode === "hell"
                 ? "💀 地獄"
                 : rec.mode === "mixed"
                 ? "🔥 混合"
                 : "🌱 一般";
-
             let scoreDisplay =
               rec.status === "dead"
-                ? `💀 死神帶走 (${rec.score}分)`
+                ? `💀 失敗 (${rec.score}分)`
                 : `${rec.score} 分`;
             let deadClass = rec.status === "dead" ? "dead" : "";
 
             if (historyHTML.split("</li>").length <= 10) {
               historyHTML += `
-              <li class="history-item ${deadClass}">
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <span style="background: #eaf2f8; color: #2980b9; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold;">${unitLabel}</span>
-                  <span style="font-weight:bold; font-size: 13px;">${modeIcon}</span>
-                  <span class="date">${dateStr}</span>
-                </div>
-                <div class="score">${scoreDisplay}</div>
-              </li>
-            `;
+                <li class="history-item ${deadClass}">
+                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="background: #eaf2f8; color: #2980b9; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold;">${unitLabel}</span>
+                    <span style="font-weight:bold; font-size: 13px;">${modeIcon}</span>
+                    <span class="date">${dateStr}</span>
+                  </div>
+                  <div class="score">${scoreDisplay}</div>
+                </li>
+              `;
             }
           });
 
@@ -341,25 +350,44 @@
           document.getElementById("stat-deaths").innerText = deathCount;
           document.getElementById("history-container").innerHTML = historyHTML;
 
-          // 渲染錯題本
-          if (uniqueWrongs.size > 0) {
+          // --- ✨ ✨ 渲染錯題本 (加入排序與徽章) ---
+          const wrongContainer = document.getElementById("wrong-q-container");
+          if (errorStatsMap.size > 0) {
+            // 1. 轉成陣列並排序 (次數多的排前面)
+            let sortedErrors = Array.from(errorStatsMap.entries()).sort(
+              (a, b) => b[1].totalCount - a[1].totalCount
+            );
+
             let wrongHTML = "";
-            uniqueWrongs.forEach((data, q) => {
+            sortedErrors.forEach(([q, info]) => {
+              // 根據次數決定顏色
+              let badgeStyle = "background:#95a5a6; color:white;"; // 預設灰色
+              let prefix = "錯誤";
+              if (info.totalCount >= 5) {
+                badgeStyle = "background:#c0392b; color:white;";
+                prefix = "🔥 狂錯";
+              } else if (info.totalCount >= 3) {
+                badgeStyle = "background:#e67e22; color:white;";
+                prefix = "警告";
+              }
+
               wrongHTML += `
-              <li class="wrong-q-item">
-                <div>
-                  <div>${q} <span class="ans">➡ 正解: ${
-                data.answer
-              }</span></div>
-                  <span class="hint">💡 ${data.hint || "無提示"}</span>
-                </div>
-              </li>
-            `;
+                <li class="wrong-q-item">
+                  <div style="width:100%">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <span style="font-weight:bold;">${q}</span>
+                      <span style="${badgeStyle} padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;">${prefix} ${info.totalCount} 次</span>
+                    </div>
+                    <div class="ans" style="margin-top:5px;">➡ 正解: ${info.answer}</div>
+                    <span class="hint">💡 ${info.hint}</span>
+                  </div>
+                </li>
+              `;
             });
-            document.getElementById("wrong-q-container").innerHTML = wrongHTML;
+            wrongContainer.innerHTML = wrongHTML;
           } else {
-            document.getElementById("wrong-q-container").innerHTML =
-              '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 太神啦！目前為止零錯題！</li>';
+            wrongContainer.innerHTML =
+              '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 目前為止零錯題，太神啦！</li>';
           }
         } catch (error) {
           console.error("讀取戰績失敗:", error);
