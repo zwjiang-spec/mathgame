@@ -25,6 +25,8 @@
         --btn-enter-text: #ffffff;
       }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
   </head>
   <body>
     <div id="toast">答案提示區</div>
@@ -287,7 +289,19 @@
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
 
       window.onload = () => {
-        // ✨ 一行指令，直接從 common.js 召喚完美鍵盤！
+        // ✨ 自動讀取剛剛在大廳 Google 登入的名字
+        const savedName = localStorage.getItem("mathGamePlayerName");
+        const nameInput = document.getElementById("player-name");
+
+        if (savedName && nameInput) {
+          nameInput.value = savedName; // 自動填入名字
+          nameInput.readOnly = true; // 鎖定輸入框，不給改
+          nameInput.style.backgroundColor = "#eaf2f8"; // 變成淡淡的專屬藍色底
+          nameInput.style.color = "#2980b9";
+          nameInput.style.fontWeight = "bold";
+        }
+
+        // 召喚完美鍵盤與排行榜
         renderKeypad("keypad");
         loadGlobalLeaderboard(CSV_URL);
       };
@@ -574,10 +588,45 @@
       function checkDeath() {
         if (score < -20) {
           clearInterval(timer);
-          document.getElementById("death-error-log").innerHTML =
-            generateErrorLogHTML();
-          document.getElementById("death-screen").classList.add("show");
-          document.getElementById("keypad-container").style.display = "none";
+
+          if (
+            typeof generateErrorLogHTML === "function" &&
+            document.getElementById("death-error-log")
+          ) {
+            document.getElementById("death-error-log").innerHTML =
+              generateErrorLogHTML();
+          }
+          if (document.getElementById("death-screen"))
+            document.getElementById("death-screen").classList.add("show");
+          if (document.getElementById("keypad-container"))
+            document.getElementById("keypad-container").style.display = "none";
+
+          const deathBtn = document.querySelector("#death-screen button");
+          if (deathBtn) {
+            deathBtn.disabled = true;
+            deathBtn.innerText = "💀 遺言傳送中...";
+          }
+
+          // ✨ 一行指令，直接呼叫 common.js 的萬能上傳函數！
+          uploadGameRecord(
+            "dead",
+            score,
+            typeof errorLogMap !== "undefined" ? errorLogMap : null,
+            typeof isHellMode !== "undefined" ? isHellMode : false
+          )
+            .then(() => {
+              if (deathBtn) {
+                deathBtn.disabled = false;
+                deathBtn.innerText = "重新開始 (投胎)";
+              }
+            })
+            .catch((err) => {
+              console.error("存檔失敗:", err);
+              if (deathBtn) {
+                deathBtn.disabled = false;
+                deathBtn.innerText = "上傳失敗，點此重試";
+              }
+            });
         }
       }
 
@@ -775,46 +824,54 @@
         endLog.classList.remove("hidden");
         window.scrollTo(0, 0);
 
-        // --- 3. 準備上傳資料 ---
-        let name = document.getElementById("ui-name").innerText;
-        if (name === "---") name = "Guest";
-        document.getElementById("player-name").value = "成績傳送中...";
+        // --- 3. 準備上傳資料到 Firebase ---
+        document.getElementById("player-name").value = "成績光速傳送中...";
 
-        // 整理錯題小尾巴，放在名字後面
-        let wrongArray = Array.from(errorLogMap.keys()).map((q) =>
-          q.replace(/<[^>]*>?/gm, "")
-        );
-        let errorMsg =
-          wrongArray.length > 0
-            ? ` (錯題: ${wrongArray.join(", ")})`
-            : " (全對🌟)";
-        let finalNameForForm = name + errorMsg;
+        // ✨ 補上這一行：宣告 restartBtn 是誰！
+        const restartBtn = document.querySelector("#end-ui-group button");
+        if (restartBtn) {
+          restartBtn.disabled = true;
+          restartBtn.innerText = "⏳ 成績上傳中...";
+        }
 
-        // --- 4. 暴力上傳法 (GET 拼接網址) ---
-        const submitUrl = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse?${ENTRY_NAME}=${encodeURIComponent(
-          finalNameForForm
-        )}&${ENTRY_SCORE}=${score}&submit=Submit`;
-
-        fetch(submitUrl, {
-          method: "GET",
-          mode: "no-cors",
-        })
+        // ✨ 呼叫 common.js 的萬能上傳！
+        uploadGameRecord(
+          "clear",
+          score,
+          typeof errorLogMap !== "undefined" ? errorLogMap : null,
+          typeof isHellMode !== "undefined" ? isHellMode : false
+        )
           .then(() => {
-            document.getElementById("player-name").value = "成績已送出！";
-            // ✨ 強制刷新排行榜
+            document.getElementById("player-name").value =
+              "成績已存入雲端戰績室！";
+            if (restartBtn) {
+              restartBtn.disabled = false;
+              restartBtn.innerText = "再玩一局 (重新開始)";
+              restartBtn.style.opacity = "1";
+              restartBtn.style.cursor = "pointer";
+            }
+            // 保留舊的 CSV 排行榜更新
+            let name = document.getElementById("ui-name").innerText;
             loadGlobalLeaderboard(CSV_URL, {
-              n: name,
+              n: name === "---" ? "Guest" : name,
               s: score,
               isToday: true,
             });
+
             setTimeout(
               () => (document.getElementById("player-name").value = ""),
               2000
             );
           })
           .catch((err) => {
-            console.error("傳送失敗:", err);
-            document.getElementById("player-name").value = "傳送失敗，請截圖";
+            console.error("雲端存檔失敗:", err);
+            document.getElementById("player-name").value = "雲端存檔失敗";
+            if (restartBtn) {
+              restartBtn.disabled = false;
+              restartBtn.innerText = "上傳失敗，點此重試";
+              restartBtn.style.opacity = "1";
+              restartBtn.style.cursor = "pointer";
+            }
           });
       }
     </script>
