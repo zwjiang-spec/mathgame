@@ -178,6 +178,21 @@
         />
         <div>
           <h1 id="user-name">讀取中...</h1>
+          <div
+            id="user-title-badge"
+            style="
+              display: inline-block;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 14px;
+              font-weight: bold;
+              margin-top: 5px;
+              color: white;
+              background: #bdc3c7;
+            "
+          >
+            尚未獲得稱號
+          </div>
           <p id="user-uid">請稍候，正在連線雲端資料庫...</p>
         </div>
       </div>
@@ -201,6 +216,27 @@
       <ul class="wrong-q-list" id="wrong-q-container">
         <li style="color: #7f8c8d; font-size: 14px">資料載入中...</li>
       </ul>
+      <div style="text-align: center; margin-bottom: 20px">
+        <button
+          id="training-btn"
+          onclick="startWeaknessTraining()"
+          style="
+            display: none; /* 初始隱藏，有錯題才顯示 */
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            transition: 0.3s;
+          "
+        >
+          🔥 開始弱點特訓 (針對最常錯題目)
+        </button>
+      </div>
 
       <h2>🕒 近期挑戰紀錄</h2>
       <ul class="history-list" id="history-container">
@@ -209,6 +245,13 @@
     </div>
 
     <script>
+      function getTitle(score) {
+        // 從高往低找符合條件的稱號
+        for (let i = TITLES.length - 1; i >= 0; i--) {
+          if (score >= TITLES[i].min) return TITLES[i];
+        }
+        return TITLES[0];
+      }
       // 🚀 Firebase 初始化
       const firebaseConfig = {
         apiKey: "AIzaSyC7ed0il_ScCdHeWOHepj56ycjRXYt_Mf4",
@@ -224,6 +267,29 @@
       const auth = firebase.auth();
       const db = firebase.firestore();
 
+      const TITLES = [
+        { min: 0, name: "數學初心者", color: "#95a5a6" },
+        { min: 300, name: "小小狙擊手", color: "#3498db" },
+        { min: 600, name: "數字預言家", color: "#9b59b6" },
+        { min: 1000, name: "鋼之煉金師", color: "#e67e22" },
+        { min: 2000, name: "數學戰神", color: "#df22e6" },
+        { min: 2000, name: "🌌 領域展開：數學至尊", color: "#c0392b" },
+      ];
+
+      function updateTitleUI(score) {
+        const badge = document.getElementById("user-title-badge");
+        let finalTitle = TITLES[0];
+        for (let i = TITLES.length - 1; i >= 0; i--) {
+          if (score >= TITLES[i].min) {
+            finalTitle = TITLES[i];
+            break;
+          }
+        }
+        badge.innerText = finalTitle.name;
+        badge.style.background = finalTitle.color;
+        // 如果是至尊，加個閃爍特效
+        if (score >= 2000) badge.style.animation = "pulse 1.5s infinite";
+      }
       // 檢查登入狀態
       auth.onAuthStateChanged((user) => {
         if (user) {
@@ -347,6 +413,7 @@
           // 渲染統計數字
           document.getElementById("stat-games").innerText = records.length;
           document.getElementById("stat-high").innerText = maxScore;
+          updateTitleUI(maxScore === -999 ? 0 : maxScore);
           document.getElementById("stat-deaths").innerText = deathCount;
           document.getElementById("history-container").innerHTML = historyHTML;
 
@@ -385,6 +452,8 @@
               `;
             });
             wrongContainer.innerHTML = wrongHTML;
+            document.getElementById("training-btn").style.display =
+              "inline-block";
           } else {
             wrongContainer.innerHTML =
               '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 目前為止零錯題，太神啦！</li>';
@@ -394,6 +463,43 @@
           document.getElementById("wrong-q-container").innerHTML =
             '<li style="color: #e74c3c;">讀取失敗，請重新整理網頁</li>';
         }
+      }
+      function startWeaknessTraining() {
+        // 抓取清單中所有的錯題項目
+        const wrongItems = document.querySelectorAll(
+          "#wrong-q-container .wrong-q-item"
+        );
+        let trainingPool = [];
+
+        wrongItems.forEach((item) => {
+          // 這裡我們抓取題目文字
+          // 考慮到你的 HTML 結構，我們抓取第一個粗體 span 或是 div
+          const qText = item.querySelector('span[style*="bold"]').innerText;
+
+          // 抓取正解 (去掉 prefix)
+          const ansText = item
+            .querySelector(".ans")
+            .innerText.replace("➡ 正解: ", "")
+            .trim();
+
+          // 抓取提示
+          const hintText = item
+            .querySelector(".hint")
+            .innerText.replace("💡 ", "")
+            .trim();
+
+          trainingPool.push({ q: qText, a: ansText, hint: hintText });
+        });
+
+        if (trainingPool.length === 0) {
+          alert("目前沒有錯題可以特訓喔！");
+          return;
+        }
+
+        // 排序前 10 題最常錯的 (這部分邏輯不變)
+        const finalPool = trainingPool.slice(0, 10);
+        localStorage.setItem("mathGameReviewPool", JSON.stringify(finalPool));
+        window.location.href = "review.html";
       }
     </script>
   </body>
