@@ -480,24 +480,57 @@
       <div
         id="user-info"
         style="
-          margin-bottom: 20px;
-          padding: 12px;
+          margin-bottom: 15px;
+          padding: 8px 12px; /* 稍微縮小內邊距爭取空間 */
           background: #f8f9fa;
           border-radius: 12px;
           border: 1px solid #eee;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 10px; /* 左右區塊保持安全距離 */
           box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
         "
       >
-        <span
-          id="user-name-display"
-          style="font-weight: bold; color: #2c3e50; font-size: 15px"
-          >👤 尚未登入</span
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0; /* 讓名字太長時可以縮限 */
+          "
         >
+          <span
+            id="user-name-display"
+            style="
+              font-weight: bold;
+              color: #2c3e50;
+              font-size: 14px;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            "
+            >👤 尚未登入</span
+          >
+          <span
+            id="user-avg-badge"
+            style="
+              display: none;
+              font-size: 11px;
+              color: #7f8c8d;
+              background: #e0e0e0;
+              padding: 2px 6px;
+              border-radius: 12px;
+              font-weight: bold;
+              white-space: nowrap;
+              flex-shrink: 0;
+            "
+          ></span>
+        </div>
 
-        <div style="display: flex; gap: 10px">
+        <div
+          style="display: flex; gap: 6px; align-items: center; flex-shrink: 0"
+        >
           <button
             id="profile-btn"
             onclick="window.location.href='profile.html'"
@@ -506,16 +539,16 @@
               background: #f39c12;
               color: white;
               border: none;
-              padding: 8px 15px;
+              padding: 6px 10px;
               border-radius: 8px;
               cursor: pointer;
               font-weight: bold;
-              box-shadow: 0 2px 5px rgba(243, 156, 18, 0.3);
+              font-size: 13px;
+              white-space: nowrap;
             "
           >
             📊 我的戰績
           </button>
-
           <button
             id="auth-btn"
             onclick="toggleLogin()"
@@ -523,16 +556,49 @@
               background: #3498db;
               color: white;
               border: none;
-              padding: 8px 15px;
+              padding: 6px 10px;
               border-radius: 8px;
               cursor: pointer;
               font-weight: bold;
-              transition: 0.2s;
-              box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+              font-size: 13px;
+              white-space: nowrap;
             "
           >
             Google 登入
           </button>
+        </div>
+      </div>
+      <div
+        id="average-board"
+        style="
+          background: linear-gradient(135deg, #2c3e50, #34495e);
+          border-radius: 12px;
+          padding: 10px 15px;
+          margin-bottom: 20px;
+          color: white;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        "
+      >
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+          "
+        >
+          <h3 style="margin: 0; color: #f1c40f; font-size: 15px">
+            👑 平均積分 Top 3
+          </h3>
+          <span style="font-size: 11px; color: #bdc3c7">(需滿3場)</span>
+        </div>
+        <div
+          id="avg-list"
+          style="display: flex; justify-content: space-between; gap: 8px"
+        >
+          <span style="color: #ccc; font-size: 12px; margin: 0 auto"
+            >數據計算中...</span
+          >
         </div>
       </div>
       <div class="tabs">
@@ -934,6 +1000,7 @@
           authBtn.style.boxShadow = "0 2px 5px rgba(231, 76, 60, 0.3)";
           localStorage.setItem("mathGamePlayerName", user.displayName);
           localStorage.setItem("mathGamePlayerUid", user.uid);
+          setTimeout(() => loadAverageLeaderboard(), 500); // 延遲半秒等名字設定好再算
         } else {
           document.getElementById("profile-btn").style.display = "none";
           nameDisplay.innerHTML = "👤 尚未登入";
@@ -942,6 +1009,7 @@
           authBtn.style.boxShadow = "0 2px 5px rgba(52, 152, 219, 0.3)";
           localStorage.removeItem("mathGamePlayerName");
           localStorage.removeItem("mathGamePlayerUid");
+          setTimeout(() => loadAverageLeaderboard(), 500); // 延遲半秒等名字設定好再算
         }
       });
 
@@ -955,6 +1023,107 @@
         }
       }
 
+      // ==========================================
+      // 📊 總平均分數計算引擎
+      // ==========================================
+      async function loadAverageLeaderboard() {
+        try {
+          // 1. 撈取雲端所有成績
+          const snapshot = await db.collection("game_records").get();
+          let userStats = {};
+
+          // 2. 把成績依照「名字」分類加總
+          snapshot.forEach((doc) => {
+            let data = doc.data();
+            let name = data.name;
+            let score = data.score || 0;
+
+            // 排除沒登入的訪客
+            if (name === "Guest" || name === "---" || !name) return;
+
+            if (!userStats[name]) {
+              userStats[name] = { totalScore: 0, count: 0 };
+            }
+            userStats[name].totalScore += score;
+            userStats[name].count += 1;
+          });
+
+          // 3. 計算平均並轉換成陣列
+          let avgArray = [];
+          let currentUserAvg = "尚無紀錄"; // 用來存登入者自己的平均
+
+          const currentSavedName = localStorage.getItem("mathGamePlayerName");
+
+          for (let name in userStats) {
+            let stats = userStats[name];
+            let avg = Math.round(stats.totalScore / stats.count); // 四捨五入取整數
+
+            // 順便把登入者本人的平均抓出來
+            if (name === currentSavedName) {
+              currentUserAvg = avg;
+            }
+
+            // 只有玩超過 3 場的人才有資格進入榮譽榜
+            if (stats.count >= 3) {
+              avgArray.push({
+                name: name,
+                avgScore: avg,
+                playCount: stats.count,
+              });
+            }
+          }
+
+          // ... 前面的計算邏輯保留 ...
+
+          // 4. ✨ 顯示玩家自己的平均分數 (改用獨立標籤，解決重複出現的問題)
+          const avgBadge = document.getElementById("user-avg-badge");
+          if (avgBadge && currentSavedName) {
+            avgBadge.style.display = "inline-block";
+            avgBadge.innerText = `總平均: ${currentUserAvg}`;
+          } else if (avgBadge) {
+            avgBadge.style.display = "none";
+          }
+
+          // 5. 排行榜排序：由高到低，取前 3 名
+          avgArray.sort((a, b) => b.avgScore - a.avgScore);
+          let top3 = avgArray.slice(0, 3);
+
+          // 6. ✨ 渲染超扁平、精緻的卡片
+          const avgListEl = document.getElementById("avg-list");
+          if (top3.length === 0) {
+            avgListEl.innerHTML = `<span style="color: #ccc; font-size: 12px; margin: 0 auto;">尚無符合資格的強者</span>`;
+            return;
+          }
+
+          let html = "";
+          let medals = ["🥇", "🥈", "🥉"];
+          top3.forEach((player, index) => {
+            html += `
+              <div style="background: rgba(0,0,0,0.2); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0;">
+                
+                <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+                  <span style="font-size: 13px;">${medals[index]}</span>
+                  <span style="font-weight: bold; font-size: 12px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${player.name}">${player.name}</span>
+                </div>
+                
+                <div style="display: flex; align-items: baseline; gap: 4px;">
+                  <span style="color: #f1c40f; font-weight: 900; font-size: 16px; line-height: 1;">${player.avgScore}</span>
+                  <span style="font-size: 10px; color: #95a5a6;">(${player.playCount}場)</span>
+                </div>
+
+              </div>
+            `;
+          });
+          avgListEl.innerHTML = html;
+        } catch (error) {
+          // ...
+          console.error("讀取平均成績失敗:", error);
+          document.getElementById(
+            "avg-list"
+          ).innerHTML = `<span style="color: #e74c3c;">連線失敗，請重新整理</span>`;
+        }
+      }
+
       // 網頁載入時啟動
       window.onload = () => {
         loadTopScore("trig", "normal", "top-trig", 3, TRIG_CSV);
@@ -963,6 +1132,8 @@
         loadTopScore("trig", "hell", "top-hell-trig", 1);
         loadTopScore("space", "hell", "top-hell-space", 1);
         loadTopScore("perm", "hell", "top-hell-perm", 1);
+        // ✨ 召喚平均分數計算引擎！
+        loadAverageLeaderboard();
       };
     </script>
   </body>
