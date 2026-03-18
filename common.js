@@ -22,80 +22,128 @@ function parseCSV(text) {
   return ret;
 }
 
+// ================= 萬能新舊融合排行榜 (地獄視覺版) =================
 async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
   const dailyBoard = document.getElementById("daily-board");
   const allTimeBoard = document.getElementById("alltime-board");
-  if (!csvUrl || !csvUrl.startsWith("http")) {
-    dailyBoard.innerHTML =
-      "<div class='board-row' style='justify-content:center; color:#e74c3c;'>尚未綁定資料庫</div>";
-    allTimeBoard.innerHTML =
-      "<div class='board-row' style='justify-content:center; color:#e74c3c;'>尚未綁定資料庫</div>";
-    return;
-  }
-  try {
-    let res = await fetch(csvUrl + "&t=" + new Date().getTime(), {
-      cache: "no-store",
-    });
-    let text = await res.text();
-    let data = parseCSV(text);
-    let ranks = [];
-    let todayObj = new Date();
-    let y = todayObj.getFullYear(),
-      m = todayObj.getMonth() + 1,
-      d = todayObj.getDate();
-    let todayPatterns = [
-      `${y}/${m}/${d}`,
-      `${y}/${String(m).padStart(2, "0")}/${String(d).padStart(2, "0")}`,
-      `${y}-${m}-${d}`,
-      `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
-    ];
 
-    for (let i = 1; i < data.length; i++) {
-      if (data[i].length >= 3) {
-        let timeRaw = data[i][0] || "";
-        let nameRaw = data[i][1] || "";
-        let scoreRaw = parseInt(data[i][2]);
-        if (isNaN(scoreRaw)) continue;
-        let cleanName = nameRaw.split(" (錯題:")[0].split(" (全對")[0].trim();
-        let isToday = todayPatterns.some((p) => timeRaw.startsWith(p));
-        ranks.push({ n: cleanName, s: scoreRaw, isToday: isToday });
+  if (!dailyBoard || !allTimeBoard) return;
+
+  // 1. 自動判斷目前的單元與模式
+  let currentUnit = "unknown";
+  let path = window.location.pathname.toLowerCase();
+  if (path.includes("trig")) currentUnit = "trig";
+  else if (path.includes("space")) currentUnit = "space";
+  else if (path.includes("perm")) currentUnit = "perm";
+
+  const urlParams = new URLSearchParams(window.location.search);
+  let currentMode = urlParams.get("mode") || "normal";
+
+  // ✨ 地獄模式設定：只顯示前 3 名，一般模式顯示前 5 名
+  let limit = currentMode === "hell" ? 3 : 5;
+
+  // ✨ 地獄模式樣式：深色背景、紅字
+  let boardStyle =
+    currentMode === "hell"
+      ? "background: #111; color: #ff4d4d; border: 1px solid #c0392b; padding: 10px; border-radius: 10px; box-shadow: 0 0 10px rgba(192, 57, 43, 0.3);"
+      : "";
+
+  try {
+    let combinedRanks = [];
+
+    // --- A. 抓取 Firebase 紀錄 ---
+    if (typeof db !== "undefined") {
+      const snapshot = await db
+        .collection("game_records")
+        .where("unit", "==", currentUnit)
+        .where("mode", "==", currentMode)
+        .get();
+      snapshot.forEach((doc) => {
+        let data = doc.data();
+        let ts = data.timestamp ? data.timestamp.toDate() : new Date();
+        combinedRanks.push({ n: data.name, s: data.score, dateObj: ts });
+      });
+    }
+
+    // --- B. 抓取舊 CSV (地獄模式通常不抓 CSV) ---
+    if (csvUrl && csvUrl.startsWith("http")) {
+      try {
+        let res = await fetch(csvUrl + "&t=" + new Date().getTime(), {
+          cache: "no-store",
+        });
+        let text = await res.text();
+        let csvData = parseCSV(text);
+        for (let i = 1; i < csvData.length; i++) {
+          if (csvData[i].length >= 3) {
+            let timeStr = csvData[i][0] || "";
+            let nameRaw = csvData[i][1] || "";
+            let scoreRaw = parseInt(csvData[i][2]);
+            if (!isNaN(scoreRaw)) {
+              combinedRanks.push({
+                n: nameRaw.split(" (")[0].trim(),
+                s: scoreRaw,
+                dateObj: new Date(timeStr),
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("CSV 載入失敗");
       }
     }
-    if (newRecord) ranks.push(newRecord);
 
-    let daily = ranks
-      .filter((r) => r.isToday)
-      .sort((a, b) => b.s - a.s)
-      .slice(0, 5);
-    let dailyHtml = "<h3>🌟 今日全班 Top 5</h3>";
+    if (newRecord)
+      combinedRanks.push({
+        n: newRecord.n,
+        s: newRecord.s,
+        dateObj: new Date(),
+      });
+
+    // --- D. 排序 (允許重複上榜) ---
+    let finalRanks = combinedRanks.sort((a, b) => b.s - a.s);
+
+    // --- E. 渲染 UI ---
+    let now = new Date();
+    let isSameDay = (d1, d2) =>
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate();
+
+    // 今日排行榜渲染
+    let daily = finalRanks
+      .filter((r) => isSameDay(r.dateObj, now))
+      .slice(0, limit);
+    let dailyHtml = `<h3 style="${
+      currentMode === "hell" ? "color:#ff4d4d" : ""
+    }">💀 今日地獄 Top ${limit}</h3>`;
     if (daily.length === 0)
       dailyHtml +=
-        "<div class='board-row' style='justify-content:center;'>尚無紀錄</div>";
-    daily.forEach(
-      (r, i) =>
-        (dailyHtml += `<div class="board-row"><span>${i + 1}. ${
-          r.n
-        }</span><strong>${r.s}</strong></div>`)
-    );
+        "<div class='board-row' style='justify-content:center;'>尚無挑戰者</div>";
+    daily.forEach((r, i) => {
+      dailyHtml += `<div class="board-row" style="border-bottom: 1px solid ${
+        currentMode === "hell" ? "#333" : "#eee"
+      }"><span>${i + 1}. ${r.n}</span><strong>${r.s}</strong></div>`;
+    });
     dailyBoard.innerHTML = dailyHtml;
+    if (currentMode === "hell") dailyBoard.style = boardStyle;
 
-    let allTime = [...ranks].sort((a, b) => b.s - a.s).slice(0, 5);
-    let allTimeHtml = "<h3>🏆 歷史全班 Top 5</h3>";
+    // 歷史排行榜渲染
+    let allTime = finalRanks.slice(0, limit);
+    let allTimeHtml = `<h3 style="${
+      currentMode === "hell" ? "color:#ff4d4d" : ""
+    }">🏆 歷史地獄 Top ${limit}</h3>`;
     if (allTime.length === 0)
       allTimeHtml +=
-        "<div class='board-row' style='justify-content:center;'>尚無紀錄</div>";
-    allTime.forEach(
-      (r, i) =>
-        (allTimeHtml += `<div class="board-row"><span>${i + 1}. ${
-          r.n
-        }</span><strong>${r.s}</strong></div>`)
-    );
+        "<div class='board-row' style='justify-content:center;'>尚無挑戰者</div>";
+    allTime.forEach((r, i) => {
+      allTimeHtml += `<div class="board-row" style="border-bottom: 1px solid ${
+        currentMode === "hell" ? "#333" : "#eee"
+      }"><span>${i + 1}. ${r.n}</span><strong>${r.s}</strong></div>`;
+    });
     allTimeBoard.innerHTML = allTimeHtml;
+    if (currentMode === "hell") allTimeBoard.style = boardStyle;
   } catch (err) {
-    dailyBoard.innerHTML =
-      "<div class='board-row' style='justify-content:center;'>讀取失敗</div>";
-    allTimeBoard.innerHTML =
-      "<div class='board-row' style='justify-content:center;'>讀取失敗</div>";
+    console.error(err);
   }
 }
 
@@ -225,40 +273,106 @@ function renderKeypad(containerId) {
   if (!container) return;
 
   container.innerHTML = `
-    <div class="key" onclick="input('7')">7</div>
-    <div class="key" onclick="input('8')">8</div>
-    <div class="key" onclick="input('9')">9</div>
-    <div class="key key-del" onclick="input('DEL')">
-      <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
-    </div>
-    
-    <div class="key" onclick="input('4')">4</div>
-    <div class="key" onclick="input('5')">5</div>
-    <div class="key" onclick="input('6')">6</div>
-    <div class="key key-sqrt" onclick="input('√')" title="根號">
-      <span class="sqrt-box" style="font-size: 1.2em">
-        <div class="sqrt-tick">
-          <svg viewBox="0 0 50 100" preserveAspectRatio="none">
-            <path d="M 5 60 L 15 60 L 30 95 L 48 5" stroke="currentColor" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </div>
-        <span class="sqrt-num" style="min-width: 0.6em"></span>
-      </span>
-    </div>
-    
-    <div class="key" onclick="input('1')">1</div>
-    <div class="key" onclick="input('2')">2</div>
-    <div class="key" onclick="input('3')">3</div>
-    <div class="key key-blue" onclick="input('-')">-</div>
-    
-    <div class="key" onclick="input('0')">0</div>
-    <div class="key key-blue" onclick="input('/')">/</div>
-    <div class="key key-blue normal-key" style="grid-column: span 2; font-size: 32px" onclick="input(',')">,</div>
-    <div class="key key-blue hell-key" onclick="input('(')">(</div>
-    <div class="key key-blue hell-key" onclick="input(')')">)</div>
-    
-    <div class="key key-enter normal-key" style="grid-column: span 4" onclick="submitAnswer()">ENTER</div>
-    <div class="key key-blue hell-key" style="grid-column: span 2" onclick="input('+')">+</div>
-    <div class="key key-enter hell-key" style="grid-column: span 2" onclick="submitAnswer()">ENTER</div>
-  `;
+      <div class="key" onclick="input('7')">7</div>
+      <div class="key" onclick="input('8')">8</div>
+      <div class="key" onclick="input('9')">9</div>
+      <div class="key key-del" onclick="input('DEL')">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+      </div>
+      
+      <div class="key" onclick="input('4')">4</div>
+      <div class="key" onclick="input('5')">5</div>
+      <div class="key" onclick="input('6')">6</div>
+      <div class="key key-sqrt" onclick="input('√')" title="根號">
+        <span class="sqrt-box" style="font-size: 1.2em">
+          <div class="sqrt-tick">
+            <svg viewBox="0 0 50 100" preserveAspectRatio="none">
+              <path d="M 5 60 L 15 60 L 30 95 L 48 5" stroke="currentColor" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <span class="sqrt-num" style="min-width: 0.6em"></span>
+        </span>
+      </div>
+      
+      <div class="key" onclick="input('1')">1</div>
+      <div class="key" onclick="input('2')">2</div>
+      <div class="key" onclick="input('3')">3</div>
+      <div class="key key-blue" onclick="input('-')">-</div>
+      
+      <div class="key" onclick="input('0')">0</div>
+      <div class="key key-blue" onclick="input('/')">/</div>
+      <div class="key key-blue normal-key" style="grid-column: span 2; font-size: 32px" onclick="input(',')">,</div>
+      <div class="key key-blue hell-key" onclick="input('(')">(</div>
+      <div class="key key-blue hell-key" onclick="input(')')">)</div>
+      
+      <div class="key key-enter normal-key" style="grid-column: span 4" onclick="submitAnswer()">ENTER</div>
+      <div class="key key-blue hell-key" style="grid-column: span 2" onclick="input('+')">+</div>
+      <div class="key key-enter hell-key" style="grid-column: span 2" onclick="submitAnswer()">ENTER</div>
+    `;
+}
+// ==========================================
+// 🚀 Firebase 雲端資料庫模組 (全域共用)
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyC7ed0il_ScCdHeWOHepj56ycjRXYt_Mf4",
+  authDomain: "mathgame-6ab85.firebaseapp.com",
+  projectId: "mathgame-6ab85",
+  storageBucket: "mathgame-6ab85.firebasestorage.app",
+  messagingSenderId: "790458098592",
+  appId: "1:790458098592:web:298e23dbb8ba82a3ee3ac5",
+};
+
+// 確保 Firebase 只被初始化一次
+if (typeof firebase !== "undefined" && !firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+// 📦 萬能上傳函數 (支援所有遊戲、所有模式、死亡與過關)
+function uploadGameRecord(status, currentScore, errMap, hellModeFlag) {
+  if (typeof firebase === "undefined") return Promise.reject("Firebase 未載入");
+  const db = firebase.firestore();
+
+  let name = document.getElementById("ui-name")
+    ? document.getElementById("ui-name").innerText
+    : "Guest";
+  if (name === "---" || !name) name = "Guest";
+  const playerUid = localStorage.getItem("mathGamePlayerUid") || "guest";
+
+  let wrongQuestionsArray = [];
+  if (errMap && typeof errMap.forEach === "function") {
+    errMap.forEach((data, qStr) => {
+      // ✨ 增加防呆：確保 data 存在且有內容
+      if (data) {
+        wrongQuestionsArray.push({
+          question: qStr.replace(/<[^>]*>?/gm, ""),
+          answer: data.ans ? data.ans.replace(/<[^>]*>?/gm, "") : "無解答",
+          hint: data.hint || "無提示",
+        });
+      }
+    });
+  }
+
+  // 🤖 自動判斷單元 (支援 practice 混合模式)
+  let currentUnit = "unknown";
+  let path = window.location.pathname.toLowerCase();
+  if (path.includes("trig")) currentUnit = "trig";
+  else if (path.includes("space")) currentUnit = "space";
+  else if (path.includes("perm")) currentUnit = "perm";
+  else if (path.includes("practice")) currentUnit = "practice";
+
+  let currentMode = hellModeFlag ? "hell" : "normal";
+  if (currentUnit === "practice") currentMode = "mixed";
+
+  const recordData = {
+    uid: playerUid,
+    name: name,
+    unit: currentUnit,
+    mode: currentMode,
+    score: currentScore,
+    status: status,
+    wrongLog: wrongQuestionsArray,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+
+  return db.collection("game_records").add(recordData);
 }
