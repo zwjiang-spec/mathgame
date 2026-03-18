@@ -927,9 +927,12 @@
           }, 150);
         } else {
           triggerErrorEffect();
+          // ✨ 延遲 400 毫秒：讓學生看清楚紅字與震動後，自動幫他清空！
           setTimeout(() => {
-            isProcessing = false;
-          }, 300); // 答錯延遲解鎖
+            userInput = ""; // 清空內部儲存的答案
+            renderInput(); // 更新畫面，讓輸入框變回空白
+            isProcessing = false; // 解除防連點鎖定
+          }, 400);
         }
       }
 
