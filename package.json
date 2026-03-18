@@ -6,10 +6,7 @@
   "scripts": {
     "start": "serve"
   },
-  "keywords": [
-    "html",
-    "css"
-  ],
+  "keywords": ["html", "css"],
   "author": "Ives van Hoorne",
   "license": "MIT",
   "devDependencies": {
