@@ -171,6 +171,59 @@
         "
       >
         <div
+          id="unit-avg-board"
+          style="
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            border-radius: 12px;
+            padding: 10px 15px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            /* ✨ 這裡做了瘦身與置中魔法！ */
+            width: 90%;
+            max-width: 460px;
+            margin: 0 auto 20px auto;
+            box-sizing: border-box;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 8px;
+            "
+          >
+            <div style="display: flex; align-items: baseline; gap: 6px">
+              <h3
+                id="unit-avg-title"
+                style="margin: 0; color: #f1c40f; font-size: 15px"
+              >
+                👑 本單元平均 Top 3
+              </h3>
+              <span style="font-size: 10px; color: #bdc3c7">(滿3場)</span>
+            </div>
+            <span
+              id="my-unit-avg"
+              style="
+                font-size: 12px;
+                background: rgba(255, 255, 255, 0.2);
+                padding: 2px 8px;
+                border-radius: 10px;
+                display: none;
+                font-weight: bold;
+              "
+            ></span>
+          </div>
+          <div
+            id="unit-avg-list"
+            style="display: flex; justify-content: space-between; gap: 8px"
+          >
+            <span style="color: #ccc; font-size: 12px; margin: 0 auto"
+              >數據計算中...</span
+            >
+          </div>
+        </div>
+        <div
           id="leaderboards"
           class="boards-container"
           style="
@@ -362,20 +415,15 @@
         // --- 2. 召喚鍵盤 ---
         renderKeypad("keypad");
 
-        // --- 3. ✨ 聰明的排行榜召喚邏輯 ---
+        // --- 3. ✨ 聰明的排行榜與平均榜召喚邏輯 ---
         const urlParams = new URLSearchParams(window.location.search);
         const isHell = urlParams.get("mode") === "hell";
 
-        if (isHell) {
-          // 💀 地獄模式：
-          // 我們不傳 CSV 網址進去（傳 null），
-          // 這樣 common.js 就會「只去 Firebase」撈出標記為 'hell' 的真正地獄大神！
-          loadGlobalLeaderboard(null);
-        } else {
-          // 🌱 一般模式：
-          // 傳入原本的 CSV_URL，讓 common.js 把「舊表單資料」+「Firebase 一般紀錄」融合。
-          loadGlobalLeaderboard(CSV_URL);
-        }
+        // 載入一般/地獄排行榜
+        loadGlobalLeaderboard(isHell ? null : CSV_URL);
+
+        // ✨ 召喚單元專屬平均榜！
+        loadUnitAverageLeaderboard();
       };
 
       const trigMap = {
@@ -1036,10 +1084,13 @@
               restartBtn.style.opacity = "1";
               restartBtn.style.cursor = "pointer";
             }
-            // 保留舊的 CSV 排行榜更新
-            // ✅ 替換成這行：自動根據模式重新整理最新的雲端榜單
+            // 抓取玩家名字，把這局成績當作 newRecord 傳進去，讓畫面秒速顯示！
+            let finalName = document.getElementById("ui-name").innerText;
+            if (finalName === "---" || !finalName) finalName = "Guest";
+
             loadGlobalLeaderboard(
-              typeof isHellMode !== "undefined" && isHellMode ? null : CSV_URL
+              typeof isHellMode !== "undefined" && isHellMode ? null : CSV_URL,
+              { n: finalName, s: score }
             );
 
             setTimeout(
