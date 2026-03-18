@@ -141,6 +141,8 @@
         border-bottom: none;
       }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
   </head>
   <body>
     <div id="toast">答案提示區</div>
@@ -433,6 +435,9 @@
 
     <script src="common.js"></script>
     <script>
+      // ==========================================
+      // 🚀 Firebase 雲端資料庫初始化
+      // ==========================================
       const permQuestions = [
         { q: "4!", a: "24", hint: "4 × 3 × 2 × 1", level: 1 },
         { q: "5!", a: "120", hint: "5 × 4 × 3 × 2 × 1", level: 1 },
@@ -595,6 +600,19 @@
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwQuA4SuPuNdHk6sUV9yyOU9g6z7uKNqIPsQw0Rj8u8g6-2WTLRMW-oeFhLRbiw2v7Oiz8v2g1XwNP/pub?output=csv";
 
       window.onload = () => {
+        // ✨ 自動讀取剛剛在大廳 Google 登入的名字
+        const savedName = localStorage.getItem("mathGamePlayerName");
+        const nameInput = document.getElementById("player-name");
+
+        if (savedName && nameInput) {
+          nameInput.value = savedName; // 自動填入名字
+          nameInput.readOnly = true; // 鎖定輸入框，不給改
+          nameInput.style.backgroundColor = "#eaf2f8"; // 變成淡淡的專屬藍色底
+          nameInput.style.color = "#2980b9";
+          nameInput.style.fontWeight = "bold";
+        }
+
+        // 召喚完美鍵盤與排行榜
         renderKeypad("keypad");
         loadGlobalLeaderboard(CSV_URL);
       };
@@ -760,11 +778,46 @@
 
       function checkDeath() {
         if (score < -20) {
-          if (timer) clearInterval(timer);
-          document.getElementById("death-error-log").innerHTML =
-            generateErrorLogHTML();
-          document.getElementById("death-screen").classList.add("show");
-          document.getElementById("keypad-container").style.display = "none";
+          clearInterval(timer);
+
+          if (
+            typeof generateErrorLogHTML === "function" &&
+            document.getElementById("death-error-log")
+          ) {
+            document.getElementById("death-error-log").innerHTML =
+              generateErrorLogHTML();
+          }
+          if (document.getElementById("death-screen"))
+            document.getElementById("death-screen").classList.add("show");
+          if (document.getElementById("keypad-container"))
+            document.getElementById("keypad-container").style.display = "none";
+
+          const deathBtn = document.querySelector("#death-screen button");
+          if (deathBtn) {
+            deathBtn.disabled = true;
+            deathBtn.innerText = "💀 遺言傳送中...";
+          }
+
+          // ✨ 一行指令，直接呼叫 common.js 的萬能上傳函數！
+          uploadGameRecord(
+            "dead",
+            score,
+            typeof errorLogMap !== "undefined" ? errorLogMap : null,
+            typeof isHellMode !== "undefined" ? isHellMode : false
+          )
+            .then(() => {
+              if (deathBtn) {
+                deathBtn.disabled = false;
+                deathBtn.innerText = "重新開始 (投胎)";
+              }
+            })
+            .catch((err) => {
+              console.error("存檔失敗:", err);
+              if (deathBtn) {
+                deathBtn.disabled = false;
+                deathBtn.innerText = "上傳失敗，點此重試";
+              }
+            });
         }
       }
 
@@ -953,57 +1006,68 @@
         document.getElementById("start-ui-group").classList.add("hidden");
         document.getElementById("end-ui-group").classList.remove("hidden");
 
-        // --- 1. 顯示 UI 與錯題本 ---
+        // --- 1. 顯示結算 UI ---
         document.getElementById("overlay").classList.remove("hidden");
         document.getElementById("final-score-text").classList.remove("hidden");
         document.getElementById(
           "final-score-text"
         ).innerText = `最終得分: ${score}`;
         document.getElementById("rules-box").classList.add("hidden");
+
+        // --- 2. 顯示錯題本 (包含提示) ---
         const endLog = document.getElementById("end-error-log");
         endLog.innerHTML = generateErrorLogHTML();
         endLog.classList.remove("hidden");
         window.scrollTo(0, 0);
 
-        // --- 2. 準備資料 ---
-        let playerName = document.getElementById("ui-name").innerText;
-        if (playerName === "---") playerName = "Guest";
-        document.getElementById("player-name").value = "成績傳送中...";
+        // --- 3. 準備上傳資料到 Firebase ---
+        document.getElementById("player-name").value = "成績光速傳送中...";
 
-        let errorSuffix =
-          errorLogMap.size === 0 ? " (全對🌟)" : ` (錯題:${errorLogMap.size})`;
-        let finalName = playerName + errorSuffix;
+        // ✨ 補上這一行：宣告 restartBtn 是誰！
+        const restartBtn = document.querySelector("#end-ui-group button");
+        if (restartBtn) {
+          restartBtn.disabled = true;
+          restartBtn.innerText = "⏳ 成績上傳中...";
+        }
 
-        // --- 3. 專屬排列組合的表單 ID ---
-        const PERM_FORM_ID =
-          "1FAIpQLSfRSPseTLbHFqY9IfR5BSWAwEoNTZQYSL4IQa3eYXAOF93UEw";
-        const PERM_ENTRY_NAME = "entry.2030485553";
-        const PERM_ENTRY_SCORE = "entry.1761371672";
-
-        const submitUrl = `https://docs.google.com/forms/d/e/${PERM_FORM_ID}/formResponse?${PERM_ENTRY_NAME}=${encodeURIComponent(
-          finalName
-        )}&${PERM_ENTRY_SCORE}=${score}&submit=Submit`;
-
-        // --- 4. 執行上傳 ---
-        fetch(submitUrl, {
-          method: "GET",
-          mode: "no-cors",
-        })
+        // ✨ 呼叫 common.js 的萬能上傳！
+        uploadGameRecord(
+          "clear",
+          score,
+          typeof errorLogMap !== "undefined" ? errorLogMap : null,
+          typeof isHellMode !== "undefined" ? isHellMode : false
+        )
           .then(() => {
-            document.getElementById("player-name").value = "成績已送出！";
-            // ✨ 使用共用模組，秒速更新排行榜！
+            document.getElementById("player-name").value =
+              "成績已存入雲端戰績室！";
+            if (restartBtn) {
+              restartBtn.disabled = false;
+              restartBtn.innerText = "再玩一局 (重新開始)";
+              restartBtn.style.opacity = "1";
+              restartBtn.style.cursor = "pointer";
+            }
+            // 保留舊的 CSV 排行榜更新
+            let name = document.getElementById("ui-name").innerText;
             loadGlobalLeaderboard(CSV_URL, {
-              n: playerName,
+              n: name === "---" ? "Guest" : name,
               s: score,
               isToday: true,
             });
+
             setTimeout(
               () => (document.getElementById("player-name").value = ""),
               2000
             );
           })
-          .catch((e) => {
-            document.getElementById("player-name").value = "傳送失敗";
+          .catch((err) => {
+            console.error("雲端存檔失敗:", err);
+            document.getElementById("player-name").value = "雲端存檔失敗";
+            if (restartBtn) {
+              restartBtn.disabled = false;
+              restartBtn.innerText = "上傳失敗，點此重試";
+              restartBtn.style.opacity = "1";
+              restartBtn.style.cursor = "pointer";
+            }
           });
       }
     </script>
