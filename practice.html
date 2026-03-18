@@ -33,6 +33,8 @@
         font-size: 18px;
       }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
   </head>
   <body>
     <div id="toast">答案提示區</div>
@@ -242,6 +244,9 @@
 
     <script src="common.js"></script>
     <script>
+      window.onload = () => {
+        renderKeypad("keypad");
+      };
       const urlParams = new URLSearchParams(window.location.search);
       const selectedModesStr = urlParams.get("modes");
       const activeModes = selectedModesStr
@@ -795,10 +800,45 @@
       function checkDeath() {
         if (score < -20) {
           clearInterval(timer);
-          document.getElementById("death-error-log").innerHTML =
-            generateErrorLogHTML();
-          document.getElementById("death-screen").classList.add("show");
-          document.getElementById("keypad-container").style.display = "none";
+
+          if (
+            typeof generateErrorLogHTML === "function" &&
+            document.getElementById("death-error-log")
+          ) {
+            document.getElementById("death-error-log").innerHTML =
+              generateErrorLogHTML();
+          }
+          if (document.getElementById("death-screen"))
+            document.getElementById("death-screen").classList.add("show");
+          if (document.getElementById("keypad-container"))
+            document.getElementById("keypad-container").style.display = "none";
+
+          const deathBtn = document.querySelector("#death-screen button");
+          if (deathBtn) {
+            deathBtn.disabled = true;
+            deathBtn.innerText = "💀 遺言傳送中...";
+          }
+
+          // ✨ 一行指令，直接呼叫 common.js 的萬能上傳函數！
+          uploadGameRecord(
+            "dead",
+            score,
+            typeof errorLogMap !== "undefined" ? errorLogMap : null,
+            typeof isHellMode !== "undefined" ? isHellMode : false
+          )
+            .then(() => {
+              if (deathBtn) {
+                deathBtn.disabled = false;
+                deathBtn.innerText = "重新開始 (投胎)";
+              }
+            })
+            .catch((err) => {
+              console.error("存檔失敗:", err);
+              if (deathBtn) {
+                deathBtn.disabled = false;
+                deathBtn.innerText = "上傳失敗，點此重試";
+              }
+            });
         }
       }
 
@@ -989,6 +1029,40 @@
         endLog.innerHTML = generateErrorLogHTML();
         endLog.classList.remove("hidden");
         window.scrollTo(0, 0);
+        // --- 3. 準備上傳資料到 Firebase (不上排行榜) ---
+        // (刪除了找不到 player-name 會當機的程式碼)
+
+        // ✨ 宣告 restartBtn，防止當機！
+        const restartBtn = document.querySelector("#end-ui-group button");
+        if (restartBtn) {
+          restartBtn.disabled = true;
+          restartBtn.innerText = "⏳ 紀錄儲存中...";
+        }
+
+        // ✨ 呼叫 common.js 的萬能上傳！
+        uploadGameRecord(
+          "clear",
+          score,
+          typeof errorLogMap !== "undefined" ? errorLogMap : null,
+          false // 練習模式沒有地獄難度
+        )
+          .then(() => {
+            if (restartBtn) {
+              restartBtn.disabled = false;
+              restartBtn.innerText = "✅ 已存入戰績室！再練習一局";
+              restartBtn.style.opacity = "1";
+              restartBtn.style.cursor = "pointer";
+            }
+          })
+          .catch((err) => {
+            console.error("雲端存檔失敗:", err);
+            if (restartBtn) {
+              restartBtn.disabled = false;
+              restartBtn.innerText = "上傳失敗，點此重試";
+              restartBtn.style.opacity = "1";
+              restartBtn.style.cursor = "pointer";
+            }
+          });
       }
     </script>
   </body>
