@@ -729,14 +729,20 @@
         checkDeath();
       }
 
+      // ✨ 防連點鎖
+      let isProcessing = false;
+
       function submitAnswer() {
-        if (userInput === "") return;
+        if (userInput === "" || isProcessing) return;
         const box = document.getElementById("input-box");
         if (
           box.classList.contains("correct-flash") ||
           box.classList.contains("error-text")
         )
           return;
+
+        isProcessing = true; // 上鎖
+
         let isCorrect = false;
         if (isCoordinateAns) {
           let cleanUser = userInput.replace(/[\s\(\)]/g, "");
@@ -771,9 +777,19 @@
             body.classList.add("strong-shake-effect");
           }
           updateUI();
-          setTimeout(getNewQuestion, 150);
+          setTimeout(() => {
+            getNewQuestion();
+            isProcessing = false; // 出完下一題解鎖
+          }, 150);
         } else {
           triggerErrorEffect();
+
+          // ✨ 升級 2：答錯延遲 400 毫秒後自動清空
+          setTimeout(() => {
+            userInput = "";
+            renderInput();
+            isProcessing = false;
+          }, 400);
         }
       }
 
