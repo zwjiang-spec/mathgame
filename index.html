@@ -411,9 +411,12 @@
         color: #ccc;
       }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
   </head>
   <body>
-    <div id="version-btn" onclick="toggleUpdateLog()">v2.5.0 更新日誌</div>
+    <div id="version-btn" onclick="toggleUpdateLog()">v3.0.0 更新日誌</div>
 
     <a
       href="https://forms.gle/pDzjWcsPBi2pwJ869"
@@ -427,22 +430,46 @@
         <span class="close-btn" onclick="toggleUpdateLog()">×</span>
         <h2>🚀 版本更新日誌</h2>
         <div class="update-item">
-          <span class="version-tag">v2.5.0</span>
-          <span class="date-tag">史詩級大升級！</span>
+          <span class="version-tag">v3.0.0</span>
+          <span class="date-tag">史詩級神仙大進化</span>
           <ul>
             <li>
-              <b style="color: #f39c12">大廳榮譽榜：</b
-              >各單元首頁新增「金銀銅」前三名專屬標籤，展現神人霸榜實力！
+              <b style="color: #2980b9">個人戰績室：</b>Google
+              登入連動，完整記錄近 10 次挑戰與錯題本。
             </li>
             <li>
-              <b style="color: #2980b9">體驗大幅升級：</b>右上角新增「🚪
-              退出」按鈕；結算畫面自動隱藏輸入框，徹底根除誤觸覆蓋名字的問題。
+              <b style="color: #29b92e">自由選擇是否登入：</b>可自由選擇是否登入
+              Google 帳號進行遊戲，成績皆會進入排行榜中。
+            </li>
+            <li>
+              <b style="color: #c0392b">地獄視覺：</b>地獄模式專屬黑化
+              UI，前三強專屬深色榜單。
+            </li>
+            <li>
+              <b style="color: #c08c2b">意見回饋：</b>遊戲中遇到任何 bug
+              或是有任何建議，都可以點選右下角的意見回饋表單！
+            </li>
+            <li>優化虛擬鍵盤與移動端退出機制。</li>
+          </ul>
+        </div>
+        <hr style="border: 0; border-top: 1px dashed #eee; margin: 20px 0" />
+
+        <div class="update-item" style="opacity: 0.8">
+          <span class="version-tag" style="background: #95a5a6">v2.5.0</span>
+          <span class="date-tag">基礎功能優化</span>
+          <ul>
+            <li>
+              <b style="color: #2980b9">體驗升級：</b>新增右上角「🚪
+              退出」按鈕，過關後自動隱藏輸入框。
             </li>
             <li>
               <b style="color: #ff0000">錯題本提示：</b
-              >錯誤的題目在結束後會提供答案與提示，解題不求人！
+              >結算畫面提供正解與提示，點擊即可學習。
             </li>
-            <li>修復了一些煩人的蟲子。</li>
+            <li>
+              <b style="color: #7f8c8d">UI 修復：</b
+              >優化手機端顯示比例，修復鍵盤遮擋問題。
+            </li>
           </ul>
         </div>
       </div>
@@ -450,7 +477,64 @@
 
     <div class="main-container">
       <h1><span class="teacher"></span>數學領域展開</h1>
+      <div
+        id="user-info"
+        style="
+          margin-bottom: 20px;
+          padding: 12px;
+          background: #f8f9fa;
+          border-radius: 12px;
+          border: 1px solid #eee;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        "
+      >
+        <span
+          id="user-name-display"
+          style="font-weight: bold; color: #2c3e50; font-size: 15px"
+          >👤 尚未登入</span
+        >
 
+        <div style="display: flex; gap: 10px">
+          <button
+            id="profile-btn"
+            onclick="window.location.href='profile.html'"
+            style="
+              display: none;
+              background: #f39c12;
+              color: white;
+              border: none;
+              padding: 8px 15px;
+              border-radius: 8px;
+              cursor: pointer;
+              font-weight: bold;
+              box-shadow: 0 2px 5px rgba(243, 156, 18, 0.3);
+            "
+          >
+            📊 我的戰績
+          </button>
+
+          <button
+            id="auth-btn"
+            onclick="toggleLogin()"
+            style="
+              background: #3498db;
+              color: white;
+              border: none;
+              padding: 8px 15px;
+              border-radius: 8px;
+              cursor: pointer;
+              font-weight: bold;
+              transition: 0.2s;
+              box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+            "
+          >
+            Google 登入
+          </button>
+        </div>
+      </div>
       <div class="tabs">
         <button
           class="tab-btn active"
@@ -515,7 +599,7 @@
             "
           >
             <div class="btn-text">
-              <span class="level-icon"></span> 有趣的坐標
+              <span class="level-icon"></span> 有趣的空間坐標
             </div>
             <div
               id="top-space"
@@ -671,64 +755,32 @@
     </div>
 
     <script>
-      function toggleUpdateLog() {
-        const modal = document.getElementById("update-modal");
-        modal.classList.contains("show")
-          ? modal.classList.remove("show")
-          : modal.classList.add("show");
-      }
+      // ==========================================
+      // 🚀 1. Firebase 初始化 (必須放在最前面！)
+      // ==========================================
+      const firebaseConfig = {
+        apiKey: "AIzaSyC7ed0il_ScCdHeWOHepj56ycjRXYt_Mf4",
+        authDomain: "mathgame-6ab85.firebaseapp.com",
+        projectId: "mathgame-6ab85",
+        storageBucket: "mathgame-6ab85.firebasestorage.app",
+        messagingSenderId: "790458098592",
+        appId: "1:790458098592:web:298e23dbb8ba82a3ee3ac5",
+      };
 
-      // ✨ 更新為支援三個頁籤的切換邏輯
-      // ✨ 更新為支援三個頁籤與「地獄領域展開」的切換邏輯
-      function switchTab(tabId) {
-        ["ranked", "hell", "practice"].forEach((id) => {
-          document.getElementById("btn-" + id).classList.remove("active");
-          document.getElementById("content-" + id).classList.remove("active");
-        });
-        document.getElementById("btn-" + tabId).classList.add("active");
-        document.getElementById("content-" + tabId).classList.add("active");
-
-        // 💀 判斷是否點擊了地獄模式，如果是，給 body 加上黑化標籤
-        if (tabId === "hell") {
-          document.body.classList.add("hell-theme");
-        } else {
-          document.body.classList.remove("hell-theme");
-        }
-      }
-
-      function startPractice() {
-        let selectedModes = [];
-        if (document.getElementById("chk-trig").checked)
-          selectedModes.push("trig");
-        if (document.getElementById("chk-space").checked)
-          selectedModes.push("space");
-        if (document.getElementById("chk-perm").checked)
-          selectedModes.push("perm");
-
-        if (selectedModes.length === 0) {
-          alert("⚠️ 請至少勾選一個單元才能開始練習喔！");
-          return;
-        }
-        window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
-      }
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const db = firebase.firestore(); // 先準備好 db，下面才能用！
 
       // ==========================================
-      // 📊 排行榜資料庫 (CSV 網址區)
+      // 🏆 2. 新舊融合！Firebase + CSV 即時雲端排行榜引擎
       // ==========================================
-
-      // 一般模式的 CSV
       const TRIG_CSV =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
       const SPACE_CSV =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
       const PERM_CSV =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwQuA4SuPuNdHk6sUV9yyOU9g6z7uKNqIPsQw0Rj8u8g6-2WTLRMW-oeFhLRbiw2v7Oiz8v2g1XwNP/pub?output=csv";
-
-      // 💀 地獄模式的 CSV (老師你之後要幫地獄模式建新的 Google 表單，再把 CSV 貼過來替換這三行)
-      // 目前先暫時用一般的資料庫代替，免得顯示空白
-      const HELL_TRIG_CSV = TRIG_CSV;
-      const HELL_SPACE_CSV = SPACE_CSV;
-      const HELL_PERM_CSV = PERM_CSV;
 
       function parseCSV(text) {
         let p = "",
@@ -753,46 +805,65 @@
         return ret;
       }
 
-      // ✨ 進化版 loadTopScore：加入 limit 參數控制顯示人數
-      async function loadTopScore(url, elementId, limit = 3) {
+      async function loadTopScore(
+        unit,
+        mode,
+        elementId,
+        limit = 3,
+        csvUrl = null
+      ) {
         const el = document.getElementById(elementId);
         try {
-          let res = await fetch(url + "&t=" + new Date().getTime(), {
-            cache: "no-store",
-          });
-          let text = await res.text();
-          let data = parseCSV(text);
+          let allRecords = [];
 
-          let records = [];
-          for (let i = 1; i < data.length; i++) {
-            if (data[i].length >= 3) {
-              let nameRaw = data[i][1] || "";
-              let scoreRaw = parseInt(data[i][2]);
-              if (isNaN(scoreRaw)) continue;
-              let cleanName = nameRaw
-                .split(" (錯題:")[0]
-                .split(" (全對")[0]
-                .split(" (死亡")[0]
-                .trim();
-              records.push({ name: cleanName, score: scoreRaw });
+          // 去雲端撈新成績
+          const snapshot = await db
+            .collection("game_records")
+            .where("unit", "==", unit)
+            .where("mode", "==", mode)
+            .get();
+          snapshot.forEach((doc) => allRecords.push(doc.data()));
+
+          // 去 CSV 撈老前輩的成績
+          if (csvUrl) {
+            try {
+              let res = await fetch(csvUrl + "&t=" + new Date().getTime(), {
+                cache: "no-store",
+              });
+              let text = await res.text();
+              let data = parseCSV(text);
+              for (let i = 1; i < data.length; i++) {
+                if (data[i].length >= 3) {
+                  let nameRaw = data[i][1] || "";
+                  let scoreRaw = parseInt(data[i][2]);
+                  if (!isNaN(scoreRaw)) {
+                    let cleanName = nameRaw
+                      .split(" (錯題:")[0]
+                      .split(" (全對")[0]
+                      .split(" (死亡")[0]
+                      .trim();
+                    allRecords.push({ name: cleanName, score: scoreRaw });
+                  }
+                }
+              }
+            } catch (err) {
+              console.warn("讀取舊 CSV 失敗", err);
             }
           }
 
-          // 依照分數排序並依照 limit 取前幾名
-          let topList = records
-            .sort((a, b) => b.score - a.score)
-            .slice(0, limit);
+          // 排序
+          allRecords.sort((a, b) => b.score - a.score);
 
+          // 畫出排行榜
+          let topList = allRecords.slice(0, limit);
           if (topList.length > 0) {
             let html = `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">`;
             let medals = ["🥇", "🥈", "🥉"];
             let colors = ["#ffd700", "#e0e0e0", "#ffb07c"];
 
             topList.forEach((player, index) => {
-              // 為了地獄模式的第一名加上皇冠
               let icon = limit === 1 ? "👑" : medals[index];
               let textColor = limit === 1 ? "#ff4d4d" : colors[index];
-
               html += `<div style="background: rgba(0, 0, 0, 0.15); padding: 3px 6px; border-radius: 6px; font-size: 11px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.1);">
                          ${icon}
                          <span style="max-width: 55px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: white;" title="${player.name}">${player.name}</span>
@@ -809,17 +880,89 @@
         }
       }
 
-      // 網頁載入時立刻抓資料
-      window.onload = () => {
-        // 一般模式 (取前 3 名)
-        loadTopScore(TRIG_CSV, "top-trig", 3);
-        loadTopScore(SPACE_CSV, "top-space", 3);
-        loadTopScore(PERM_CSV, "top-perm", 3);
+      // ==========================================
+      // 🚀 3. 其他大廳 UI 功能
+      // ==========================================
+      function toggleUpdateLog() {
+        const modal = document.getElementById("update-modal");
+        modal.classList.contains("show")
+          ? modal.classList.remove("show")
+          : modal.classList.add("show");
+      }
 
-        // 地獄模式 (只取第 1 名)
-        loadTopScore(HELL_TRIG_CSV, "top-hell-trig", 1);
-        loadTopScore(HELL_SPACE_CSV, "top-hell-space", 1);
-        loadTopScore(HELL_PERM_CSV, "top-hell-perm", 1);
+      function switchTab(tabId) {
+        ["ranked", "hell", "practice"].forEach((id) => {
+          document.getElementById("btn-" + id).classList.remove("active");
+          document.getElementById("content-" + id).classList.remove("active");
+        });
+        document.getElementById("btn-" + tabId).classList.add("active");
+        document.getElementById("content-" + tabId).classList.add("active");
+
+        if (tabId === "hell") {
+          document.body.classList.add("hell-theme");
+        } else {
+          document.body.classList.remove("hell-theme");
+        }
+      }
+
+      function startPractice() {
+        let selectedModes = [];
+        if (document.getElementById("chk-trig").checked)
+          selectedModes.push("trig");
+        if (document.getElementById("chk-space").checked)
+          selectedModes.push("space");
+        if (document.getElementById("chk-perm").checked)
+          selectedModes.push("perm");
+
+        if (selectedModes.length === 0) {
+          alert("⚠️ 請至少勾選一個單元才能開始練習喔！");
+          return;
+        }
+        window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
+      }
+
+      // 監聽玩家的登入狀態
+      auth.onAuthStateChanged((user) => {
+        const nameDisplay = document.getElementById("user-name-display");
+        const authBtn = document.getElementById("auth-btn");
+
+        if (user) {
+          document.getElementById("profile-btn").style.display = "block";
+          nameDisplay.innerHTML = `<img src="${user.photoURL}" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-right:8px;"> ${user.displayName}`;
+          authBtn.innerText = "登出";
+          authBtn.style.background = "#e74c3c";
+          authBtn.style.boxShadow = "0 2px 5px rgba(231, 76, 60, 0.3)";
+          localStorage.setItem("mathGamePlayerName", user.displayName);
+          localStorage.setItem("mathGamePlayerUid", user.uid);
+        } else {
+          document.getElementById("profile-btn").style.display = "none";
+          nameDisplay.innerHTML = "👤 尚未登入";
+          authBtn.innerText = "Google 登入";
+          authBtn.style.background = "#3498db";
+          authBtn.style.boxShadow = "0 2px 5px rgba(52, 152, 219, 0.3)";
+          localStorage.removeItem("mathGamePlayerName");
+          localStorage.removeItem("mathGamePlayerUid");
+        }
+      });
+
+      function toggleLogin() {
+        if (auth.currentUser) {
+          if (confirm("確定要登出嗎？")) auth.signOut();
+        } else {
+          auth
+            .signInWithPopup(provider)
+            .catch((error) => alert("登入失敗：" + error.message));
+        }
+      }
+
+      // 網頁載入時啟動
+      window.onload = () => {
+        loadTopScore("trig", "normal", "top-trig", 3, TRIG_CSV);
+        loadTopScore("space", "normal", "top-space", 3, SPACE_CSV);
+        loadTopScore("perm", "normal", "top-perm", 3, PERM_CSV);
+        loadTopScore("trig", "hell", "top-hell-trig", 1);
+        loadTopScore("space", "hell", "top-hell-space", 1);
+        loadTopScore("perm", "hell", "top-hell-perm", 1);
       };
     </script>
   </body>
