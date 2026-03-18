@@ -340,6 +340,7 @@
 
     <script src="common.js"></script>
     <script>
+      let isGameOver = false; // 🚩 這就是我們的守門員
       const FORM_ID =
         "1FAIpQLSeCrdzV9erg41HjfjB3oBDZTMosCJZBIahPX5fa2EQqF-9SQQ";
       const ENTRY_NAME = "entry.1283303860";
@@ -733,6 +734,9 @@
 
       function checkDeath() {
         if (score < -20) {
+          // ✨ 死亡也要鎖門！防止重複死兩次，或跟 endGame 撞在一起
+          if (isGameOver) return;
+          isGameOver = true;
           clearInterval(timer);
 
           if (
@@ -929,6 +933,7 @@
       }
 
       function startGame() {
+        isGameOver = false; // 🔓 重新開始新局時，要把門鎖打開
         document.getElementById("player-name").blur();
         window.scrollTo(0, 0);
         initAudio();
@@ -984,6 +989,9 @@
       }
 
       function endGame() {
+        // ✨ 守門員檢查：如果已經結束過，就直接跳出，防止重複執行
+        if (isGameOver) return;
+        isGameOver = true;
         // --- 0. 切換按鈕：隱藏開始按鈕，顯示重新開始 ---
         document.getElementById("start-ui-group").classList.add("hidden");
         document.getElementById("end-ui-group").classList.remove("hidden");
@@ -1029,12 +1037,10 @@
               restartBtn.style.cursor = "pointer";
             }
             // 保留舊的 CSV 排行榜更新
-            let name = document.getElementById("ui-name").innerText;
-            loadGlobalLeaderboard(CSV_URL, {
-              n: name === "---" ? "Guest" : name,
-              s: score,
-              isToday: true,
-            });
+            // ✅ 替換成這行：自動根據模式重新整理最新的雲端榜單
+            loadGlobalLeaderboard(
+              typeof isHellMode !== "undefined" && isHellMode ? null : CSV_URL
+            );
 
             setTimeout(
               () => (document.getElementById("player-name").value = ""),
