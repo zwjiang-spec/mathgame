@@ -478,7 +478,158 @@
         </div>
       </div>
     </div>
+    <div
+      id="legend-modal"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 200;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      "
+    >
+      <div class="modal-content" style="text-align: center">
+        <span
+          class="close-btn"
+          onclick="toggleLegend()"
+          style="
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #95a5a6;
+          "
+          >×</span
+        >
+        <h2
+          style="
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 22px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+          "
+        >
+          🎖️ 領域階級說明
+        </h2>
+        <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 25px">
+          系統會根據你的「歷史最高分」頒發專屬稱號
+        </p>
 
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: left;
+            padding: 0 20px;
+          "
+        >
+          <div
+            style="
+              color: #95a5a6;
+              border-bottom: 1px dashed #eee;
+              padding-bottom: 8px;
+            "
+          >
+            數學初心者
+            <span style="float: right; color: #7f8c8d; font-size: 14px"
+              >0 分起</span
+            >
+          </div>
+          <div
+            style="
+              color: #3498db;
+              border-bottom: 1px dashed #eee;
+              padding-bottom: 8px;
+            "
+          >
+            小小狙擊手
+            <span style="float: right; color: #7f8c8d; font-size: 14px"
+              >300 分</span
+            >
+          </div>
+          <div
+            style="
+              color: #9b59b6;
+              border-bottom: 1px dashed #eee;
+              padding-bottom: 8px;
+            "
+          >
+            數字預言家
+            <span style="float: right; color: #7f8c8d; font-size: 14px"
+              >600 分</span
+            >
+          </div>
+          <div
+            style="
+              color: #e67e22;
+              border-bottom: 1px dashed #eee;
+              padding-bottom: 8px;
+            "
+          >
+            鋼之煉金師
+            <span style="float: right; color: #7f8c8d; font-size: 14px"
+              >1000 分</span
+            >
+          </div>
+          <div
+            style="
+              color: #df22e6;
+              border-bottom: 1px dashed #eee;
+              padding-bottom: 8px;
+            "
+          >
+            數學戰神
+            <span style="float: right; color: #7f8c8d; font-size: 14px"
+              >1500 分</span
+            >
+          </div>
+          <div
+            style="
+              color: #c0392b;
+              font-size: 18px;
+              padding-bottom: 8px;
+              text-shadow: 0 0 8px rgba(192, 57, 43, 0.3);
+            "
+          >
+            🌌 領域展開：數學至尊
+            <span style="float: right; color: #c0392b; font-size: 16px"
+              >2000 分</span
+            >
+          </div>
+        </div>
+
+        <button
+          onclick="toggleLegend()"
+          style="
+            margin-top: 30px;
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 35px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+          "
+        >
+          我知道了
+        </button>
+      </div>
+    </div>
     <div class="main-container">
       <h1><span class="teacher"></span>數學領域展開</h1>
       <div
@@ -516,6 +667,19 @@
             "
             >👤 尚未登入</span
           >
+          <span
+            id="user-title-badge"
+            style="
+              display: none;
+              font-size: 10px;
+              color: white;
+              padding: 2px 8px;
+              border-radius: 12px;
+              font-weight: bold;
+              white-space: nowrap;
+              flex-shrink: 0;
+            "
+          ></span>
           <span
             id="user-avg-badge"
             style="
@@ -571,6 +735,27 @@
             Google 登入
           </button>
         </div>
+      </div>
+      <div style="text-align: right; margin-bottom: 15px; padding-right: 5px">
+        <button
+          onclick="toggleLegend()"
+          style="
+            background: #fff;
+            color: #34495e;
+            border: 1px solid #bdc3c7;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: 0.2s;
+          "
+          onmouseover="this.style.background='#f8f9fa'"
+          onmouseout="this.style.background='#fff'"
+        >
+          🎖️ 階級說明
+        </button>
       </div>
       <div class="tabs">
         <button
@@ -920,11 +1105,24 @@
       // ==========================================
       // 🚀 3. 其他大廳 UI 功能
       // ==========================================
+      // 開關更新日誌視窗
       function toggleUpdateLog() {
         const modal = document.getElementById("update-modal");
         modal.classList.contains("show")
           ? modal.classList.remove("show")
           : modal.classList.add("show");
+      }
+
+      // ✨ 開關階級說明視窗
+      function toggleLegend() {
+        const modal = document.getElementById("legend-modal");
+        if (modal.style.opacity === "1") {
+          modal.style.opacity = "0";
+          modal.style.pointerEvents = "none";
+        } else {
+          modal.style.opacity = "1";
+          modal.style.pointerEvents = "auto";
+        }
       }
 
       function switchTab(tabId) {
@@ -961,27 +1159,72 @@
       // 監聽玩家的登入狀態
       auth.onAuthStateChanged((user) => {
         const nameDisplay = document.getElementById("user-name-display");
+        const titleBadge = document.getElementById("user-title-badge"); // 抓取標籤
         const authBtn = document.getElementById("auth-btn");
 
         if (user) {
+          // --- 登入狀態 ---
           document.getElementById("profile-btn").style.display = "block";
           nameDisplay.innerHTML = `<img src="${user.photoURL}" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-right:8px;"> ${user.displayName}`;
           authBtn.innerText = "登出";
           authBtn.style.background = "#e74c3c";
           authBtn.style.boxShadow = "0 2px 5px rgba(231, 76, 60, 0.3)";
+
           localStorage.setItem("mathGamePlayerName", user.displayName);
           localStorage.setItem("mathGamePlayerUid", user.uid);
+
+          // ✨ 核心稱號計算 (必須放在 if(user) 裡面才不會報錯)
+          db.collection("game_records")
+            .where("uid", "==", user.uid)
+            .get()
+            .then((snapshot) => {
+              let maxScore = 0;
+              snapshot.forEach((doc) => {
+                let s = parseInt(doc.data().score) || 0;
+                if (s > maxScore) maxScore = s;
+              });
+
+              // 稱號等級定義
+              const TITLES = [
+                { min: 0, name: "初心者", color: "#95a5a6" },
+                { min: 300, name: "狙擊手", color: "#3498db" },
+                { min: 600, name: "預言家", color: "#9b59b6" },
+                { min: 1000, name: "煉金師", color: "#e67e22" },
+                { min: 2000, name: "戰神", color: "#df22e6" },
+                { min: 2000, name: "🌌 數學至尊", color: "#c0392b" },
+              ];
+
+              let myTitle = TITLES[0];
+              for (let i = TITLES.length - 1; i >= 0; i--) {
+                if (maxScore >= TITLES[i].min) {
+                  myTitle = TITLES[i];
+                  break;
+                }
+              }
+
+              // ✨ 渲染稱號到標籤上
+              titleBadge.style.display = "inline-block";
+              titleBadge.innerText = myTitle.name;
+              titleBadge.style.background = myTitle.color;
+
+              // 至尊專屬閃爍特效
+              if (maxScore >= 2000) {
+                titleBadge.style.boxShadow = "0 0 10px " + myTitle.color;
+              }
+            });
         } else {
+          // --- 登出狀態 ---
           document.getElementById("profile-btn").style.display = "none";
           nameDisplay.innerHTML = "👤 尚未登入";
+          titleBadge.style.display = "none"; // 登出就隱藏稱號
           authBtn.innerText = "Google 登入";
           authBtn.style.background = "#3498db";
           authBtn.style.boxShadow = "0 2px 5px rgba(52, 152, 219, 0.3)";
+
           localStorage.removeItem("mathGamePlayerName");
           localStorage.removeItem("mathGamePlayerUid");
         }
       });
-
       function toggleLogin() {
         if (auth.currentUser) {
           if (confirm("確定要登出嗎？")) auth.signOut();
