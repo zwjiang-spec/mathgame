@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>弱點特訓教室</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* ✨ 繼承虛擬鍵盤的專屬顏色變數 */
+      :root {
+        --bg-main: #f8f9fa;
+        --text-dark: #1c2833;
+        --text-gray: #95a5a6;
+        --btn-white: #ffffff;
+        --btn-blue-bg: #eaf2f8;
+        --btn-blue-text: #2980b9;
+        --btn-del-bg: #fae5e5;
+        --btn-del-text: #c0392b;
+        --btn-sqrt-bg: #fdf2e3;
+        --btn-sqrt-text: #d68910;
+        --btn-enter-bg: #2ecc71;
+        --btn-enter-text: #ffffff;
+      }
+
+      body {
+        background: #fdf2f2;
+        text-align: center;
+        padding: 15px;
+        overflow-x: hidden;
+      }
+
+      #review-container {
+        width: 90%;
+        max-width: 600px; /* ✨ 解除瘦身，稍微加寬 */
+        margin: 0 auto 20px auto;
+        background: white;
+        padding: 25px 20px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        box-sizing: border-box; /* 確保 padding 不會撐破寬度 */
+      }
+
+      .progress {
+        color: #7f8c8d;
+        font-size: 15px;
+        margin-bottom: 15px;
+        font-weight: bold;
+      }
+
+      #question-display {
+        font-size: 28px;
+        font-weight: 800;
+        margin: 15px 0;
+        color: #c0392b;
+      }
+
+      /* ✨ 輸入框樣式 (完美對齊遊戲主畫面) */
+      #input-box {
+        min-height: 50px;
+        min-width: 150px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #2980b9;
+        background: #f8f9fa;
+        border: 2px dashed #bdc3c7;
+        border-radius: 12px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto 15px auto;
+        padding: 10px;
+        transition: 0.2s;
+      }
+
+      .error-text {
+        color: #e74c3c !important;
+        border-color: #e74c3c !important;
+        background: #fae5e5 !important;
+      }
+      .correct-flash {
+        background: #d4efdf !important;
+        border-color: #27ae60 !important;
+        color: #27ae60 !important;
+      }
+
+      #hint-area {
+        margin-top: 15px;
+        color: #7f8c8d;
+        font-size: 15px;
+        font-weight: bold;
+        min-height: 25px;
+      }
+
+      /* ✨ 鍵盤專屬容器 */
+      #keypad-container {
+        width: 90%;
+        max-width: 600px; /* ✨ 解除瘦身 */
+        margin: 0 auto;
+        padding-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="review-container">
+      <div style="text-align: left; margin-bottom: 10px">
+        <a
+          href="profile.html"
+          style="
+            text-decoration: none;
+            color: #95a5a6;
+            font-size: 15px;
+            font-weight: bold;
+          "
+          >⬅ 逃避特訓 (返回戰績室)</a
+        >
+      </div>
+      <h2 style="margin-top: 0; color: #c0392b">🔥 弱點特訓中</h2>
+      <div class="progress" id="progress-text">第 0 / 0 題</div>
+
+      <div id="display-area">
+        <div id="question-display">載入中...</div>
+        <div id="input-box"></div>
+      </div>
+
+      <div id="hint-area"></div>
+    </div>
+
+    <div id="keypad-container">
+      <div id="keypad"></div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+      let pool = JSON.parse(localStorage.getItem("mathGameReviewPool") || "[]");
+      let currentIndex = 0;
+      let userInput = "";
+      let isProcessing = false; // 防連點鎖
+
+      window.onload = () => {
+        if (pool.length === 0) {
+          alert("目前沒有特訓資料喔！快去挑戰幾場吧！");
+          window.location.href = "profile.html";
+          return;
+        }
+        // 召喚虛擬鍵盤 (呼叫 common.js 的函數)
+        if (typeof renderKeypad === "function") {
+          renderKeypad("keypad");
+        }
+        loadNext();
+      };
+
+      function loadNext() {
+        if (currentIndex >= pool.length) {
+          alert("🎉 太神啦！你已成功克服所有弱點！");
+          window.location.href = "profile.html";
+          return;
+        }
+        const qData = pool[currentIndex];
+        document.getElementById("progress-text").innerText = `第 ${
+          currentIndex + 1
+        } / ${pool.length} 題`;
+
+        // 處理題目顯示 (如果有 span 等 HTML 標籤，透過 formatMathHTML 處理)
+        let displayQ =
+          typeof formatMathHTML === "function" &&
+          !qData.q.includes("<span") &&
+          !qData.q.includes("<svg")
+            ? formatMathHTML(qData.q)
+            : qData.q;
+
+        document.getElementById("question-display").innerHTML = displayQ + " =";
+        document.getElementById("hint-area").innerHTML = ""; // 清空提示
+
+        userInput = "";
+        renderInput();
+      }
+
+      // ==========================================
+      // ⌨️ 虛擬鍵盤專用邏輯
+      // ==========================================
+
+      // 1. 處理鍵盤點擊 (被 common.js 呼叫)
+      function input(val) {
+        if (isProcessing) return;
+        if (val === "DEL") {
+          userInput = userInput.slice(0, -1);
+        } else {
+          userInput += val;
+        }
+        renderInput();
+      }
+
+      // 2. 渲染輸入框
+      function renderInput() {
+        const box = document.getElementById("input-box");
+        if (typeof formatMathHTML === "function") {
+          box.innerHTML = formatMathHTML(userInput);
+        } else {
+          box.innerText = userInput;
+        }
+        box.classList.remove("error-text", "correct-flash");
+      }
+
+      // 3. 提交答案 (對應 common.js 鍵盤的 ENTER 鍵)
+      function submitAnswer() {
+        if (userInput === "" || isProcessing) return;
+        isProcessing = true; // 上鎖
+
+        const correctAns = pool[currentIndex].a;
+        const box = document.getElementById("input-box");
+        let isCorrect = false;
+
+        // 判斷邏輯 (字串完全相等 或 數值相等)
+        if (userInput === correctAns) {
+          isCorrect = true;
+        } else {
+          try {
+            let safeUser = userInput.replace(/√(\d+)/g, "Math.sqrt($1)");
+            let safeTarget = correctAns.replace(/√(\d+)/g, "Math.sqrt($1)");
+            if (Math.abs(eval(safeUser) - eval(safeTarget)) < 1e-5) {
+              isCorrect = true;
+            }
+          } catch (e) {
+            isCorrect = false;
+          }
+        }
+
+        if (isCorrect) {
+          // ✅ 答對了！
+          if (typeof playCorrect === "function") playCorrect();
+          box.classList.add("correct-flash");
+          document.getElementById("hint-area").innerHTML =
+            '<span style="color:#27ae60;">✅ 正確！完美克服！</span>';
+
+          // 延遲跳下一題
+          setTimeout(() => {
+            currentIndex++;
+            isProcessing = false;
+            loadNext();
+          }, 800);
+        } else {
+          // ❌ 答錯了！
+          if (typeof playWrong === "function") playWrong();
+          box.classList.add("error-text");
+
+          // 顯示提示
+          let hintText =
+            pool[currentIndex].hint || "這題好像沒有提示喔，再想想看！";
+          let displayHint =
+            typeof formatMathHTML === "function" && !hintText.includes("<span")
+              ? formatMathHTML(hintText)
+              : hintText;
+          document.getElementById("hint-area").innerHTML =
+            "💡 提示：" + displayHint;
+
+          // 畫面震動特效
+          const area = document.getElementById("review-container");
+          area.classList.remove("shake-animation");
+          void area.offsetWidth; // 觸發重繪
+          area.classList.add("shake-animation");
+
+          // 延遲清空輸入框，強迫學生重打加深記憶
+          setTimeout(() => {
+            userInput = "";
+            renderInput();
+            isProcessing = false;
+          }, 800);
+        }
+      }
+    </script>
+  </body>
+</html>
