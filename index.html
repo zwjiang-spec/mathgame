@@ -417,14 +417,13 @@
   </head>
   <body>
     <div id="version-btn" onclick="toggleUpdateLog()">v3.0.0 更新日誌</div>
-
     <a
       href="https://forms.gle/pDzjWcsPBi2pwJ869"
       target="_blank"
       class="feedback-btn"
+      >💡 意見回饋</a
     >
-      💡 意見回饋
-    </a>
+
     <div id="update-modal">
       <div class="modal-content">
         <span class="close-btn" onclick="toggleUpdateLog()">×</span>
@@ -435,15 +434,11 @@
           <ul>
             <li>
               <b style="color: #2980b9">個人戰績室：</b>Google
-              登入連動，完整記錄近 10 次挑戰與錯題本。
+              登入連動，完整記錄近 10 次挑戰與錯題本，並且給予弱點特訓！
             </li>
             <li>
               <b style="color: #29b92e">自由選擇是否登入：</b>可自由選擇是否登入
               Google 帳號進行遊戲，成績皆會進入排行榜中。
-            </li>
-            <li>
-              <b style="color: #c0392b">地獄視覺：</b>地獄模式專屬黑化
-              UI，前三強專屬深色榜單。
             </li>
             <li>
               <b style="color: #c08c2b">意見回饋：</b>遊戲中遇到任何 bug
@@ -451,13 +446,19 @@
             </li>
             <li>
               <b style="color: #a020f0">平均成績：</b
-              >點入各單元會顯示你在這單元的平均分數以及所有玩家前五名的平均分數！
+              >點入各單元會顯示你在這單元的平均分數以及所有玩家前三名的平均分數！
             </li>
-            <li>優化虛擬鍵盤與移動端退出機制。</li>
+            <li>
+              <b style="color: #2023f0">遊戲稱號：</b
+              >依據你的最高分數，會獲得不同的稱號！
+            </li>
+            <li>
+              <b style="color: #380404">數學死神已降臨：</b
+              >數學死神已降臨至遊戲大廳，需要所有玩家共同的努力來將祂擊退！
+            </li>
           </ul>
         </div>
         <hr style="border: 0; border-top: 1px dashed #eee; margin: 20px 0" />
-
         <div class="update-item" style="opacity: 0.8">
           <span class="version-tag" style="background: #95a5a6">v2.5.0</span>
           <span class="date-tag">基礎功能優化</span>
@@ -470,14 +471,11 @@
               <b style="color: #ff0000">錯題本提示：</b
               >結算畫面提供正解與提示，點擊即可學習。
             </li>
-            <li>
-              <b style="color: #7f8c8d">UI 修復：</b
-              >優化手機端顯示比例，修復鍵盤遮擋問題。
-            </li>
           </ul>
         </div>
       </div>
     </div>
+
     <div
       id="legend-modal"
       style="
@@ -519,12 +517,11 @@
             padding-bottom: 10px;
           "
         >
-          🎖️ 領域階級說明
+          🎖️ 領域稱號說明
         </h2>
         <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 25px">
           系統會根據你的「歷史最高分」頒發專屬稱號
         </p>
-
         <div
           style="
             display: flex;
@@ -610,7 +607,6 @@
             >
           </div>
         </div>
-
         <button
           onclick="toggleLegend()"
           style="
@@ -630,31 +626,263 @@
         </button>
       </div>
     </div>
+
+    <div
+      id="boss-info-modal"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 250;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      "
+    >
+      <div
+        class="modal-content"
+        style="
+          text-align: left;
+          background: #1a1a2e;
+          border: 2px solid #e74c3c;
+          box-shadow: 0 10px 40px rgba(231, 76, 60, 0.5);
+          color: white;
+        "
+      >
+        <span
+          class="close-btn"
+          onclick="toggleBossInfo()"
+          style="
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #bdc3c7;
+          "
+          >×</span
+        >
+        <h2
+          style="
+            margin-top: 0;
+            color: #e74c3c;
+            font-size: 22px;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 10px;
+            text-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
+          "
+        >
+          💀 世界 Boss 討伐戰
+        </h2>
+        <p
+          style="
+            color: #ecf0f1;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+          "
+        >
+          這是一場需要所有玩家集結的史詩戰役！數學死神擁有高達
+          <b style="color: #e74c3c; font-size: 18px">50 萬</b>
+          的血量，單靠一個人的力量是絕對無法擊退的。
+        </p>
+        <ul
+          style="
+            color: #bdc3c7;
+            font-size: 14px;
+            line-height: 1.8;
+            padding-left: 20px;
+            margin-bottom: 25px;
+          "
+        >
+          <li>
+            你在任何模式下獲得的<b style="color: #2ecc71">正分數</b
+            >，都會化作對死神的<b style="color: #f39c12">真實傷害</b>。
+          </li>
+          <li>
+            如果答錯被扣到負分，不會幫死神補血 (別擔心，他還沒學會吸血 🧛‍♂️)。
+          </li>
+          <li>
+            發揮你的極限，集結所有玩家的「領域展開」之力，一起把死神的血條打穿吧！
+          </li>
+        </ul>
+        <div style="text-align: center">
+          <button
+            onclick="toggleBossInfo()"
+            style="
+              background: linear-gradient(135deg, #c0392b, #e74c3c);
+              color: white;
+              border: none;
+              padding: 10px 40px;
+              border-radius: 25px;
+              font-size: 16px;
+              font-weight: bold;
+              cursor: pointer;
+              box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+              transition: 0.2s;
+            "
+          >
+            ⚔️ 準備戰鬥
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="main-container">
       <h1><span class="teacher"></span>數學領域展開</h1>
+
+      <div
+        id="boss-container"
+        style="
+          background: #1a1a2e;
+          border-radius: 15px;
+          padding: 15px;
+          margin-bottom: 20px;
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+          text-align: center;
+          border: 2px solid #34495e;
+          position: relative;
+          overflow: hidden;
+        "
+      >
+        <button
+          onclick="toggleBossInfo()"
+          style="
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #bdc3c7;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.2s;
+          "
+          onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='#fff'"
+          onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#bdc3c7'"
+          title="點擊查看討伐說明"
+        >
+          ?
+        </button>
+        <div
+          style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(
+              circle,
+              rgba(192, 57, 43, 0.2) 0%,
+              transparent 70%
+            );
+            animation: pulseBg 2s infinite;
+            pointer-events: none;
+          "
+        ></div>
+        <h3
+          id="boss-title"
+          style="
+            margin: 0 0 10px 0;
+            color: #e74c3c;
+            font-size: 18px;
+            text-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+            position: relative;
+            z-index: 1;
+          "
+        >
+          💀 世界 Boss：數學死神
+        </h3>
+        <div
+          style="
+            background: #000;
+            width: 100%;
+            height: 24px;
+            border-radius: 12px;
+            border: 2px solid #555;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+          "
+        >
+          <div
+            id="boss-hp-bar"
+            style="
+              background: linear-gradient(90deg, #c0392b, #e74c3c);
+              width: 100%;
+              height: 100%;
+              transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+              box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.3);
+            "
+          ></div>
+          <div
+            id="boss-hp-text"
+            style="
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              color: white;
+              font-size: 12px;
+              font-weight: bold;
+              text-shadow: 1px 1px 2px #000;
+              letter-spacing: 1px;
+            "
+          >
+            血量偵測中...
+          </div>
+        </div>
+        <div
+          style="
+            color: #95a5a6;
+            font-size: 11px;
+            margin-top: 8px;
+            position: relative;
+            z-index: 1;
+          "
+        >
+          ⚔️ 所有玩家總傷害累計：<span
+            id="boss-damage-text"
+            style="color: #f39c12; font-weight: bold; font-size: 14px"
+            >0</span
+          >
+        </div>
+      </div>
+
       <div
         id="user-info"
         style="
           margin-bottom: 15px;
-          padding: 8px 12px; /* 稍微縮小內邊距爭取空間 */
+          padding: 8px 12px;
           background: #f8f9fa;
           border-radius: 12px;
           border: 1px solid #eee;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 10px; /* 左右區塊保持安全距離 */
+          gap: 10px;
           box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
         "
       >
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            min-width: 0; /* 讓名字太長時可以縮限 */
-          "
-        >
+        <div style="display: flex; align-items: center; gap: 6px; min-width: 0">
           <span
             id="user-name-display"
             style="
@@ -695,7 +923,6 @@
             "
           ></span>
         </div>
-
         <div
           style="display: flex; gap: 6px; align-items: center; flex-shrink: 0"
         >
@@ -736,6 +963,7 @@
           </button>
         </div>
       </div>
+
       <div style="text-align: right; margin-bottom: 15px; padding-right: 5px">
         <button
           onclick="toggleLegend()"
@@ -754,9 +982,10 @@
           onmouseover="this.style.background='#f8f9fa'"
           onmouseout="this.style.background='#fff'"
         >
-          🎖️ 階級說明
+          🎖️ 稱號說明
         </button>
       </div>
+
       <div class="tabs">
         <button
           class="tab-btn active"
@@ -1124,7 +1353,76 @@
           modal.style.pointerEvents = "auto";
         }
       }
+      // ✨ 開關魔王討伐說明視窗
+      function toggleBossInfo() {
+        const modal = document.getElementById("boss-info-modal");
+        if (modal.style.opacity === "1") {
+          modal.style.opacity = "0";
+          modal.style.pointerEvents = "none";
+        } else {
+          modal.style.opacity = "1";
+          modal.style.pointerEvents = "auto";
+        }
+      }
+      // ✨ 世界 Boss 血量計算引擎
+      function loadBossData() {
+        const MAX_HP = 500000; // 魔王總血量：50萬
+        const hpText = document.getElementById("boss-hp-text");
+        const hpBar = document.getElementById("boss-hp-bar");
+        const dmgText = document.getElementById("boss-damage-text");
+        const bossTitle = document.getElementById("boss-title");
 
+        // 撈取所有「大於 0 分」的成績，作為對魔王的有效傷害
+        db.collection("game_records")
+          .where("score", ">", 0)
+          .get()
+          .then((snapshot) => {
+            let totalDamage = 0;
+            snapshot.forEach((doc) => {
+              totalDamage += parseInt(doc.data().score) || 0;
+            });
+
+            // 計算剩餘血量 (最低扣到 0)
+            let currentHP = MAX_HP - totalDamage;
+            if (currentHP < 0) currentHP = 0;
+
+            // 計算血條百分比
+            let hpPercent = (currentHP / MAX_HP) * 100;
+
+            // 動畫更新 UI
+            hpText.innerText = `HP: ${currentHP.toLocaleString()} / ${MAX_HP.toLocaleString()}`;
+
+            // 數字跑動特效 (讓傷害數字看起來更帥)
+            let currentDmgDisplay = 0;
+            let dmgInterval = setInterval(() => {
+              currentDmgDisplay += Math.ceil(totalDamage / 20);
+              if (currentDmgDisplay >= totalDamage) {
+                currentDmgDisplay = totalDamage;
+                clearInterval(dmgInterval);
+              }
+              dmgText.innerText = currentDmgDisplay.toLocaleString();
+            }, 50);
+
+            // 延遲一點點收縮血條，製造視覺打擊感
+            setTimeout(() => {
+              hpBar.style.width = hpPercent + "%";
+            }, 300);
+
+            // 🎉 隱藏彩蛋：如果死神被打敗了
+            if (currentHP === 0) {
+              bossTitle.innerText = "🎉 數學死神已被所有玩家擊敗！";
+              bossTitle.style.color = "#f1c40f";
+              hpBar.style.background =
+                "linear-gradient(90deg, #f1c40f, #f39c12)";
+              hpBar.style.width = "100%";
+              hpText.innerText = "領域完全解放！";
+            }
+          })
+          .catch((err) => {
+            console.error("讀取魔王血量失敗", err);
+            hpText.innerText = "💀 靈壓干擾，血量讀取失敗";
+          });
+      }
       function switchTab(tabId) {
         ["ranked", "hell", "practice"].forEach((id) => {
           document.getElementById("btn-" + id).classList.remove("active");
@@ -1243,6 +1541,8 @@
         loadTopScore("trig", "hell", "top-hell-trig", 1);
         loadTopScore("space", "hell", "top-hell-space", 1);
         loadTopScore("perm", "hell", "top-hell-perm", 1);
+        // ✨ 召喚大魔王血條！
+        loadBossData();
       };
     </script>
   </body>
