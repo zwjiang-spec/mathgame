@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>我的專屬數學戰績室</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body {
+        background-color: #f7f9fc;
+        padding: 20px;
+        text-align: center;
+        overflow-y: auto;
+        display: block;
+        height: auto;
+      }
+      .profile-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        text-align: left;
+      }
+      .header-area {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+      }
+      .header-area img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 3px solid #3498db;
+      }
+      .header-area h1 {
+        margin: 0;
+        font-size: 24px;
+        color: #2c3e50;
+      }
+      .header-area p {
+        margin: 5px 0 0 0;
+        color: #7f8c8d;
+        font-size: 14px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 25px;
+      }
+      .stat-card {
+        background: #f8f9fa;
+        padding: 15px 10px;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid #eaeaea;
+      }
+      .stat-card .value {
+        font-size: 24px;
+        font-weight: 900;
+        color: #2980b9;
+        margin-bottom: 5px;
+      }
+      .stat-card .label {
+        font-size: 12px;
+        color: #95a5a6;
+        font-weight: bold;
+      }
+      .stat-card.death .value {
+        color: #e74c3c;
+      }
+
+      h2 {
+        font-size: 18px;
+        color: #34495e;
+        border-left: 4px solid #f39c12;
+        padding-left: 10px;
+        margin-top: 30px;
+        margin-bottom: 15px;
+      }
+
+      .wrong-q-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .wrong-q-item {
+        background: #fff5f5;
+        border-left: 4px solid #e74c3c;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        border-radius: 0 8px 8px 0;
+        font-size: 16px;
+        color: #2c3e50;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .wrong-q-item .ans {
+        color: #e67e22;
+        font-weight: bold;
+        font-size: 14px;
+      }
+      .wrong-q-item .hint {
+        display: block;
+        font-size: 12px;
+        color: #7f8c8d;
+        margin-top: 5px;
+      }
+
+      .history-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .history-item {
+        background: #f8f9fa;
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid #eee;
+      }
+      .history-item .date {
+        font-size: 12px;
+        color: #95a5a6;
+      }
+      .history-item .score {
+        font-weight: bold;
+        color: #27ae60;
+        font-size: 18px;
+      }
+      .history-item.dead .score {
+        color: #e74c3c;
+      }
+
+      .home-btn {
+        display: inline-block;
+        background: #ecf0f1;
+        color: #7f8c8d;
+        padding: 8px 15px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        margin-bottom: 20px;
+        transition: 0.2s;
+      }
+      .home-btn:hover {
+        background: #bdc3c7;
+        color: white;
+      }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
+  </head>
+  <body>
+    <div class="profile-container">
+      <a href="index.html" class="home-btn">⬅ 返回大廳</a>
+
+      <div class="header-area" id="profile-header">
+        <img
+          src="https://via.placeholder.com/60"
+          id="user-avatar"
+          alt="大頭貼"
+        />
+        <div>
+          <h1 id="user-name">讀取中...</h1>
+          <p id="user-uid">請稍候，正在連線雲端資料庫...</p>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="value" id="stat-games">0</div>
+          <div class="label">挑戰總局數</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" style="color: #f39c12" id="stat-high">0</div>
+          <div class="label">最高分數</div>
+        </div>
+        <div class="stat-card death">
+          <div class="value" id="stat-deaths">0</div>
+          <div class="label">被死神帶走</div>
+        </div>
+      </div>
+
+      <h2>📖 我的專屬錯題本 (常錯複習)</h2>
+      <ul class="wrong-q-list" id="wrong-q-container">
+        <li style="color: #7f8c8d; font-size: 14px">資料載入中...</li>
+      </ul>
+
+      <h2>🕒 近期挑戰紀錄</h2>
+      <ul class="history-list" id="history-container">
+        <li style="color: #7f8c8d; font-size: 14px">資料載入中...</li>
+      </ul>
+    </div>
+
+    <script>
+      // 🚀 Firebase 初始化
+      const firebaseConfig = {
+        apiKey: "AIzaSyC7ed0il_ScCdHeWOHepj56ycjRXYt_Mf4",
+        authDomain: "mathgame-6ab85.firebaseapp.com",
+        projectId: "mathgame-6ab85",
+        storageBucket: "mathgame-6ab85.firebasestorage.app",
+        messagingSenderId: "790458098592",
+        appId: "1:790458098592:web:298e23dbb8ba82a3ee3ac5",
+      };
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      // 檢查登入狀態
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          document.getElementById("user-avatar").src = user.photoURL;
+          document.getElementById("user-name").innerText = user.displayName;
+          document.getElementById("user-uid").innerText =
+            "學霸認證代碼: " + user.uid.substring(0, 8);
+          loadUserData(user.uid);
+        } else {
+          alert("⚠️ 請先在首頁進行 Google 登入才能查看戰績！");
+          window.location.href = "index.html";
+        }
+      });
+
+      // 撈取資料並渲染畫面
+      async function loadUserData(uid) {
+        try {
+          // 從資料庫抓取該 UID 的所有紀錄
+          const snapshot = await db
+            .collection("game_records")
+            .where("uid", "==", uid)
+            .get();
+
+          let records = [];
+          snapshot.forEach((doc) => records.push(doc.data()));
+
+          // 如果完全沒玩過
+          if (records.length === 0) {
+            document.getElementById("stat-games").innerText = 0;
+            document.getElementById("wrong-q-container").innerHTML =
+              '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 你還沒有任何錯題，趕快去挑戰吧！</li>';
+            document.getElementById("history-container").innerHTML =
+              '<li style="color: #7f8c8d; padding: 10px;">尚無紀錄</li>';
+            return;
+          }
+
+          // 照時間新到舊排序 (為了不讓 Firestore 報錯，我們用 JS 在本地端排)
+          records.sort((a, b) => {
+            let timeA = a.timestamp ? a.timestamp.toMillis() : 0;
+            let timeB = b.timestamp ? b.timestamp.toMillis() : 0;
+            return timeB - timeA;
+          });
+
+          // --- 📊 統計數據 ---
+          let maxScore = -999;
+          let deathCount = 0;
+          let uniqueWrongs = new Map(); // 用 Map 幫錯題去重複
+
+          let historyHTML = "";
+
+          records.forEach((rec) => {
+            // 最高分與死亡數
+            if (rec.score > maxScore) maxScore = rec.score;
+            if (rec.status === "dead" || rec.score <= -20) deathCount++;
+
+            // 收集錯題 (去重複)
+            if (rec.wrongLog && rec.wrongLog.length > 0) {
+              rec.wrongLog.forEach((w) => {
+                if (!uniqueWrongs.has(w.question)) {
+                  uniqueWrongs.set(w.question, w);
+                }
+              });
+            }
+
+            // 產生歷史紀錄列表 (最多顯示前 10 筆)
+            let dateStr = rec.timestamp
+              ? rec.timestamp
+                  .toDate()
+                  .toLocaleString("zh-TW", {
+                    month: "numeric",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+              : "剛剛";
+
+            // ✨ 自動翻譯單元名稱與圖示
+            let unitLabel = "🎮 未知";
+            if (rec.unit === "trig") unitLabel = "📐 三角";
+            else if (rec.unit === "space") unitLabel = "🚀 空間";
+            else if (rec.unit === "perm") unitLabel = "🎲 排列";
+            else if (rec.unit === "practice") unitLabel = "💪 練習";
+
+            // ✨ 判斷模式
+            let modeIcon =
+              rec.mode === "hell"
+                ? "💀 地獄"
+                : rec.mode === "mixed"
+                ? "🔥 混合"
+                : "🌱 一般";
+
+            let scoreDisplay =
+              rec.status === "dead"
+                ? `💀 死神帶走 (${rec.score}分)`
+                : `${rec.score} 分`;
+            let deadClass = rec.status === "dead" ? "dead" : "";
+
+            if (historyHTML.split("</li>").length <= 10) {
+              historyHTML += `
+              <li class="history-item ${deadClass}">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <span style="background: #eaf2f8; color: #2980b9; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: bold;">${unitLabel}</span>
+                  <span style="font-weight:bold; font-size: 13px;">${modeIcon}</span>
+                  <span class="date">${dateStr}</span>
+                </div>
+                <div class="score">${scoreDisplay}</div>
+              </li>
+            `;
+            }
+          });
+
+          // 渲染統計數字
+          document.getElementById("stat-games").innerText = records.length;
+          document.getElementById("stat-high").innerText = maxScore;
+          document.getElementById("stat-deaths").innerText = deathCount;
+          document.getElementById("history-container").innerHTML = historyHTML;
+
+          // 渲染錯題本
+          if (uniqueWrongs.size > 0) {
+            let wrongHTML = "";
+            uniqueWrongs.forEach((data, q) => {
+              wrongHTML += `
+              <li class="wrong-q-item">
+                <div>
+                  <div>${q} <span class="ans">➡ 正解: ${
+                data.answer
+              }</span></div>
+                  <span class="hint">💡 ${data.hint || "無提示"}</span>
+                </div>
+              </li>
+            `;
+            });
+            document.getElementById("wrong-q-container").innerHTML = wrongHTML;
+          } else {
+            document.getElementById("wrong-q-container").innerHTML =
+              '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 太神啦！目前為止零錯題！</li>';
+          }
+        } catch (error) {
+          console.error("讀取戰績失敗:", error);
+          document.getElementById("wrong-q-container").innerHTML =
+            '<li style="color: #e74c3c;">讀取失敗，請重新整理網頁</li>';
+        }
+      }
+    </script>
+  </body>
+</html>
