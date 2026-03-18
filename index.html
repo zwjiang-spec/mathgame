@@ -733,7 +733,107 @@
         </div>
       </div>
     </div>
+    <div
+      id="boss-rank-modal"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 250;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      "
+    >
+      <div
+        class="modal-content"
+        style="
+          text-align: left;
+          background: #1a1a2e;
+          border: 2px solid #f39c12;
+          box-shadow: 0 10px 40px rgba(243, 156, 18, 0.4);
+          color: white;
+          width: 85%;
+          max-width: 380px;
+        "
+      >
+        <span
+          class="close-btn"
+          onclick="toggleBossRank()"
+          style="
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #bdc3c7;
+          "
+          >×</span
+        >
+        <h2
+          style="
+            margin-top: 0;
+            color: #f39c12;
+            font-size: 20px;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 10px;
+          "
+        >
+          🏆 討伐貢獻 Top 5
+        </h2>
 
+        <p
+          style="
+            color: #ecf0f1;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+          "
+        >
+          🔥 <b style="color: #e74c3c">地獄模式</b>的傷害將以
+          <b style="color: #f1c40f">2 倍</b> 計算！<br />
+          👑 成功擊殺死神後，貢獻最高的 MVP 將獲得永久專屬稱號！
+        </p>
+
+        <div
+          id="boss-rank-list"
+          style="
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+          "
+        >
+          <div style="color: #7f8c8d; text-align: center">
+            資料飛速計算中...
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px">
+          <button
+            onclick="toggleBossRank()"
+            style="
+              background: #34495e;
+              color: white;
+              border: none;
+              padding: 8px 30px;
+              border-radius: 20px;
+              font-size: 14px;
+              font-weight: bold;
+              cursor: pointer;
+            "
+          >
+            關閉
+          </button>
+        </div>
+      </div>
+    </div>
     <div class="main-container">
       <h1><span class="teacher"></span>數學領域展開</h1>
 
@@ -980,18 +1080,39 @@
         </div>
         <div
           style="
-            color: #95a5a6;
-            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-top: 8px;
             position: relative;
             z-index: 1;
           "
         >
-          ⚔️ 所有玩家總傷害累計：<span
-            id="boss-damage-text"
-            style="color: #f39c12; font-weight: bold; font-size: 14px"
-            >0</span
+          <div style="color: #95a5a6; font-size: 11px">
+            ⚔️ 所有玩家總傷害累積：<span
+              id="boss-damage-text"
+              style="color: #f39c12; font-weight: bold; font-size: 14px"
+              >0</span
+            >
+          </div>
+          <button
+            onclick="toggleBossRank()"
+            style="
+              background: rgba(243, 156, 18, 0.15);
+              color: #f39c12;
+              border: 1px solid rgba(243, 156, 18, 0.5);
+              padding: 3px 10px;
+              border-radius: 12px;
+              font-size: 11px;
+              font-weight: bold;
+              cursor: pointer;
+              transition: 0.2s;
+            "
+            onmouseover="this.style.background='rgba(243, 156, 18, 0.3)'"
+            onmouseout="this.style.background='rgba(243, 156, 18, 0.15)'"
           >
+            🏆 貢獻排行
+          </button>
         </div>
       </div>
 
@@ -1373,7 +1494,17 @@
           modal.style.pointerEvents = "auto";
         }
       }
-      // ✨ 世界 Boss 血量計算引擎
+      function toggleBossRank() {
+        const modal = document.getElementById("boss-rank-modal");
+        if (modal.style.opacity === "1") {
+          modal.style.opacity = "0";
+          modal.style.pointerEvents = "none";
+        } else {
+          modal.style.opacity = "1";
+          modal.style.pointerEvents = "auto";
+        }
+      }
+      // ✨ 世界 Boss 終極運算引擎 (含排行與雙倍傷害)
       function loadBossData() {
         const MAX_HP = 500000; // 魔王總血量：50萬
         const hpText = document.getElementById("boss-hp-text");
@@ -1381,27 +1512,40 @@
         const dmgText = document.getElementById("boss-damage-text");
         const bossTitle = document.getElementById("boss-title");
 
-        // 撈取所有「大於 0 分」的成績，作為對魔王的有效傷害
         db.collection("game_records")
           .where("score", ">", 0)
           .get()
           .then((snapshot) => {
             let totalDamage = 0;
+            let playerDamageMap = {}; // 用來記錄每個人的總貢獻
+
             snapshot.forEach((doc) => {
-              totalDamage += parseInt(doc.data().score) || 0;
+              let data = doc.data();
+              let s = parseInt(data.score) || 0;
+              let mode = data.mode || "normal";
+              let uid = data.uid;
+              let name = data.name || "神秘勇者";
+
+              // ✨ 地獄模式傷害直接 x2 倍！
+              let actualDamage = mode === "hell" ? s * 2 : s;
+              totalDamage += actualDamage;
+
+              // 累加個人貢獻度
+              if (uid) {
+                if (!playerDamageMap[uid]) {
+                  playerDamageMap[uid] = { uid: uid, name: name, damage: 0 };
+                }
+                playerDamageMap[uid].damage += actualDamage;
+              }
             });
 
-            // 計算剩餘血量 (最低扣到 0)
+            // --- 處理血條 UI ---
             let currentHP = MAX_HP - totalDamage;
             if (currentHP < 0) currentHP = 0;
-
-            // 計算血條百分比
             let hpPercent = (currentHP / MAX_HP) * 100;
 
-            // 動畫更新 UI
             hpText.innerText = `HP: ${currentHP.toLocaleString()} / ${MAX_HP.toLocaleString()}`;
 
-            // 數字跑動特效 (讓傷害數字看起來更帥)
             let currentDmgDisplay = 0;
             let dmgInterval = setInterval(() => {
               currentDmgDisplay += Math.ceil(totalDamage / 20);
@@ -1412,19 +1556,57 @@
               dmgText.innerText = currentDmgDisplay.toLocaleString();
             }, 50);
 
-            // 延遲一點點收縮血條，製造視覺打擊感
             setTimeout(() => {
               hpBar.style.width = hpPercent + "%";
             }, 300);
 
-            // 🎉 隱藏彩蛋：如果死神被打敗了
-            if (currentHP === 0) {
-              bossTitle.innerText = "🎉 數學死神已被所有玩家擊敗！";
-              bossTitle.style.color = "#f1c40f";
+            // --- 🏆 處理排行榜 UI ---
+            let topPlayers = Object.values(playerDamageMap).sort(
+              (a, b) => b.damage - a.damage
+            );
+            let top5 = topPlayers.slice(0, 5);
+            let rankHtml = "";
+
+            let icons = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
+            top5.forEach((p, idx) => {
+              rankHtml += `<div style="display:flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                  <span style="font-weight:bold; color:#ecf0f1; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${
+                    icons[idx]
+                  } ${p.name}</span>
+                  <span style="color: #f39c12; font-weight: bold; font-size: 13px;">⚔️ ${p.damage.toLocaleString()}</span>
+               </div>`;
+            });
+            if (rankHtml === "")
+              rankHtml =
+                '<div style="color:#7f8c8d; text-align:center;">尚無人造成傷害</div>';
+            document.getElementById("boss-rank-list").innerHTML = rankHtml;
+
+            // --- 🎉 隱藏彩蛋：魔王被擊殺 & MVP 稱號動態覆蓋 ---
+            if (currentHP === 0 && topPlayers.length > 0) {
+              let mvp = topPlayers[0]; // 第一名就是 MVP
+              bossTitle.innerHTML = `🎉 死神已被擊敗！MVP: <span style="color:#f1c40f;">${mvp.name}</span>`;
+              bossTitle.style.color = "#ecf0f1";
               hpBar.style.background =
                 "linear-gradient(90deg, #f1c40f, #f39c12)";
               hpBar.style.width = "100%";
               hpText.innerText = "領域完全解放！";
+
+              // 檢查目前登入的玩家是不是 MVP，如果是，強制覆蓋稱號！
+              const currentUid = localStorage.getItem("mathGamePlayerUid");
+              if (currentUid === mvp.uid) {
+                setTimeout(() => {
+                  const titleBadge =
+                    document.getElementById("user-title-badge");
+                  if (titleBadge) {
+                    titleBadge.innerText = "👑 死神弒殺者";
+                    titleBadge.style.background =
+                      "linear-gradient(135deg, #c0392b, #8e44ad)";
+                    titleBadge.style.boxShadow =
+                      "0 0 15px rgba(192, 57, 43, 0.8)";
+                    titleBadge.style.display = "inline-block";
+                  }
+                }, 500); // 稍微延遲以確保蓋過原本的稱號計算
+              }
             }
           })
           .catch((err) => {
