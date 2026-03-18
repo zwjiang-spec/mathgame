@@ -51,17 +51,24 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
   try {
     let combinedRanks = [];
 
-    // --- A. 抓取 Firebase 紀錄 ---
-    if (typeof db !== "undefined") {
+    // --- A. 抓取 Firebase 實時紀錄 ---
+    if (typeof firebase !== "undefined") {
+      const db = firebase.firestore(); // ✨ 關鍵鑰匙：告訴它資料庫在哪裡！
       const snapshot = await db
         .collection("game_records")
         .where("unit", "==", currentUnit)
         .where("mode", "==", currentMode)
         .get();
+
       snapshot.forEach((doc) => {
         let data = doc.data();
+        // 確保有抓到時間戳記，如果是剛上傳還在緩衝的，就用當下時間
         let ts = data.timestamp ? data.timestamp.toDate() : new Date();
-        combinedRanks.push({ n: data.name, s: data.score, dateObj: ts });
+        combinedRanks.push({
+          n: data.name,
+          s: data.score,
+          dateObj: ts,
+        });
       });
     }
 
@@ -109,29 +116,38 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
       d1.getMonth() === d2.getMonth() &&
       d1.getDate() === d2.getDate();
 
-    // 今日排行榜渲染
-    let daily = finalRanks
-      .filter((r) => isSameDay(r.dateObj, now))
-      .slice(0, limit);
-    let dailyHtml = `<h3 style="${
-      currentMode === "hell" ? "color:#ff4d4d" : ""
-    }">💀 今日地獄 Top ${limit}</h3>`;
-    if (daily.length === 0)
-      dailyHtml +=
-        "<div class='board-row' style='justify-content:center;'>尚無挑戰者</div>";
-    daily.forEach((r, i) => {
-      dailyHtml += `<div class="board-row" style="border-bottom: 1px solid ${
-        currentMode === "hell" ? "#333" : "#eee"
-      }"><span>${i + 1}. ${r.n}</span><strong>${r.s}</strong></div>`;
-    });
-    dailyBoard.innerHTML = dailyHtml;
-    if (currentMode === "hell") dailyBoard.style = boardStyle;
+    // ✨ 自動判斷標題文字 (一般模式 vs 地獄模式)
+    let titleDaily = `🌟 今日單元 Top ${limit}`; // 地獄模式不用今日標題了
+    let titleAllTime =
+      currentMode === "hell"
+        ? `🏆 歷史地獄 Top ${limit}`
+        : `🏆 歷史單元 Top ${limit}`;
 
-    // 歷史排行榜渲染
+    // --- 今日排行榜渲染 (地獄模式直接隱藏) ---
+    if (currentMode === "hell") {
+      dailyBoard.style.display = "none"; // 💀 地獄模式：把今日榜單變不見
+    } else {
+      dailyBoard.style.display = ""; // 🌱 一般模式：恢復顯示
+      let daily = finalRanks
+        .filter((r) => isSameDay(r.dateObj, now))
+        .slice(0, limit);
+      let dailyHtml = `<h3>${titleDaily}</h3>`;
+      if (daily.length === 0)
+        dailyHtml +=
+          "<div class='board-row' style='justify-content:center;'>尚無挑戰者</div>";
+      daily.forEach((r, i) => {
+        dailyHtml += `<div class="board-row" style="border-bottom: 1px solid #eee"><span>${
+          i + 1
+        }. ${r.n}</span><strong>${r.s}</strong></div>`;
+      });
+      dailyBoard.innerHTML = dailyHtml;
+    }
+
+    // --- 歷史排行榜渲染 (大家都有) ---
     let allTime = finalRanks.slice(0, limit);
     let allTimeHtml = `<h3 style="${
       currentMode === "hell" ? "color:#ff4d4d" : ""
-    }">🏆 歷史地獄 Top ${limit}</h3>`;
+    }">${titleAllTime}</h3>`;
     if (allTime.length === 0)
       allTimeHtml +=
         "<div class='board-row' style='justify-content:center;'>尚無挑戰者</div>";
@@ -375,4 +391,106 @@ function uploadGameRecord(status, currentScore, errMap, hellModeFlag) {
   };
 
   return db.collection("game_records").add(recordData);
+}
+// ==========================================
+// 📊 單元專屬：平均分數計算引擎 (common.js)
+// ==========================================
+async function loadUnitAverageLeaderboard() {
+  const avgBoardContainer = document.getElementById("unit-avg-board");
+  const avgListEl = document.getElementById("unit-avg-list");
+  if (!avgBoardContainer || !avgListEl) return;
+
+  // 1. 自動判斷目前的單元與模式
+  let currentUnit = "unknown";
+  let path = window.location.pathname.toLowerCase();
+  if (path.includes("trig")) currentUnit = "trig";
+  else if (path.includes("space")) currentUnit = "space";
+  else if (path.includes("perm")) currentUnit = "perm";
+
+  const urlParams = new URLSearchParams(window.location.search);
+  let currentMode = urlParams.get("mode") || "normal";
+
+  // 如果是地獄模式，可以改變標題顏色
+  if (currentMode === "hell") {
+    document.getElementById("unit-avg-title").innerHTML = "💀 地獄平均 Top 3";
+    document.getElementById("unit-avg-title").style.color = "#ff4d4d";
+    avgBoardContainer.style.background = "#111";
+    avgBoardContainer.style.border = "1px solid #c0392b";
+  }
+
+  try {
+    if (typeof firebase === "undefined") return;
+    const db = firebase.firestore();
+
+    // 只抓「這個單元」且「這個模式」的成績
+    const snapshot = await db
+      .collection("game_records")
+      .where("unit", "==", currentUnit)
+      .where("mode", "==", currentMode)
+      .get();
+
+    let userStats = {};
+    snapshot.forEach((doc) => {
+      let data = doc.data();
+      let name = data.name;
+      let score = data.score || 0;
+
+      if (name === "Guest" || name === "---" || !name) return;
+
+      if (!userStats[name]) userStats[name] = { totalScore: 0, count: 0 };
+      userStats[name].totalScore += score;
+      userStats[name].count += 1;
+    });
+
+    let avgArray = [];
+    let currentUserAvg = "尚無紀錄";
+    const currentSavedName = localStorage.getItem("mathGamePlayerName");
+
+    for (let name in userStats) {
+      let stats = userStats[name];
+      let avg = Math.round(stats.totalScore / stats.count);
+
+      if (name === currentSavedName) currentUserAvg = avg;
+
+      if (stats.count >= 3) {
+        avgArray.push({ name: name, avgScore: avg, playCount: stats.count });
+      }
+    }
+
+    // 顯示玩家自己在「這個單元」的平均分數
+    const myAvgBadge = document.getElementById("my-unit-avg");
+    if (myAvgBadge && currentSavedName) {
+      myAvgBadge.style.display = "inline-block";
+      myAvgBadge.innerText = `我的平均: ${currentUserAvg}`;
+    }
+
+    avgArray.sort((a, b) => b.avgScore - a.avgScore);
+    let top3 = avgArray.slice(0, 3);
+
+    if (top3.length === 0) {
+      avgListEl.innerHTML = `<span style="color: #ccc; font-size: 12px; margin: 0 auto;">尚無符合資格的強者</span>`;
+      return;
+    }
+
+    let html = "";
+    let medals = ["🥇", "🥈", "🥉"];
+    top3.forEach((player, index) => {
+      html += `
+          <div style="background: rgba(0,0,0,0.2); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+              <span style="font-size: 13px;">${medals[index]}</span>
+              <span style="font-weight: bold; font-size: 12px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${player.name}">${player.name}</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 4px;">
+              <span style="color: #f1c40f; font-weight: 900; font-size: 16px; line-height: 1;">${player.avgScore}</span>
+              <span style="font-size: 10px; color: #95a5a6;">(${player.playCount}場)</span>
+            </div>
+          </div>
+        `;
+    });
+    avgListEl.innerHTML = html;
+  } catch (error) {
+    console.error("讀取平均成績失敗:", error);
+    avgListEl.innerHTML = `<span style="color: #e74c3c;">連線失敗</span>`;
+  }
 }
