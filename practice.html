@@ -424,6 +424,8 @@
         targetAns = "",
         userInput = "",
         currentQuestionStr = "";
+      let correctCount = 0,
+        wrongCount = 0;
       let isCoordinateAns = false;
       let currentHint = ""; // ✨ 新增的提示變數
 
@@ -828,7 +830,9 @@
             "dead",
             score,
             typeof errorLogMap !== "undefined" ? errorLogMap : null,
-            typeof isHellMode !== "undefined" ? isHellMode : false
+            typeof isHellMode !== "undefined" ? isHellMode : false,
+            correctCount,
+            wrongCount
           )
             .then(() => {
               if (deathBtn) {
@@ -851,13 +855,13 @@
         combo = 0;
         consecutiveWrong++;
 
-        let displayAns = isCoordinateAns
-          ? `( ${formatMathHTML(targetAns)} )`
-          : formatMathHTML(targetAns);
+        let rawAns = isCoordinateAns ? `(${targetAns})` : targetAns;
+
         errorLogMap.set(currentQuestionStr, {
-          ans: displayAns,
+          ans: rawAns, // 👈 存入純文字 (例如 "√3/2" 或 "(3,4,5)")
           hint: currentHint,
         });
+
         if (!activeWrongPool.some((item) => item.q === currentQuestionStr)) {
           activeWrongPool.push({
             q: currentQuestionStr,
@@ -909,6 +913,7 @@
         }
 
         if (isCorrect) {
+          correctCount++; // ✨ 動作 3：答對加 1
           correctQuestionsSet.add(currentQuestionStr);
           activeWrongPool = activeWrongPool.filter(
             (item) => item.q !== currentQuestionStr
@@ -932,6 +937,7 @@
             isProcessing = false; // 解鎖
           }, 150);
         } else {
+          wrongCount++; // ✨ 動作 4：答錯加 1
           triggerErrorEffect();
 
           // ✨ 答錯延遲 400 毫秒後自動清空
@@ -951,6 +957,7 @@
           return;
 
         isProcessing = true; // 跳過也要上鎖
+        wrongCount++; // ✨ 動作 4：跳過也算答錯
 
         triggerErrorEffect(true);
         score -=
@@ -964,7 +971,6 @@
           isProcessing = false; // 解鎖
         }, 450);
       }
-
       function updateUI() {
         document.getElementById("ui-score").innerText = score;
         const comboFill = document.getElementById("combo-gauge-fill");
@@ -1009,6 +1015,8 @@
         activeWrongPool = [];
         score = 0;
         combo = 0;
+        correctCount = 0;
+        wrongCount = 0;
         consecutiveWrong = 0;
         currentQuestionErrors = 0;
         updateUI();
@@ -1077,7 +1085,9 @@
           "clear",
           score,
           typeof errorLogMap !== "undefined" ? errorLogMap : null,
-          false // 練習模式沒有地獄難度
+          false, // 練習模式沒有地獄難度
+          correctCount,
+          wrongCount
         )
           .then(() => {
             if (restartBtn) {
