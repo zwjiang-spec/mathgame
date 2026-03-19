@@ -373,6 +373,8 @@
         targetAns = "",
         userInput = "",
         currentQuestionStr = "";
+      let correctCount = 0,
+        wrongCount = 0;
       let isCoordinateAns = false;
       let currentHint = ""; // ✨ 新增的提示變數
 
@@ -676,7 +678,9 @@
             "dead",
             score,
             typeof errorLogMap !== "undefined" ? errorLogMap : null,
-            typeof isHellMode !== "undefined" ? isHellMode : false
+            typeof isHellMode !== "undefined" ? isHellMode : false,
+            correctCount,
+            wrongCount
           )
             .then(() => {
               if (deathBtn) {
@@ -699,13 +703,13 @@
         combo = 0;
         consecutiveWrong++;
 
-        let displayAns = isCoordinateAns
-          ? `( ${formatMathHTML(targetAns)} )`
-          : formatMathHTML(targetAns);
+        let rawAns = isCoordinateAns ? `(${targetAns})` : targetAns;
+
         errorLogMap.set(currentQuestionStr, {
-          ans: displayAns,
+          ans: rawAns, // 👈 存入純文字 (例如 "√3/2" 或 "(3,4,5)")
           hint: currentHint,
         });
+
         if (!activeWrongPool.some((item) => item.q === currentQuestionStr)) {
           activeWrongPool.push({
             q: currentQuestionStr,
@@ -758,15 +762,19 @@
         }
 
         if (isCorrect) {
+          correctCount++; // ✨ 動作 3：精準答對加 1！
           correctQuestionsSet.add(currentQuestionStr);
           activeWrongPool = activeWrongPool.filter(
             (item) => item.q !== currentQuestionStr
           );
 
-          spawnComboParticle();
+          if (typeof spawnComboParticle === "function") spawnComboParticle();
           consecutiveWrong = 0;
-          if (combo >= 9) playFeverCorrect();
-          else playCorrect();
+          if (combo >= 9) {
+            if (typeof playFeverCorrect === "function") playFeverCorrect();
+          } else {
+            if (typeof playCorrect === "function") playCorrect();
+          }
           box.classList.add("correct-flash");
           score += (10 + combo * 2) * currentMultiplier;
           combo++;
@@ -782,9 +790,10 @@
             isProcessing = false; // 出完下一題解鎖
           }, 150);
         } else {
+          wrongCount++; // ✨ 動作 4：精準答錯加 1！
           triggerErrorEffect();
 
-          // ✨ 升級 2：答錯延遲 400 毫秒後自動清空
+          // ✨ 答錯延遲 400 毫秒後自動清空
           setTimeout(() => {
             userInput = "";
             renderInput();
@@ -794,15 +803,25 @@
       }
 
       function skipQuestion() {
-        if (!document.getElementById("overlay").classList.contains("hidden"))
+        if (
+          !document.getElementById("overlay").classList.contains("hidden") ||
+          isProcessing
+        )
           return;
+
+        isProcessing = true; // 上鎖
+        wrongCount++; // ✨ 動作 4：跳過也算答錯 1 題！
+
         triggerErrorEffect(true);
         score -=
           20 * currentMultiplier -
           currentQuestionErrors * 5 * currentMultiplier;
         updateUI();
         checkDeath();
-        setTimeout(getNewQuestion, 450);
+        setTimeout(() => {
+          getNewQuestion();
+          isProcessing = false; // 解鎖
+        }, 450);
       }
 
       function updateUI() {
@@ -853,6 +872,8 @@
         activeWrongPool = [];
         score = 0;
         combo = 0;
+        correctCount = 0;
+        wrongCount = 0;
         consecutiveWrong = 0;
         currentQuestionErrors = 0;
         updateUI();
@@ -923,7 +944,9 @@
           "clear",
           score,
           typeof errorLogMap !== "undefined" ? errorLogMap : null,
-          typeof isHellMode !== "undefined" ? isHellMode : false
+          typeof isHellMode !== "undefined" ? isHellMode : false,
+          correctCount,
+          wrongCount
         )
           .then(() => {
             document.getElementById("player-name").value =
