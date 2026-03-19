@@ -1456,13 +1456,49 @@
             }
           }
 
-          // 排序
-          allRecords.sort((a, b) => b.score - a.score);
+          // ==========================================
+          // ✨ 1. 去除重複玩家，只保留個人的最高分！
+          // ==========================================
+          let uniqueMap = new Map();
+          allRecords.forEach((r) => {
+            // 如果還沒記錄過這個名字，或是這次分數更高，就更新
+            if (
+              !uniqueMap.has(r.name) ||
+              r.score > uniqueMap.get(r.name).score
+            ) {
+              uniqueMap.set(r.name, r);
+            }
+          });
+          // 將過濾後的結果由高到低排序
+          let sortedUniqueRanks = Array.from(uniqueMap.values()).sort(
+            (a, b) => b.score - a.score
+          );
 
-          // 畫出排行榜
-          let topList = allRecords.slice(0, limit);
+          // ==========================================
+          // ✨ 2. 抓出玩家自己的最高紀錄與名次！
+          // ==========================================
+          const myName = localStorage.getItem("mathGamePlayerName");
+          let myBestScore = null;
+          let myRank = null;
+
+          if (myName && myName !== "Guest" && myName !== "---") {
+            let myRecordIdx = sortedUniqueRanks.findIndex(
+              (r) => r.name === myName
+            );
+            if (myRecordIdx !== -1) {
+              myRank = myRecordIdx + 1;
+              myBestScore = sortedUniqueRanks[myRecordIdx].score;
+            }
+          }
+
+          // ==========================================
+          // ✨ 3. 畫出排行榜 (大廳卡片專用)
+          // ==========================================
+          let topList = sortedUniqueRanks.slice(0, limit);
+          let html = "";
+
           if (topList.length > 0) {
-            let html = `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">`;
+            html += `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px;">`;
             let medals = ["🥇", "🥈", "🥉"];
             let colors = ["#ffd700", "#e0e0e0", "#ffb07c"];
 
@@ -1476,12 +1512,32 @@
                        </div>`;
             });
             html += `</div>`;
-            el.innerHTML = html;
           } else {
-            el.innerHTML = `👑 尚無挑戰者`;
+            html += `<div style="margin-top: 5px; font-size: 12px; color: rgba(255,255,255,0.6);">👑 尚無挑戰者</div>`;
           }
+
+          // ==========================================
+          // ✨ 4. 將個人紀錄掛在排行榜下方
+          // ==========================================
+          if (myName && myName !== "Guest" && myName !== "---") {
+            if (myRank !== null) {
+              let myRankColor = myRank <= limit ? "#2ecc71" : "#f1c40f"; // 有上榜用綠色，沒上榜用金黃色
+              html += `
+                <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.3); font-size: 11.5px; color: rgba(255,255,255,0.9);">
+                  🙋‍♂️ 我的最高: <span style="color: #f1c40f; font-weight: bold;">${myBestScore}</span> 
+                  <span style="opacity:0.8;">(第 <span style="color: ${myRankColor}; font-weight: bold;">${myRank}</span> 名)</span>
+                </div>`;
+            } else {
+              html += `
+                <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.3); font-size: 11px; color: rgba(255,255,255,0.5);">
+                  🙋‍♂️ 尚未留下挑戰紀錄
+                </div>`;
+            }
+          }
+
+          el.innerHTML = html;
         } catch (e) {
-          el.innerHTML = `👑 讀取失敗，請重新整理`;
+          el.innerHTML = `<div style="margin-top: 5px; font-size: 12px; color: #e74c3c;">👑 讀取失敗，請重新整理</div>`;
         }
       }
 
