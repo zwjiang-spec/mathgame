@@ -2,11 +2,19 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>我的專屬數學戰績室</title>
-    
+
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
+
     <script src="common.js"></script>
 
     <style>
@@ -27,30 +35,93 @@
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         text-align: left;
       }
+
+      /* ✨ 調整頭部區塊以容納右側徽章 */
       .header-area {
         display: flex;
-        align-items: center;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
         gap: 15px;
         border-bottom: 2px solid #eee;
         padding-bottom: 20px;
         margin-bottom: 20px;
       }
-      .header-area img {
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex: 1;
+        min-width: 250px;
+      }
+      .header-left img {
         width: 60px;
         height: 60px;
         border-radius: 50%;
         border: 3px solid #3498db;
       }
-      .header-area h1 {
+      .header-left h1 {
         margin: 0;
         font-size: 24px;
         color: #2c3e50;
       }
-      .header-area p {
+      .header-left p {
         margin: 5px 0 0 0;
         color: #7f8c8d;
         font-size: 14px;
       }
+
+      /* ✨ 縮小並移到右上角的徽章專屬 CSS */
+      .header-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 6px;
+      }
+      .badge-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+      .badge-btn {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #f8f9fa;
+        border: 2px solid transparent;
+        font-size: 18px;
+        cursor: pointer;
+        transition: 0.2s;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        padding: 0;
+        outline: none;
+      }
+      .badge-btn.unlocked {
+        background: #fffdf5;
+        border-color: #f1c40f;
+        box-shadow: 0 4px 8px rgba(241, 196, 15, 0.3);
+      }
+      .badge-btn.unlocked:hover {
+        transform: scale(1.2) rotate(5deg);
+        box-shadow: 0 6px 12px rgba(241, 196, 15, 0.5);
+        z-index: 10;
+      }
+      .badge-btn.locked {
+        background: #f4f6f7;
+        border-color: #e5e8e8;
+        filter: grayscale(100%);
+        opacity: 0.4;
+      }
+      .badge-btn.locked:hover {
+        transform: scale(1.1);
+        opacity: 0.7;
+      }
+
       .stats-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -78,6 +149,7 @@
       .stat-card.death .value {
         color: #e74c3c;
       }
+
       h2 {
         font-size: 18px;
         color: #34495e;
@@ -157,58 +229,77 @@
         color: white;
       }
     </style>
-
-    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
   </head>
   <body>
     <div class="profile-container">
       <a href="index.html" class="home-btn">⬅ 返回大廳</a>
 
       <div class="header-area" id="profile-header">
-        <img src="https://via.placeholder.com/60" id="user-avatar" alt="大頭貼" />
-        <div>
-          <div style="display: flex; align-items: center; gap: 10px">
-            <h1 id="user-name" style="margin: 0">讀取中...</h1>
-            <button
-              id="edit-name-btn"
-              onclick="renameUser()"
+        <div class="header-left">
+          <img
+            src="https://via.placeholder.com/60"
+            id="user-avatar"
+            alt="大頭貼"
+          />
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px">
+              <h1 id="user-name" style="margin: 0">讀取中...</h1>
+              <button
+                id="edit-name-btn"
+                onclick="renameUser()"
+                style="
+                  display: none;
+                  background: #f39c12;
+                  color: white;
+                  border: none;
+                  padding: 4px 10px;
+                  border-radius: 8px;
+                  font-size: 12px;
+                  font-weight: bold;
+                  cursor: pointer;
+                  transition: 0.2s;
+                  box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
+                "
+                onmouseover="this.style.background='#e67e22'"
+                onmouseout="this.style.background='#f39c12'"
+              >
+                ✏️ 更改暱稱
+              </button>
+            </div>
+            <div
+              id="user-title-badge"
               style="
-                display: none;
-                background: #f39c12;
-                color: white;
-                border: none;
-                padding: 4px 10px;
-                border-radius: 8px;
-                font-size: 12px;
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 14px;
                 font-weight: bold;
-                cursor: pointer;
-                transition: 0.2s;
-                box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
+                margin-top: 5px;
+                color: white;
+                background: #bdc3c7;
               "
-              onmouseover="this.style.background='#e67e22'"
-              onmouseout="this.style.background='#f39c12'"
             >
-              ✏️ 更改暱稱
-            </button>
+              尚未獲得稱號
+            </div>
+            <p id="user-uid" style="font-size: 12px">
+              請稍候，正在連線雲端資料庫...
+            </p>
           </div>
-          <div
-            id="user-title-badge"
+        </div>
+
+        <div class="header-right">
+          <span
             style="
-              display: inline-block;
-              padding: 4px 12px;
-              border-radius: 20px;
-              font-size: 14px;
+              font-size: 11px;
+              color: #95a5a6;
               font-weight: bold;
-              margin-top: 5px;
-              color: white;
-              background: #bdc3c7;
+              letter-spacing: 1px;
             "
+            >🏆 榮耀徽章</span
           >
-            尚未獲得稱號
+          <div id="badge-container" class="badge-container">
+            <span style="color: #7f8c8d; font-size: 12px">計算足跡中...</span>
           </div>
-          <p id="user-uid">請稍候，正在連線雲端資料庫...</p>
         </div>
       </div>
 
@@ -265,16 +356,35 @@
           ?
         </button>
 
-        <h2 style="margin-top: 0; font-size: 18px; color: #34495e; border-left: 4px solid #8e44ad; padding-left: 10px; margin-bottom: 10px;">
+        <h2
+          style="
+            margin-top: 0;
+            font-size: 18px;
+            color: #34495e;
+            border-left: 4px solid #8e44ad;
+            padding-left: 10px;
+            margin-bottom: 10px;
+          "
+        >
           📊 數學六式 (真實能力分析)
         </h2>
-        
-        <div style="position: relative; height: 280px; width: 100%; margin: 0 auto;">
+
+        <div
+          style="position: relative; height: 280px; width: 100%; margin: 0 auto"
+        >
           <canvas id="abilityRadar"></canvas>
         </div>
-        
-        <p style="text-align: center; font-size: 11px; color: #95a5a6; margin-top: 10px;">
-          * 能力值採用「真實答對率」與「遊玩經驗」精準計算，完全不受打字速度影響。
+
+        <p
+          style="
+            text-align: center;
+            font-size: 11px;
+            color: #95a5a6;
+            margin-top: 10px;
+          "
+        >
+          *
+          能力值採用「真實答對率」與「遊玩經驗」精準計算，完全不受打字速度影響。
         </p>
       </div>
 
@@ -282,7 +392,7 @@
       <ul class="wrong-q-list" id="wrong-q-container">
         <li style="color: #7f8c8d; font-size: 14px">資料載入中...</li>
       </ul>
-      
+
       <div style="text-align: center; margin-bottom: 20px">
         <button
           id="training-btn"
@@ -312,50 +422,211 @@
     </div>
 
     <div
-      id="radar-info-modal"
+      id="badge-info-modal"
       style="
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.6); z-index: 999;
-        display: flex; justify-content: center; align-items: center;
-        opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
       "
     >
-      <div style="background: white; width: 85%; max-width: 400px; border-radius: 15px; padding: 25px; text-align: left; position: relative; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);">
-        <span class="close-btn" onclick="toggleRadarInfo()" style="position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #95a5a6;">×</span>
-        <h2 style="margin-top: 0; color: #8e44ad; font-size: 20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">
+      <div
+        style="
+          background: white;
+          width: 80%;
+          max-width: 320px;
+          border-radius: 20px;
+          padding: 30px 20px;
+          text-align: center;
+          position: relative;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        "
+      >
+        <span
+          onclick="closeBadgeInfo()"
+          style="
+            position: absolute;
+            top: 12px;
+            right: 18px;
+            font-size: 26px;
+            cursor: pointer;
+            color: #95a5a6;
+            transition: 0.2s;
+          "
+          >×</span
+        >
+        <div
+          id="modal-badge-icon"
+          style="
+            font-size: 60px;
+            margin-bottom: 5px;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: 0.3s;
+          "
+        >
+          🏆
+        </div>
+        <h2
+          id="modal-badge-name"
+          style="
+            margin: 0 0 8px 0;
+            color: #d35400;
+            font-size: 22px;
+            border: none;
+            padding: 0;
+          "
+        >
+          徽章名稱
+        </h2>
+        <div
+          id="modal-badge-status"
+          style="
+            display: inline-block;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+          "
+        ></div>
+        <p
+          id="modal-badge-desc"
+          style="
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0 0 25px 0;
+            padding: 0 10px;
+          "
+        ></p>
+        <button
+          onclick="closeBadgeInfo()"
+          style="
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+          "
+        >
+          確定
+        </button>
+      </div>
+    </div>
+
+    <div
+      id="radar-info-modal"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      "
+    >
+      <div
+        style="
+          background: white;
+          width: 85%;
+          max-width: 400px;
+          border-radius: 15px;
+          padding: 25px;
+          text-align: left;
+          position: relative;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        "
+      >
+        <span
+          class="close-btn"
+          onclick="toggleRadarInfo()"
+          style="
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #95a5a6;
+          "
+          >×</span
+        >
+        <h2
+          style="
+            margin-top: 0;
+            color: #8e44ad;
+            font-size: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+          "
+        >
           📊 能力值是怎麼算的？
         </h2>
-        <ul style="padding-left: 20px; color: #34495e; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-          <li style="margin-bottom: 12px"><b>🎯 單元準確率：</b><br /><span style="color: #7f8c8d">總答對題數 ÷ (答對數 + 錯題數)。</span></li>
-          <li style="margin-bottom: 12px"><b>🛡️ 生存防禦力：</b><br /><span style="color: #7f8c8d">未被死神強制帶走的安全通關機率。</span></li>
-          <li style="margin-bottom: 12px"><b>💪 勤奮鍛鍊度：</b><br /><span style="color: #7f8c8d">累積遊玩滿 30 局即可達滿分！</span></li>
+        <ul
+          style="
+            padding-left: 20px;
+            color: #34495e;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+          "
+        >
+          <li style="margin-bottom: 12px">
+            <b>🎯 單元準確率：</b><br /><span style="color: #7f8c8d"
+              >總答對題數 ÷ (答對數 + 錯題數)。</span
+            >
+          </li>
+          <li style="margin-bottom: 12px">
+            <b>🛡️ 生存防禦力：</b><br /><span style="color: #7f8c8d"
+              >未被死神強制帶走的安全通關機率。</span
+            >
+          </li>
+          <li style="margin-bottom: 12px">
+            <b>💪 勤奮鍛鍊度：</b><br /><span style="color: #7f8c8d"
+              >累積遊玩滿 30 局即可達滿分！</span
+            >
+          </li>
         </ul>
         <div style="text-align: center">
-          <button onclick="toggleRadarInfo()" style="background: #2c3e50; color: white; border: none; padding: 10px 30px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer;">我知道了</button>
+          <button
+            onclick="toggleRadarInfo()"
+            style="
+              background: #2c3e50;
+              color: white;
+              border: none;
+              padding: 10px 30px;
+              border-radius: 20px;
+              font-size: 14px;
+              font-weight: bold;
+              cursor: pointer;
+            "
+          >
+            我知道了
+          </button>
         </div>
       </div>
     </div>
 
     <script>
-      function getTitle(score) {
-        for (let i = TITLES.length - 1; i >= 0; i--) {
-          if (score >= TITLES[i].min) return TITLES[i];
-        }
-        return TITLES[0];
-      }
-
-      // 🚀 Firebase 初始化
-      const firebaseConfig = {
-        apiKey: "AIzaSyC7ed0il_ScCdHeWOHepj56ycjRXYt_Mf4",
-        authDomain: "mathgame-6ab85.firebaseapp.com",
-        projectId: "mathgame-6ab85",
-        storageBucket: "mathgame-6ab85.firebasestorage.app",
-        messagingSenderId: "790458098592",
-        appId: "1:790458098592:web:298e23dbb8ba82a3ee3ac5",
-      };
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
       const auth = firebase.auth();
       const db = firebase.firestore();
 
@@ -382,12 +653,13 @@
         if (score >= 2000) badge.style.animation = "pulse 1.5s infinite";
       }
 
-      // 檢查登入狀態與自訂暱稱
       auth.onAuthStateChanged(async (user) => {
         if (user) {
           document.getElementById("user-avatar").src = user.photoURL;
-          document.getElementById("user-uid").innerText = "學霸認證代碼: " + user.uid.substring(0, 8);
-          document.getElementById("edit-name-btn").style.display = "inline-block";
+          document.getElementById("user-uid").innerText =
+            "學霸代碼: " + user.uid.substring(0, 8);
+          document.getElementById("edit-name-btn").style.display =
+            "inline-block";
 
           try {
             const userDoc = await db.collection("users").doc(user.uid).get();
@@ -409,17 +681,23 @@
         }
       });
 
-      // 撈取資料並渲染畫面
       async function loadUserData(uid) {
         try {
-          const snapshot = await db.collection("game_records").where("uid", "==", uid).get();
+          const snapshot = await db
+            .collection("game_records")
+            .where("uid", "==", uid)
+            .get();
           let records = [];
           snapshot.forEach((doc) => records.push(doc.data()));
 
           if (records.length === 0) {
             document.getElementById("stat-games").innerText = 0;
-            document.getElementById("wrong-q-container").innerHTML = '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 你還沒有任何錯題，趕快去挑戰吧！</li>';
-            document.getElementById("history-container").innerHTML = '<li style="color: #7f8c8d; padding: 10px;">尚無紀錄</li>';
+            document.getElementById("wrong-q-container").innerHTML =
+              '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 你還沒有任何錯題，趕快去挑戰吧！</li>';
+            document.getElementById("history-container").innerHTML =
+              '<li style="color: #7f8c8d; padding: 10px;">尚無紀錄</li>';
+            document.getElementById("badge-container").innerHTML =
+              '<span style="color:#7f8c8d; font-size:12px;">尚無紀錄解鎖徽章</span>';
             return;
           }
 
@@ -434,13 +712,22 @@
           let deathCount = 0;
           let errorStatsMap = new Map();
           let historyHTML = "";
+          let hasNoMistake = false;
 
           records.forEach((rec) => {
-            if (rec.score > maxScore) maxScore = rec.score;
-            if (rec.status === "dead" || rec.score <= -20) deathCount++;
+            let s = rec.score || 0;
+            if (s > maxScore) maxScore = s;
+            if (rec.status === "dead" || s <= -20) deathCount++;
+
+            let exactCorrect =
+              rec.correctCount !== undefined
+                ? rec.correctCount
+                : Math.max(0, Math.floor(s / 10));
+            let exactWrong = rec.wrongCount !== undefined ? rec.wrongCount : 0;
 
             if (rec.wrongLog && Array.isArray(rec.wrongLog)) {
               rec.wrongLog.forEach((w) => {
+                exactWrong += w.count || 1;
                 let qText = w.question || w.q;
                 let qAns = w.answer || w.ans;
                 let qHint = w.hint || "無提示";
@@ -449,20 +736,42 @@
                 if (errorStatsMap.has(qText)) {
                   errorStatsMap.get(qText).totalCount += qCount;
                 } else {
-                  errorStatsMap.set(qText, { answer: qAns, hint: qHint, totalCount: qCount });
+                  errorStatsMap.set(qText, {
+                    answer: qAns,
+                    hint: qHint,
+                    totalCount: qCount,
+                  });
                 }
               });
             }
 
-            let dateStr = rec.timestamp ? rec.timestamp.toDate().toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "剛剛";
+            // 高難度防禦徽章判定
+            if (exactWrong === 0 && exactCorrect >= 10) hasNoMistake = true;
+
+            let dateStr = rec.timestamp
+              ? rec.timestamp
+                  .toDate()
+                  .toLocaleString("zh-TW", {
+                    month: "numeric",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+              : "剛剛";
             let unitLabel = "🎮 未知";
             if (rec.unit === "trig") unitLabel = "📐 三角";
             else if (rec.unit === "space") unitLabel = "🚀 空間";
             else if (rec.unit === "perm") unitLabel = "🎲 排列";
             else if (rec.unit === "practice") unitLabel = "💪 練習";
 
-            let modeIcon = rec.mode === "hell" ? "💀 地獄" : rec.mode === "mixed" ? "🔥 混合" : "🌱 一般";
-            let scoreDisplay = rec.status === "dead" ? `💀 失敗 (${rec.score}分)` : `${rec.score} 分`;
+            let modeIcon =
+              rec.mode === "hell"
+                ? "💀 地獄"
+                : rec.mode === "mixed"
+                ? "🔥 混合"
+                : "🌱 一般";
+            let scoreDisplay =
+              rec.status === "dead" ? `💀 失敗 (${s}分)` : `${s} 分`;
             let deadClass = rec.status === "dead" ? "dead" : "";
 
             if (historyHTML.split("</li>").length <= 10) {
@@ -479,45 +788,115 @@
             }
           });
 
-          document.getElementById("stat-games").innerText = records.length;
+          let totalGamesPlayed = records.length;
+          document.getElementById("stat-games").innerText = totalGamesPlayed;
           document.getElementById("stat-high").innerText = maxScore;
           updateTitleUI(maxScore === -999 ? 0 : maxScore);
           document.getElementById("stat-deaths").innerText = deathCount;
           document.getElementById("history-container").innerHTML = historyHTML;
 
-          // --- ✨ 渲染錯題本 (搭配資料集屬性，徹底解決根號消失 Bug) ---
+          // ==========================================
+          // ✨ 右上角精緻化：榮耀徽章產生器
+          // ==========================================
+          let badges = [
+            {
+              id: "score1000",
+              name: "破千強者",
+              icon: "🚀",
+              desc: "單局突破 1000 分，你已經超越了大部分的挑戰者！",
+              unlocked: maxScore >= 1000,
+            },
+            {
+              id: "score2000",
+              name: "領域至尊",
+              icon: "👑",
+              desc: "單局突破 2000 分！神人專屬的終極殊榮！",
+              unlocked: maxScore >= 2000,
+            },
+            {
+              id: "no_mistake",
+              name: "絕對防禦",
+              icon: "🛡️",
+              desc: "單局無錯題通關 (需答對 10 題以上)，銅牆鐵壁般的運算能力！",
+              unlocked: hasNoMistake,
+            },
+            {
+              id: "play50",
+              name: "肝帝學霸",
+              icon: "🏋️",
+              desc: "累積挑戰達 50 局，努力絕對不會背叛你！",
+              unlocked: totalGamesPlayed >= 50,
+            },
+            {
+              id: "die10",
+              name: "不屈不撓",
+              icon: "🔥",
+              desc: "被死神帶走 10 次仍不放棄，這就是數學魂！",
+              unlocked: deathCount >= 10,
+            },
+          ];
+
+          let badgeHtml = "";
+          badges.forEach((b) => {
+            let statusClass = b.unlocked ? "unlocked" : "locked";
+            let safeName = b.name.replace(/'/g, "\\'");
+            let safeDesc = b.desc.replace(/'/g, "\\'");
+
+            badgeHtml += `
+              <button class="badge-btn ${statusClass}" onclick="showBadgeInfo('${b.icon}', '${safeName}', '${safeDesc}', ${b.unlocked})" title="${b.name}">
+                ${b.icon}
+              </button>
+            `;
+          });
+          document.getElementById("badge-container").innerHTML = badgeHtml;
+
+          // --- ✨ 渲染錯題本 ---
           const wrongContainer = document.getElementById("wrong-q-container");
           if (errorStatsMap.size > 0) {
-            let sortedErrors = Array.from(errorStatsMap.entries()).sort((a, b) => b[1].totalCount - a[1].totalCount);
+            let sortedErrors = Array.from(errorStatsMap.entries()).sort(
+              (a, b) => b[1].totalCount - a[1].totalCount
+            );
             let wrongHTML = "";
             sortedErrors.forEach(([q, info]) => {
               let badgeStyle = "background:#95a5a6; color:white;";
               let prefix = "錯誤";
-              if (info.totalCount >= 5) { badgeStyle = "background:#c0392b; color:white;"; prefix = "🔥 狂錯"; } 
-              else if (info.totalCount >= 3) { badgeStyle = "background:#e67e22; color:white;"; prefix = "警告"; }
+              if (info.totalCount >= 5) {
+                badgeStyle = "background:#c0392b; color:white;";
+                prefix = "🔥 狂錯";
+              } else if (info.totalCount >= 3) {
+                badgeStyle = "background:#e67e22; color:white;";
+                prefix = "警告";
+              }
 
-              // ✨ 將原始文字存在 data-raw-q 裡，防止被 HTML 破壞
-              let safeQ = String(q).replace(/"/g, '&quot;');
-              let safeAns = String(info.answer).replace(/"/g, '&quot;');
-              let safeHint = String(info.hint).replace(/"/g, '&quot;');
+              let safeQ = String(q).replace(/"/g, "&quot;");
+              let safeAns = String(info.answer).replace(/"/g, "&quot;");
+              let safeHint = String(info.hint).replace(/"/g, "&quot;");
 
               wrongHTML += `
                 <li class="wrong-q-item" data-raw-q="${safeQ}" data-raw-a="${safeAns}" data-raw-hint="${safeHint}">
                   <div style="width:100%">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                      <span style="font-weight:bold;">${formatMathHTML(q)}</span>
-                      <span style="${badgeStyle} font-size:11px; padding:2px 8px; border-radius:12px; font-weight:bold;">${prefix} ${info.totalCount} 次</span>
+                      <span style="font-weight:bold;">${formatMathHTML(
+                        q
+                      )}</span>
+                      <span style="${badgeStyle} font-size:11px; padding:2px 8px; border-radius:12px; font-weight:bold;">${prefix} ${
+                info.totalCount
+              } 次</span>
                     </div>
-                    <div class="ans" style="margin-top:5px;">➡ 正解: ${formatMathHTML(info.answer)}</div>
+                    <div class="ans" style="margin-top:5px;">➡ 正解: ${formatMathHTML(
+                      info.answer
+                    )}</div>
                     <span class="hint">💡 ${info.hint}</span>
                   </div>
                 </li>
               `;
             });
             wrongContainer.innerHTML = wrongHTML;
-            document.getElementById("training-btn").style.display = "inline-block";
+            document.getElementById("training-btn").style.display =
+              "inline-block";
           } else {
-            wrongContainer.innerHTML = '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 目前為止零錯題，太神啦！</li>';
+            wrongContainer.innerHTML =
+              '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 目前為止零錯題，太神啦！</li>';
           }
 
           // ==========================================
@@ -530,16 +909,20 @@
             practice: { correct: 0, err: 0, games: 0 },
           };
 
-          let totalGamesPlayed = records.length;
-          let survivedGames = 0;
-
           records.forEach((rec) => {
             let u = rec.unit || "practice";
             let s = rec.score || 0;
-            let exactCorrect = rec.correctCount !== undefined ? rec.correctCount : Math.max(0, Math.floor(s / 10));
+            let exactCorrect =
+              rec.correctCount !== undefined
+                ? rec.correctCount
+                : Math.max(0, Math.floor(s / 10));
             let exactWrong = rec.wrongCount !== undefined ? rec.wrongCount : 0;
 
-            if (rec.wrongCount === undefined && rec.wrongLog && Array.isArray(rec.wrongLog)) {
+            if (
+              rec.wrongCount === undefined &&
+              rec.wrongLog &&
+              Array.isArray(rec.wrongLog)
+            ) {
               rec.wrongLog.forEach((w) => (exactWrong += w.count || 1));
             }
 
@@ -548,7 +931,6 @@
               stats[u].correct += exactCorrect;
               stats[u].err += exactWrong;
             }
-            if (rec.status !== "dead" && s > -20) survivedGames++;
           });
 
           function getAccuracy(unitData) {
@@ -562,8 +944,16 @@
           let accSpace = getAccuracy(stats.space);
           let accPerm = getAccuracy(stats.perm);
           let accPrac = getAccuracy(stats.practice);
-          let effortScore = Math.min(100, Math.round((totalGamesPlayed / 30) * 100));
-          let survivalRate = totalGamesPlayed > 0 ? Math.round((survivedGames / totalGamesPlayed) * 100) : 0;
+          let effortScore = Math.min(
+            100,
+            Math.round((totalGamesPlayed / 30) * 100)
+          );
+          let survivalRate =
+            totalGamesPlayed > 0
+              ? Math.round(
+                  ((totalGamesPlayed - deathCount) / totalGamesPlayed) * 100
+                )
+              : 0;
 
           const canvasEl = document.getElementById("abilityRadar");
           if (canvasEl) {
@@ -572,18 +962,34 @@
             window.myRadarChart = new Chart(ctx, {
               type: "radar",
               data: {
-                labels: ["📐 三角準確率", "🚀 空間準確率", "🎲 排列準確率", "🛡️ 生存防禦力", "🔥 綜合實戰力", "💪 勤奮鍛鍊度"],
-                datasets: [{
-                  label: "真實能力值",
-                  data: [accTrig, accSpace, accPerm, survivalRate, accPrac, effortScore],
-                  backgroundColor: "rgba(52, 152, 219, 0.3)",
-                  borderColor: "rgba(41, 128, 185, 1)",
-                  pointBackgroundColor: "#e74c3c",
-                  pointBorderColor: "#fff",
-                  pointHoverBackgroundColor: "#fff",
-                  pointHoverBorderColor: "#e74c3c",
-                  borderWidth: 2,
-                }],
+                labels: [
+                  "📐 三角準確率",
+                  "🚀 空間準確率",
+                  "🎲 排列準確率",
+                  "🛡️ 生存防禦力",
+                  "🔥 綜合實戰力",
+                  "💪 勤奮鍛鍊度",
+                ],
+                datasets: [
+                  {
+                    label: "真實能力值",
+                    data: [
+                      accTrig,
+                      accSpace,
+                      accPerm,
+                      survivalRate,
+                      accPrac,
+                      effortScore,
+                    ],
+                    backgroundColor: "rgba(52, 152, 219, 0.3)",
+                    borderColor: "rgba(41, 128, 185, 1)",
+                    pointBackgroundColor: "#e74c3c",
+                    pointBorderColor: "#fff",
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderColor: "#e74c3c",
+                    borderWidth: 2,
+                  },
+                ],
               },
               options: {
                 responsive: true,
@@ -592,7 +998,10 @@
                   r: {
                     angleLines: { color: "rgba(0, 0, 0, 0.1)" },
                     grid: { color: "rgba(0, 0, 0, 0.05)" },
-                    pointLabels: { font: { size: 12, weight: "bold" }, color: "#2c3e50" },
+                    pointLabels: {
+                      font: { size: 12, weight: "bold" },
+                      color: "#2c3e50",
+                    },
                     ticks: { display: false, min: 0, max: 100, stepSize: 20 },
                   },
                 },
@@ -602,15 +1011,53 @@
           }
         } catch (error) {
           console.error("讀取戰績失敗:", error);
-          document.getElementById("wrong-q-container").innerHTML = '<li style="color: #e74c3c;">讀取失敗，請重新整理網頁</li>';
+          document.getElementById("wrong-q-container").innerHTML =
+            '<li style="color: #e74c3c;">讀取失敗，請重新整理網頁</li>';
         }
       }
 
+      // ✨ 控制徽章資訊視窗
+      function showBadgeInfo(icon, name, desc, isUnlocked) {
+        const iconEl = document.getElementById("modal-badge-icon");
+        const nameEl = document.getElementById("modal-badge-name");
+        const statusEl = document.getElementById("modal-badge-status");
+
+        iconEl.innerText = icon;
+        iconEl.style.filter = isUnlocked ? "none" : "grayscale(100%)";
+        iconEl.style.opacity = isUnlocked ? "1" : "0.4";
+
+        nameEl.innerText = name;
+        nameEl.style.color = isUnlocked ? "#d35400" : "#7f8c8d";
+
+        if (isUnlocked) {
+          statusEl.innerText = "✅ 已解鎖";
+          statusEl.style.background = "#d4efdf";
+          statusEl.style.color = "#27ae60";
+        } else {
+          statusEl.innerText = "🔒 未達成條件";
+          statusEl.style.background = "#f2f4f4";
+          statusEl.style.color = "#7f8c8d";
+        }
+
+        document.getElementById("modal-badge-desc").innerText = desc;
+
+        const modal = document.getElementById("badge-info-modal");
+        modal.style.opacity = "1";
+        modal.style.pointerEvents = "auto";
+      }
+
+      function closeBadgeInfo() {
+        const modal = document.getElementById("badge-info-modal");
+        modal.style.opacity = "0";
+        modal.style.pointerEvents = "none";
+      }
+
       function startWeaknessTraining() {
-        const wrongItems = document.querySelectorAll("#wrong-q-container .wrong-q-item");
+        const wrongItems = document.querySelectorAll(
+          "#wrong-q-container .wrong-q-item"
+        );
         let trainingPool = [];
         wrongItems.forEach((item) => {
-          // ✨ 透過 dataset 抓取乾淨純文字，不再被 innerText 吃掉根號！
           const qText = item.getAttribute("data-raw-q");
           const ansText = item.getAttribute("data-raw-a");
           const hintText = item.getAttribute("data-raw-hint");
@@ -670,7 +1117,11 @@
             return;
           }
 
-          if (!confirm(`確定要將暱稱改為「${newName}」嗎？\n⚠️ 注意：更改後 30 天內將無法再次修改！`))
+          if (
+            !confirm(
+              `確定要將暱稱改為「${newName}」嗎？\n⚠️ 注意：更改後 30 天內將無法再次修改！`
+            )
+          )
             return;
 
           document.getElementById("user-name").innerText = "🔄 雲端同步中...";
@@ -704,7 +1155,8 @@
           console.error("改名詳細錯誤:", error);
           let errorMsg = error.message;
           if (error.message.includes("Missing or insufficient permissions")) {
-            errorMsg = "Firebase 資料庫權限不足！請檢查 Rules 設定是否允許 update 與 write。";
+            errorMsg =
+              "Firebase 資料庫權限不足！請檢查 Rules 設定是否允許 update 與 write。";
           }
           alert(`❌ 改名失敗：\n${errorMsg}`);
           document.getElementById("edit-name-btn").disabled = false;
