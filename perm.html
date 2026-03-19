@@ -634,6 +634,8 @@
       let score = 0,
         combo = 0,
         consecutiveWrong = 0;
+      let correctCount = 0,
+        wrongCount = 0;
       let targetAns = "",
         userInput = "",
         currentQuestionStr = "",
@@ -857,7 +859,9 @@
             "dead",
             score,
             typeof errorLogMap !== "undefined" ? errorLogMap : null,
-            typeof isHellMode !== "undefined" ? isHellMode : false
+            typeof isHellMode !== "undefined" ? isHellMode : false,
+            correctCount,
+            wrongCount
           )
             .then(() => {
               if (deathBtn) {
@@ -913,6 +917,8 @@
         isProcessing = true; // 上鎖
 
         if (isMathEqual(userInput, targetAns)) {
+          correctCount++; // ✨ 動作 3：精準答對加 1！
+
           if (currentQuestionErrors === 0)
             correctQuestionsSet.add(currentQuestionStr);
           activeWrongPool = activeWrongPool.filter(
@@ -945,6 +951,7 @@
             isProcessing = false; // 出完下一題解鎖
           }, 150);
         } else {
+          wrongCount++; // ✨ 動作 4：精準答錯加 1！
           triggerErrorEffect();
 
           // ✨ 答錯延遲 400 毫秒後自動清空輸入框
@@ -964,6 +971,7 @@
           return;
 
         isProcessing = true; // 跳過也上鎖
+        wrongCount++; // ✨ 動作 4：跳過也算答錯 1 題！
 
         let h = typeof currentHint !== "undefined" ? currentHint : "";
 
@@ -1051,6 +1059,8 @@
         activeWrongPool = [];
         score = 0;
         combo = 0;
+        correctCount = 0;
+        wrongCount = 0;
         consecutiveWrong = 0;
         currentQuestionErrors = 0;
         updateUI();
@@ -1128,7 +1138,9 @@
           "clear",
           score,
           typeof errorLogMap !== "undefined" ? errorLogMap : null,
-          typeof isHellMode !== "undefined" ? isHellMode : false
+          typeof isHellMode !== "undefined" ? isHellMode : false,
+          correctCount,
+          wrongCount
         )
           .then(() => {
             document.getElementById("player-name").value =
