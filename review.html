@@ -34,13 +34,13 @@
 
       #review-container {
         width: 90%;
-        max-width: 600px; /* ✨ 解除瘦身，稍微加寬 */
+        max-width: 600px;
         margin: 0 auto 20px auto;
         background: white;
         padding: 25px 20px;
         border-radius: 20px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        box-sizing: border-box; /* 確保 padding 不會撐破寬度 */
+        box-sizing: border-box;
       }
 
       .progress {
@@ -97,7 +97,7 @@
       /* ✨ 鍵盤專屬容器 */
       #keypad-container {
         width: 90%;
-        max-width: 600px; /* ✨ 解除瘦身 */
+        max-width: 600px;
         margin: 0 auto;
         padding-bottom: 20px;
       }
@@ -134,13 +134,23 @@
 
     <script src="common.js"></script>
     <script>
-      let pool = JSON.parse(localStorage.getItem("mathGameReviewPool") || "[]");
+      // ✨ 增加防呆機制：確保不會因為抓取失敗而整組壞掉
+      let pool = [];
+      try {
+        let rawData = localStorage.getItem("mathGameReviewPool");
+        if (rawData && rawData !== "undefined") {
+          pool = JSON.parse(rawData);
+        }
+      } catch (e) {
+        console.error("特訓資料庫讀取失敗", e);
+      }
+
       let currentIndex = 0;
       let userInput = "";
       let isProcessing = false; // 防連點鎖
 
       window.onload = () => {
-        if (pool.length === 0) {
+        if (!pool || pool.length === 0) {
           alert("目前沒有特訓資料喔！快去挑戰幾場吧！");
           window.location.href = "profile.html";
           return;
@@ -163,13 +173,14 @@
           currentIndex + 1
         } / ${pool.length} 題`;
 
-        // 處理題目顯示 (如果有 span 等 HTML 標籤，透過 formatMathHTML 處理)
+        // ✨ 防彈處理：確保強制轉成文字，避免吃 HTML 標籤
+        let safeQ = String(qData.q || "");
         let displayQ =
           typeof formatMathHTML === "function" &&
-          !qData.q.includes("<span") &&
-          !qData.q.includes("<svg")
-            ? formatMathHTML(qData.q)
-            : qData.q;
+          !safeQ.includes("<span") &&
+          !safeQ.includes("<svg")
+            ? formatMathHTML(safeQ)
+            : safeQ;
 
         document.getElementById("question-display").innerHTML = displayQ + " =";
         document.getElementById("hint-area").innerHTML = ""; // 清空提示
@@ -178,11 +189,7 @@
         renderInput();
       }
 
-      // ==========================================
-      // ⌨️ 虛擬鍵盤專用邏輯
-      // ==========================================
-
-      // 1. 處理鍵盤點擊 (被 common.js 呼叫)
+      // 1. 處理鍵盤點擊
       function input(val) {
         if (isProcessing) return;
         if (val === "DEL") {
@@ -209,21 +216,19 @@
         if (userInput === "" || isProcessing) return;
         isProcessing = true; // 上鎖
 
-        const correctAns = pool[currentIndex].a;
+        const correctAns = String(pool[currentIndex].a || "");
         const box = document.getElementById("input-box");
         let isCorrect = false;
 
-        // 判斷邏輯 (字串完全相等 或 數值相等)
+        // ✨ 究極升級版：完全呼叫 common.js 的 evalMath 大腦
         if (userInput === correctAns) {
           isCorrect = true;
         } else {
-          let userVal = evalMath(userInput);
-          let targetVal = evalMath(correctAns);
+          let userVal = typeof evalMath === "function" ? evalMath(userInput) : NaN;
+          let targetVal = typeof evalMath === "function" ? evalMath(correctAns) : NaN;
+          
           if (!isNaN(userVal) && !isNaN(targetVal) && Math.abs(userVal - targetVal) < 1e-5) {
             isCorrect = true;
-            }
-          } catch (e) {
-            isCorrect = false;
           }
         }
 
@@ -246,14 +251,12 @@
           box.classList.add("error-text");
 
           // 顯示提示
-          let hintText =
-            pool[currentIndex].hint || "這題好像沒有提示喔，再想想看！";
+          let hintText = pool[currentIndex].hint || "這題好像沒有提示喔，再想想看！";
           let displayHint =
-            typeof formatMathHTML === "function" && !hintText.includes("<span")
-              ? formatMathHTML(hintText)
+            typeof formatMathHTML === "function" && !String(hintText).includes("<span")
+              ? formatMathHTML(String(hintText))
               : hintText;
-          document.getElementById("hint-area").innerHTML =
-            "💡 提示：" + displayHint;
+          document.getElementById("hint-area").innerHTML = "💡 提示：" + displayHint;
 
           // 畫面震動特效
           const area = document.getElementById("review-container");
