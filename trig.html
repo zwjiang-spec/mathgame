@@ -582,6 +582,9 @@
         startTime,
         lastTickSec = -1;
       const TIME_LIMIT = 90;
+      // ✨ 新增這兩個變數，用來精準追蹤答對/答錯數
+      let correctCount = 0,
+        wrongCount = 0;
 
       let correctQuestionsSet = new Set();
       let errorLogMap = new Map();
@@ -810,7 +813,9 @@
             "dead",
             score,
             typeof errorLogMap !== "undefined" ? errorLogMap : null,
-            typeof isHellMode !== "undefined" ? isHellMode : false
+            typeof isHellMode !== "undefined" ? isHellMode : false,
+            correctCount, // 👈 傳遞精準答對數
+            wrongCount // 👈 傳遞精準答錯數
           )
             .then(() => {
               if (deathBtn) {
@@ -833,7 +838,7 @@
         combo = 0;
         consecutiveWrong++;
         errorLogMap.set(currentQuestionStr, {
-          ans: formatMathHTML(targetAns),
+          ans: targetAns,
           hint: currentHint,
         });
         if (!activeWrongPool.some((item) => item.q === currentQuestionStr)) {
@@ -863,8 +868,6 @@
 
       function submitAnswer() {
         if (userInput === "" || isProcessing) return;
-
-        // 取得輸入框
         const box = document.getElementById("input-box");
         if (
           box.classList.contains("correct-flash") ||
@@ -874,43 +877,26 @@
 
         isProcessing = true; // 上鎖
 
-        let isCorrect = false;
+        // ✨ 萬能數值判定 (解決 sin -600度 的冤案)
+        let userVal = evalMath(userInput);
+        let targetVal = evalMath(targetAns);
 
-        // 🛡️ 第一道防線：字串完全比對 (最精準！)
-        // 只要學生打的字串跟題庫一模一樣 (例如 "(√5-1)/4")，直接給過！
-        if (userInput === targetAns) {
-          isCorrect = true;
-        } else {
-          // 🛡️ 第二道防線：數值計算比對 (容錯機制)
-          // 萬一學生打的順序不一樣，我們用更強大的方法解析它
-          try {
-            let safeUser = userInput.replace(/√(\d+)/g, "Math.sqrt($1)");
-            let safeTarget = targetAns.replace(/√(\d+)/g, "Math.sqrt($1)");
-            let userVal = eval(safeUser);
-            let targetVal = eval(safeTarget);
-            if (
-              !isNaN(userVal) &&
-              !isNaN(targetVal) &&
-              Math.abs(userVal - targetVal) < 1e-5
-            ) {
-              isCorrect = true;
-            }
-          } catch (e) {
-            isCorrect = false;
-          }
-        }
+        // 只要兩個數字算出來的差距極小，就判定正確
+        let isCorrect =
+          !isNaN(userVal) &&
+          !isNaN(targetVal) &&
+          Math.abs(userVal - targetVal) < 1e-5;
 
         if (isCorrect) {
+          correctCount++; // 精準計數
           correctQuestionsSet.add(currentQuestionStr);
           activeWrongPool = activeWrongPool.filter(
             (item) => item.q !== currentQuestionStr
           );
-
           spawnComboParticle();
           consecutiveWrong = 0;
           if (combo >= 9) playFeverCorrect();
           else playCorrect();
-
           box.classList.add("correct-flash");
           score += (10 + combo * 2) * currentMultiplier;
           combo++;
@@ -923,15 +909,15 @@
           updateUI();
           setTimeout(() => {
             getNewQuestion();
-            isProcessing = false; // 出完下一題解鎖
+            isProcessing = false;
           }, 150);
         } else {
+          wrongCount++; // 精準計數
           triggerErrorEffect();
-          // ✨ 延遲 400 毫秒：讓學生看清楚紅字與震動後，自動幫他清空！
           setTimeout(() => {
-            userInput = ""; // 清空內部儲存的答案
-            renderInput(); // 更新畫面，讓輸入框變回空白
-            isProcessing = false; // 解除防連點鎖定
+            userInput = "";
+            renderInput();
+            isProcessing = false;
           }, 400);
         }
       }
@@ -943,7 +929,7 @@
         )
           return;
         isProcessing = true; // 上鎖
-
+        wrongCount++; // ✨ 跳過(PASS)也算答錯一題！
         triggerErrorEffect(true);
         score -=
           20 * currentMultiplier -
@@ -1007,6 +993,9 @@
         combo = 0;
         consecutiveWrong = 0;
         currentQuestionErrors = 0;
+        // ✨ 新局開始，計數器歸零
+        correctCount = 0;
+        wrongCount = 0;
         updateUI();
         startTime = Date.now();
         getNewQuestion();
@@ -1076,7 +1065,9 @@
           "clear",
           score,
           typeof errorLogMap !== "undefined" ? errorLogMap : null,
-          typeof isHellMode !== "undefined" ? isHellMode : false
+          typeof isHellMode !== "undefined" ? isHellMode : false,
+          correctCount, // 👈 傳遞精準答對數
+          wrongCount // 👈 傳遞精準答錯數
         )
           .then(() => {
             document.getElementById("player-name").value =
