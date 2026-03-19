@@ -177,7 +177,30 @@
           alt="大頭貼"
         />
         <div>
-          <h1 id="user-name">讀取中...</h1>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <h1 id="user-name" style="margin: 0">讀取中...</h1>
+            <button
+              id="edit-name-btn"
+              onclick="renameUser()"
+              style="
+                display: none;
+                background: #f39c12;
+                color: white;
+                border: none;
+                padding: 4px 10px;
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: 0.2s;
+                box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
+              "
+              onmouseover="this.style.background='#e67e22'"
+              onmouseout="this.style.background='#f39c12'"
+            >
+              ✏️ 更改暱稱
+            </button>
+          </div>
           <div
             id="user-title-badge"
             style="
@@ -290,13 +313,29 @@
         // 如果是至尊，加個閃爍特效
         if (score >= 2000) badge.style.animation = "pulse 1.5s infinite";
       }
-      // 檢查登入狀態
-      auth.onAuthStateChanged((user) => {
+      // 檢查登入狀態與自訂暱稱
+      auth.onAuthStateChanged(async (user) => {
         if (user) {
           document.getElementById("user-avatar").src = user.photoURL;
-          document.getElementById("user-name").innerText = user.displayName;
           document.getElementById("user-uid").innerText =
             "學霸認證代碼: " + user.uid.substring(0, 8);
+          document.getElementById("edit-name-btn").style.display =
+            "inline-block";
+
+          // ✨ 去資料庫查他有沒有改過專屬暱稱
+          try {
+            const userDoc = await db.collection("users").doc(user.uid).get();
+            let finalName = user.displayName;
+            if (userDoc.exists && userDoc.data().name) {
+              finalName = userDoc.data().name;
+            }
+            document.getElementById("user-name").innerText = finalName;
+            localStorage.setItem("mathGamePlayerName", finalName); // 讓遊戲大廳也知道新名字
+          } catch (error) {
+            console.error("讀取名字失敗", error);
+            document.getElementById("user-name").innerText = user.displayName;
+          }
+
           loadUserData(user.uid);
         } else {
           alert("⚠️ 請先在首頁進行 Google 登入才能查看戰績！");
@@ -500,6 +539,100 @@
         const finalPool = trainingPool.slice(0, 10);
         localStorage.setItem("mathGameReviewPool", JSON.stringify(finalPool));
         window.location.href = "review.html";
+      }
+      // ✨ 30天冷卻期改名與戰績同步引擎 (除錯升級版)
+      async function renameUser() {
+        const user = auth.currentUser;
+        if (!user) {
+          alert("無法取得登入狀態，請重新整理網頁！");
+          return;
+        }
+        const uid = user.uid;
+
+        try {
+          const userRef = db.collection("users").doc(uid);
+          const userDoc = await userRef.get();
+
+          // 1. 檢查 30 天冷卻期
+          if (userDoc.exists && userDoc.data().lastRenameDate) {
+            const lastDate = userDoc.data().lastRenameDate.toMillis();
+            const now = Date.now();
+            const daysPassed = (now - lastDate) / (1000 * 60 * 60 * 24);
+
+            if (daysPassed < 30) {
+              const daysLeft = Math.ceil(30 - daysPassed);
+              alert(`⏳ 魔法冷卻中！距離下次可改名還有 ${daysLeft} 天。`);
+              return;
+            }
+          }
+
+          // 2. 詢問新暱稱
+          let newName = prompt(
+            "請輸入您的專屬遊戲暱稱 (最多 10 個字，30 天內無法再次修改，請謹慎輸入！)："
+          );
+          if (newName === null) return; // 玩家按取消
+
+          newName = newName.trim();
+          if (newName.length === 0 || newName.length > 10) {
+            alert("⚠️ 暱稱格式不符！請輸入 1~10 個字。");
+            return;
+          }
+
+          // 3. 雙重確認
+          if (
+            !confirm(
+              `確定要將暱稱改為「${newName}」嗎？\n⚠️ 注意：更改後 30 天內將無法再次修改！`
+            )
+          )
+            return;
+
+          document.getElementById("user-name").innerText = "🔄 雲端同步中...";
+          document.getElementById("edit-name-btn").disabled = true;
+
+          // 4. 更新 users 資料庫 (記錄名字與冷卻時間)
+          await userRef.set(
+            {
+              name: newName,
+              lastRenameDate: firebase.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+          // 5. ✨ Firebase 批次更新魔法 (加入防呆機制)
+          const recordsSnapshot = await db
+            .collection("game_records")
+            .where("uid", "==", uid)
+            .get();
+
+          // 只有當玩家有歷史戰績時，才執行批次更新！
+          if (!recordsSnapshot.empty) {
+            const batch = db.batch();
+            recordsSnapshot.forEach((doc) => {
+              batch.update(doc.ref, { name: newName });
+            });
+            await batch.commit(); // 一口氣把所有戰績換上新名字
+          }
+
+          // 6. 更新畫面與本地快取
+          localStorage.setItem("mathGamePlayerName", newName);
+          document.getElementById("user-name").innerText = newName;
+          document.getElementById("edit-name-btn").disabled = false;
+          alert("✅ 暱稱更改成功！您的新名字已同步至所有伺服器排行榜！");
+        } catch (error) {
+          console.error("改名詳細錯誤:", error);
+
+          // ✨ 把真實的錯誤原因顯示在螢幕上！
+          let errorMsg = error.message;
+          if (error.message.includes("Missing or insufficient permissions")) {
+            errorMsg =
+              "Firebase 資料庫權限不足！請檢查 Rules 設定是否允許 update 與 write。";
+          }
+          alert(`❌ 改名失敗：\n${errorMsg}`);
+
+          document.getElementById("edit-name-btn").disabled = false;
+          document.getElementById("user-name").innerText =
+            localStorage.getItem("mathGamePlayerName") || user.displayName;
+        }
       }
     </script>
   </body>
