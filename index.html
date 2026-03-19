@@ -688,9 +688,7 @@
             margin-bottom: 15px;
           "
         >
-          這是一場需要所有玩家集結的史詩戰役！數學死神擁有高達
-          <b style="color: #e74c3c; font-size: 18px">50 萬</b>
-          的血量，單靠一個人的力量是絕對無法擊退的。
+          這是一場無盡的史詩戰役！當魔王的血條被打穿後，祂將會<b>無限轉生進化</b>，變得更加強大！
         </p>
         <ul
           style="
@@ -702,14 +700,24 @@
           "
         >
           <li>
-            你在任何模式下獲得的<b style="color: #2ecc71">正分數</b
-            >，都會化作對死神的<b style="color: #f39c12">真實傷害</b>。
+            <b>📅 每日破綻加成：</b>每天會公告魔王的弱點單元，挑戰該單元將獲得
+            <b style="color: #f1c40f">1.5 倍</b> 真實傷害！<br /><span
+              style="font-size: 12px; color: #7f8c8d"
+              >(一四:三角 / 二五:空間 / 三六:排列 / 週日:全單元加成)</span
+            >
           </li>
           <li>
-            如果答錯被扣到負分，不會幫死神補血 (別擔心，他還沒學會吸血 🧛‍♂️)。
+            <b>🔥 地獄重擊：</b>地獄模式的傷害將以
+            <b style="color: #e74c3c">2.0 倍</b> 計算！
           </li>
           <li>
-            發揮你的極限，集結所有玩家的「領域展開」之力，一起把死神的血條打穿吧！
+            <b>🔄 輪迴重置：</b>每當擊敗一階魔王，<b style="color: #3498db"
+              >貢獻排行榜將會重置</b
+            >，所有人重新競逐下一階的榮耀！
+          </li>
+          <li>
+            <b>👑 永久殊榮：</b>成功給予該階級魔王最高總傷害的
+            MVP，將解鎖<b>對應該魔王的永久專屬動態稱號</b>！
           </li>
         </ul>
         <div style="text-align: center">
@@ -725,7 +733,6 @@
               font-weight: bold;
               cursor: pointer;
               box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
-              transition: 0.2s;
             "
           >
             ⚔️ 準備戰鬥
@@ -733,6 +740,7 @@
         </div>
       </div>
     </div>
+
     <div
       id="boss-rank-modal"
       style="
@@ -785,9 +793,8 @@
             padding-bottom: 10px;
           "
         >
-          🏆 討伐貢獻 Top 5
+          🏆 本輪討伐 Top 5
         </h2>
-
         <p
           style="
             color: #ecf0f1;
@@ -796,11 +803,9 @@
             margin-bottom: 15px;
           "
         >
-          🔥 <b style="color: #e74c3c">地獄模式</b>的傷害將以
-          <b style="color: #f1c40f">2 倍</b> 計算！<br />
-          👑 成功擊殺死神後，貢獻最高的 MVP 將獲得永久專屬稱號！
+          🔄 本排行榜為<b>「當前階級魔王」</b>專屬！<br />
+          👑 結算時第一名的玩家，將解鎖該階魔王的<b>永久專屬稱號</b>！
         </p>
-
         <div
           id="boss-rank-list"
           style="
@@ -814,7 +819,6 @@
             資料飛速計算中...
           </div>
         </div>
-
         <div style="text-align: center; margin-top: 20px">
           <button
             onclick="toggleBossRank()"
@@ -1584,9 +1588,8 @@
           modal.style.pointerEvents = "auto";
         }
       }
-      // ✨ 世界 Boss 終極運算引擎 (含排行與雙倍傷害)
+      // ✨ 世界 Boss 2.0 終極引擎 (時間軸推演 + 獨立排行 + 永久稱號)
       function loadBossData() {
-        const MAX_HP = 500000; // 魔王總血量：50萬
         const hpText = document.getElementById("boss-hp-text");
         const hpBar = document.getElementById("boss-hp-bar");
         const dmgText = document.getElementById("boss-damage-text");
@@ -1596,58 +1599,154 @@
           .where("score", ">", 0)
           .get()
           .then((snapshot) => {
-            let totalDamage = 0;
-            let playerDamageMap = {}; // 用來記錄每個人的總貢獻
+            let allRecords = [];
 
+            // 1. 將所有紀錄提取出來，並給予時間戳記防呆
             snapshot.forEach((doc) => {
-              let data = doc.data();
-              let s = parseInt(data.score) || 0;
-              let mode = data.mode || "normal";
-              let uid = data.uid;
-              let name = data.name || "神秘勇者";
-
-              // ✨ 地獄模式傷害直接 x2 倍！
-              let actualDamage = mode === "hell" ? s * 2 : s;
-              totalDamage += actualDamage;
-
-              // 累加個人貢獻度
-              if (uid) {
-                if (!playerDamageMap[uid]) {
-                  playerDamageMap[uid] = { uid: uid, name: name, damage: 0 };
-                }
-                playerDamageMap[uid].damage += actualDamage;
-              }
+              let d = doc.data();
+              d._ts = d.timestamp ? d.timestamp.toMillis() : Date.now();
+              allRecords.push(d);
             });
 
-            // --- 處理血條 UI ---
-            let currentHP = MAX_HP - totalDamage;
-            if (currentHP < 0) currentHP = 0;
-            let hpPercent = (currentHP / MAX_HP) * 100;
+            // 2. 按照時間先後順序排序 (時間軸推演的關鍵！)
+            allRecords.sort((a, b) => a._ts - b._ts);
 
-            hpText.innerText = `HP: ${currentHP.toLocaleString()} / ${MAX_HP.toLocaleString()}`;
+            let level = 1;
+            let levelMaxHp = 500000;
+            let currentLevelTotalDamage = 0;
+            let currentLevelPlayerMap = {}; // 只記錄「當前魔王」的貢獻
+            let mvpHistory = {}; // 記錄玩家獲得過的所有 MVP 稱號 { uid: { title, level } }
+
+            // 魔王名字與對應的專屬 MVP 稱號
+            const bossDataList = [
+              { name: "數學死神", mvpTitle: "🗡️ 死神終結者" },
+              { name: "混沌魔將", mvpTitle: "⚔️ 混沌斬裂者" },
+              { name: "虛空支配者", mvpTitle: "🌌 虛空粉碎者" },
+              { name: "維度吞噬者", mvpTitle: "🌀 維度主宰" },
+              { name: "幾何破壞神", mvpTitle: "📐 幾何救世主" },
+              { name: "真·理之眼", mvpTitle: "👁️ 真理超越者" },
+              { name: "無盡惡夢", mvpTitle: "👑 傳說中的弒神者" },
+            ];
+
+            // 3. 逐筆推演歷史傷害
+            for (let i = 0; i < allRecords.length; i++) {
+              let r = allRecords[i];
+              let s = parseInt(r.score) || 0;
+              let unit = r.unit || "practice";
+              let mode = r.mode || "normal";
+              let uid = r.uid;
+              let name = r.name || "神秘勇者";
+
+              // 計算每日加成 (依據玩家當時遊玩的日期)
+              let dayOfWeek = new Date(r._ts).getDay();
+              let isBonus = false;
+              if ((dayOfWeek === 1 || dayOfWeek === 4) && unit === "trig")
+                isBonus = true;
+              if ((dayOfWeek === 2 || dayOfWeek === 5) && unit === "space")
+                isBonus = true;
+              if ((dayOfWeek === 3 || dayOfWeek === 6) && unit === "perm")
+                isBonus = true;
+              if (dayOfWeek === 0) isBonus = true;
+
+              let dmg = s;
+              if (isBonus) dmg = Math.floor(dmg * 1.5);
+              if (mode === "hell") dmg *= 2;
+
+              // 處理傷害扣減與魔王轉生
+              while (dmg > 0) {
+                let hpLeft = levelMaxHp - currentLevelTotalDamage;
+                if (dmg >= hpLeft) {
+                  // 💥 當前魔王死亡！
+                  if (uid) {
+                    if (!currentLevelPlayerMap[uid])
+                      currentLevelPlayerMap[uid] = { uid, name, damage: 0 };
+                    currentLevelPlayerMap[uid].damage += hpLeft;
+                  }
+                  currentLevelTotalDamage += hpLeft;
+                  dmg -= hpLeft; // 溢出的傷害保留給下一隻魔王
+
+                  // 結算本輪 MVP 並發放永久稱號
+                  let topPlayers = Object.values(currentLevelPlayerMap).sort(
+                    (a, b) => b.damage - a.damage
+                  );
+                  if (topPlayers.length > 0) {
+                    let mvp = topPlayers[0];
+                    let bossIdx = Math.min(level - 1, bossDataList.length - 1);
+                    // 記錄該玩家獲得的稱號 (如果他殺了多隻，保留最高階的)
+                    if (
+                      !mvpHistory[mvp.uid] ||
+                      mvpHistory[mvp.uid].level < level
+                    ) {
+                      mvpHistory[mvp.uid] = {
+                        title: bossDataList[bossIdx].mvpTitle,
+                        level: level,
+                      };
+                    }
+                  }
+
+                  // 🆙 魔王轉生重置
+                  level++;
+                  levelMaxHp = 500000 + (level - 1) * 200000; // 每級多 20 萬血
+                  currentLevelTotalDamage = 0;
+                  currentLevelPlayerMap = {}; // ✨ 排行榜清空！
+                } else {
+                  // 🔪 魔王還沒死，扣血
+                  if (uid) {
+                    if (!currentLevelPlayerMap[uid])
+                      currentLevelPlayerMap[uid] = { uid, name, damage: 0 };
+                    currentLevelPlayerMap[uid].damage += dmg;
+                  }
+                  currentLevelTotalDamage += dmg;
+                  dmg = 0; // 傷害用完
+                }
+              }
+            }
+
+            // ==========================================
+            // 🌟 結算完畢！開始渲染當前魔王 UI
+            // ==========================================
+            let currentHP = levelMaxHp - currentLevelTotalDamage;
+            let hpPercent = (currentHP / levelMaxHp) * 100;
+            let bossIdx = Math.min(level - 1, bossDataList.length - 1);
+            let currentBossName = bossDataList[bossIdx].name;
+
+            // 顯示今天的加成公告
+            const todayDay = new Date().getDay();
+            let bonusStr = "";
+            if (todayDay === 1 || todayDay === 4)
+              bonusStr = "📐 今日弱點：三角比 (傷害1.5倍)";
+            else if (todayDay === 2 || todayDay === 5)
+              bonusStr = "🚀 今日弱點：空間 (傷害1.5倍)";
+            else if (todayDay === 3 || todayDay === 6)
+              bonusStr = "🎲 今日弱點：排列 (傷害1.5倍)";
+            else bonusStr = "🔥 週末狂歡：全單元傷害 1.5 倍！";
+
+            bossTitle.innerHTML = `Lv.${level} ${currentBossName} <span style="display:inline-block; font-size:11px; color:#f1c40f; margin-left:8px; border:1px solid #f1c40f; padding:2px 6px; border-radius:10px; vertical-align:middle;">${bonusStr}</span>`;
+            hpText.innerText = `HP: ${currentHP.toLocaleString()} / ${levelMaxHp.toLocaleString()}`;
 
             let currentDmgDisplay = 0;
             let dmgInterval = setInterval(() => {
-              currentDmgDisplay += Math.ceil(totalDamage / 20);
-              if (currentDmgDisplay >= totalDamage) {
-                currentDmgDisplay = totalDamage;
+              currentDmgDisplay += Math.ceil(currentLevelTotalDamage / 20);
+              if (currentDmgDisplay >= currentLevelTotalDamage) {
+                currentDmgDisplay = currentLevelTotalDamage;
                 clearInterval(dmgInterval);
               }
               dmgText.innerText = currentDmgDisplay.toLocaleString();
+              document.getElementById(
+                "boss-damage-text"
+              ).parentElement.innerHTML = `⚔️ 本輪討伐累積傷害：<span id="boss-damage-text" style="color: #f39c12; font-weight: bold; font-size: 14px">${currentDmgDisplay.toLocaleString()}</span>`;
             }, 50);
 
-            setTimeout(() => {
-              hpBar.style.width = hpPercent + "%";
-            }, 300);
+            setTimeout(() => (hpBar.style.width = hpPercent + "%"), 300);
 
-            // --- 🏆 處理排行榜 UI ---
-            let topPlayers = Object.values(playerDamageMap).sort(
+            // --- 🏆 渲染「當前魔王」專屬排行榜 UI ---
+            let currentTopPlayers = Object.values(currentLevelPlayerMap).sort(
               (a, b) => b.damage - a.damage
             );
-            let top5 = topPlayers.slice(0, 5);
+            let top5 = currentTopPlayers.slice(0, 5);
             let rankHtml = "";
-
             let icons = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
+
             top5.forEach((p, idx) => {
               rankHtml += `<div style="display:flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.1);">
                   <span style="font-weight:bold; color:#ecf0f1; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${
@@ -1658,24 +1757,23 @@
             });
             if (rankHtml === "")
               rankHtml =
-                '<div style="color:#7f8c8d; text-align:center;">尚無人造成傷害</div>';
+                '<div style="color:#7f8c8d; text-align:center;">新魔王降臨，尚無人造成傷害</div>';
 
-            // ✨ 新增魔法：尋找「我」的專屬貢獻與名次
             const currentUid = localStorage.getItem("mathGamePlayerUid");
             let myRankHtml = "";
 
             if (currentUid) {
-              let myData = playerDamageMap[currentUid];
+              let myData = currentLevelPlayerMap[currentUid];
               let myDamage = myData ? myData.damage : 0;
               let myName =
                 localStorage.getItem("mathGamePlayerName") || "神秘勇者";
               let myRank = myData
-                ? topPlayers.findIndex((p) => p.uid === currentUid) + 1
+                ? currentTopPlayers.findIndex((p) => p.uid === currentUid) + 1
                 : "-";
 
               myRankHtml = `
                 <div style="margin-top: 12px; padding-top: 10px; border-top: 2px solid #34495e;">
-                  <div style="color: #bdc3c7; font-size: 12px; margin-bottom: 6px;">👇 我的討伐戰況</div>
+                  <div style="color: #bdc3c7; font-size: 12px; margin-bottom: 6px;">👇 我的本輪戰況</div>
                   <div style="display:flex; justify-content: space-between; align-items: center; background: rgba(243, 156, 18, 0.15); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(243, 156, 18, 0.4);">
                     <span style="font-weight:bold; color:#fff; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                       <span style="color:#f1c40f; margin-right:4px;">#${myRank}</span> ${myName}
@@ -1685,44 +1783,27 @@
                 </div>
               `;
             } else {
-              // 沒登入的訪客看到的畫面
-              myRankHtml = `
-                <div style="margin-top: 12px; padding-top: 10px; border-top: 2px solid #34495e; text-align:center; color:#95a5a6; font-size:12px;">
-                  ⚠️ 請先登入以查看您的專屬貢獻度
-                </div>
-              `;
+              myRankHtml = `<div style="margin-top: 12px; padding-top: 10px; border-top: 2px solid #34495e; text-align:center; color:#95a5a6; font-size:12px;">⚠️ 請先登入以查看您的專屬貢獻度</div>`;
             }
 
-            // 把 Top 5 跟我的戰況組合在一起，丟到畫面上
             document.getElementById("boss-rank-list").innerHTML =
               rankHtml + myRankHtml;
 
-            // --- 🎉 隱藏彩蛋：魔王被擊殺 & MVP 稱號動態覆蓋 ---
-            if (currentHP === 0 && topPlayers.length > 0) {
-              let mvp = topPlayers[0]; // 第一名就是 MVP
-              bossTitle.innerHTML = `🎉 死神已被擊敗！MVP: <span style="color:#f1c40f;">${mvp.name}</span>`;
-              bossTitle.style.color = "#ecf0f1";
-              hpBar.style.background =
-                "linear-gradient(90deg, #f1c40f, #f39c12)";
-              hpBar.style.width = "100%";
-              hpText.innerText = "領域完全解放！";
-
-              // 檢查目前登入的玩家是不是 MVP，如果是，強制覆蓋稱號！
-              const currentUid = localStorage.getItem("mathGamePlayerUid");
-              if (currentUid === mvp.uid) {
-                setTimeout(() => {
-                  const titleBadge =
-                    document.getElementById("user-title-badge");
-                  if (titleBadge) {
-                    titleBadge.innerText = "👑 死神弒殺者";
-                    titleBadge.style.background =
-                      "linear-gradient(135deg, #c0392b, #8e44ad)";
-                    titleBadge.style.boxShadow =
-                      "0 0 15px rgba(192, 57, 43, 0.8)";
-                    titleBadge.style.display = "inline-block";
-                  }
-                }, 500); // 稍微延遲以確保蓋過原本的稱號計算
-              }
+            // ==========================================
+            // 🎉 發放歷史永久稱號！(覆蓋原本的稱號)
+            // ==========================================
+            if (currentUid && mvpHistory[currentUid]) {
+              setTimeout(() => {
+                const titleBadge = document.getElementById("user-title-badge");
+                if (titleBadge) {
+                  titleBadge.innerText = mvpHistory[currentUid].title;
+                  titleBadge.style.background =
+                    "linear-gradient(135deg, #c0392b, #8e44ad)";
+                  titleBadge.style.boxShadow =
+                    "0 0 15px rgba(192, 57, 43, 0.8)";
+                  titleBadge.style.display = "inline-block";
+                }
+              }, 800); // 延遲確保蓋過 Firebase 原始的評分稱號
             }
           })
           .catch((err) => {
