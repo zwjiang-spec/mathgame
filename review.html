@@ -217,11 +217,10 @@
         if (userInput === correctAns) {
           isCorrect = true;
         } else {
-          try {
-            let safeUser = userInput.replace(/√(\d+)/g, "Math.sqrt($1)");
-            let safeTarget = correctAns.replace(/√(\d+)/g, "Math.sqrt($1)");
-            if (Math.abs(eval(safeUser) - eval(safeTarget)) < 1e-5) {
-              isCorrect = true;
+          let userVal = evalMath(userInput);
+          let targetVal = evalMath(correctAns);
+          if (!isNaN(userVal) && !isNaN(targetVal) && Math.abs(userVal - targetVal) < 1e-5) {
+            isCorrect = true;
             }
           } catch (e) {
             isCorrect = false;
