@@ -7,7 +7,11 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>我的專屬數學戰績室</title>
+
     <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="common.js"></script>
+
     <style>
       body {
         background-color: #f7f9fc;
@@ -50,7 +54,6 @@
         color: #7f8c8d;
         font-size: 14px;
       }
-
       .stats-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -78,7 +81,6 @@
       .stat-card.death .value {
         color: #e74c3c;
       }
-
       h2 {
         font-size: 18px;
         color: #34495e;
@@ -87,7 +89,6 @@
         margin-top: 30px;
         margin-bottom: 15px;
       }
-
       .wrong-q-list {
         list-style: none;
         padding: 0;
@@ -116,7 +117,6 @@
         color: #7f8c8d;
         margin-top: 5px;
       }
-
       .history-list {
         list-style: none;
         padding: 0;
@@ -144,7 +144,6 @@
       .history-item.dead .score {
         color: #e74c3c;
       }
-
       .home-btn {
         display: inline-block;
         background: #ecf0f1;
@@ -235,16 +234,87 @@
         </div>
       </div>
 
+      <div
+        style="
+          position: relative;
+          background: white;
+          border-radius: 12px;
+          padding: 20px;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+          margin-bottom: 25px;
+          border: 1px solid #eaeaea;
+        "
+      >
+        <button
+          onclick="toggleRadarInfo()"
+          style="
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #f8f9fa;
+            color: #95a5a6;
+            border: 1px solid #e0e0e0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.2s;
+          "
+          onmouseover="this.style.background='#e0e0e0'; this.style.color='#34495e';"
+          onmouseout="this.style.background='#f8f9fa'; this.style.color='#95a5a6';"
+          title="查看能力值計算方式"
+        >
+          ?
+        </button>
+
+        <h2
+          style="
+            margin-top: 0;
+            font-size: 18px;
+            color: #34495e;
+            border-left: 4px solid #8e44ad;
+            padding-left: 10px;
+            margin-bottom: 10px;
+          "
+        >
+          📊 數學六式 (真實能力分析)
+        </h2>
+
+        <div
+          style="position: relative; height: 280px; width: 100%; margin: 0 auto"
+        >
+          <canvas id="abilityRadar"></canvas>
+        </div>
+
+        <p
+          style="
+            text-align: center;
+            font-size: 11px;
+            color: #95a5a6;
+            margin-top: 10px;
+          "
+        >
+          *
+          能力值採用「真實答對率」與「遊玩經驗」精準計算，完全不受打字速度影響。
+        </p>
+      </div>
+
       <h2>📖 我的專屬錯題本 (常錯複習)</h2>
       <ul class="wrong-q-list" id="wrong-q-container">
         <li style="color: #7f8c8d; font-size: 14px">資料載入中...</li>
       </ul>
+
       <div style="text-align: center; margin-bottom: 20px">
         <button
           id="training-btn"
           onclick="startWeaknessTraining()"
           style="
-            display: none; /* 初始隱藏，有錯題才顯示 */
+            display: none;
             background: linear-gradient(135deg, #e74c3c, #c0392b);
             color: white;
             border: none;
@@ -267,14 +337,113 @@
       </ul>
     </div>
 
+    <div
+      id="radar-info-modal"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      "
+    >
+      <div
+        style="
+          background: white;
+          width: 85%;
+          max-width: 400px;
+          border-radius: 15px;
+          padding: 25px;
+          text-align: left;
+          position: relative;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        "
+      >
+        <span
+          class="close-btn"
+          onclick="toggleRadarInfo()"
+          style="
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #95a5a6;
+          "
+          >×</span
+        >
+        <h2
+          style="
+            margin-top: 0;
+            color: #8e44ad;
+            font-size: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+          "
+        >
+          📊 能力值是怎麼算的？
+        </h2>
+        <ul
+          style="
+            padding-left: 20px;
+            color: #34495e;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+          "
+        >
+          <li style="margin-bottom: 12px">
+            <b>🎯 單元準確率：</b><br /><span style="color: #7f8c8d"
+              >總答對題數 ÷ (答對數 + 錯題數)。</span
+            >
+          </li>
+          <li style="margin-bottom: 12px">
+            <b>🛡️ 生存防禦力：</b><br /><span style="color: #7f8c8d"
+              >未被死神強制帶走的安全通關機率。</span
+            >
+          </li>
+          <li style="margin-bottom: 12px">
+            <b>💪 勤奮鍛鍊度：</b><br /><span style="color: #7f8c8d"
+              >累積遊玩滿 30 局即可達滿分！</span
+            >
+          </li>
+        </ul>
+        <div style="text-align: center">
+          <button
+            onclick="toggleRadarInfo()"
+            style="
+              background: #2c3e50;
+              color: white;
+              border: none;
+              padding: 10px 30px;
+              border-radius: 20px;
+              font-size: 14px;
+              font-weight: bold;
+              cursor: pointer;
+            "
+          >
+            我知道了
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script>
       function getTitle(score) {
-        // 從高往低找符合條件的稱號
         for (let i = TITLES.length - 1; i >= 0; i--) {
           if (score >= TITLES[i].min) return TITLES[i];
         }
         return TITLES[0];
       }
+
       // 🚀 Firebase 初始化
       const firebaseConfig = {
         apiKey: "AIzaSyC7ed0il_ScCdHeWOHepj56ycjRXYt_Mf4",
@@ -310,9 +479,9 @@
         }
         badge.innerText = finalTitle.name;
         badge.style.background = finalTitle.color;
-        // 如果是至尊，加個閃爍特效
         if (score >= 2000) badge.style.animation = "pulse 1.5s infinite";
       }
+
       // 檢查登入狀態與自訂暱稱
       auth.onAuthStateChanged(async (user) => {
         if (user) {
@@ -322,7 +491,6 @@
           document.getElementById("edit-name-btn").style.display =
             "inline-block";
 
-          // ✨ 去資料庫查他有沒有改過專屬暱稱
           try {
             const userDoc = await db.collection("users").doc(user.uid).get();
             let finalName = user.displayName;
@@ -330,7 +498,7 @@
               finalName = userDoc.data().name;
             }
             document.getElementById("user-name").innerText = finalName;
-            localStorage.setItem("mathGamePlayerName", finalName); // 讓遊戲大廳也知道新名字
+            localStorage.setItem("mathGamePlayerName", finalName);
           } catch (error) {
             console.error("讀取名字失敗", error);
             document.getElementById("user-name").innerText = user.displayName;
@@ -346,16 +514,13 @@
       // 撈取資料並渲染畫面
       async function loadUserData(uid) {
         try {
-          // 從資料庫抓取該 UID 的所有紀錄
           const snapshot = await db
             .collection("game_records")
             .where("uid", "==", uid)
             .get();
-
           let records = [];
           snapshot.forEach((doc) => records.push(doc.data()));
 
-          // 如果完全沒玩過
           if (records.length === 0) {
             document.getElementById("stat-games").innerText = 0;
             document.getElementById("wrong-q-container").innerHTML =
@@ -365,7 +530,6 @@
             return;
           }
 
-          // 照時間新到舊排序 (為了不讓 Firestore 報錯，我們用 JS 在本地端排)
           records.sort((a, b) => {
             let timeA = a.timestamp ? a.timestamp.toMillis() : 0;
             let timeB = b.timestamp ? b.timestamp.toMillis() : 0;
@@ -375,25 +539,19 @@
           // --- 📊 統計數據 ---
           let maxScore = -999;
           let deathCount = 0;
-
-          // ✨ 建立統計引擎
           let errorStatsMap = new Map();
-
           let historyHTML = "";
 
           records.forEach((rec) => {
-            // 最高分與死亡數
             if (rec.score > maxScore) maxScore = rec.score;
             if (rec.status === "dead" || rec.score <= -20) deathCount++;
 
-            // ✨ 跨場次錯題收集與統計 (不論是 dead 還是 clear 都算進去)
             if (rec.wrongLog && Array.isArray(rec.wrongLog)) {
               rec.wrongLog.forEach((w) => {
-                // 有些舊資料可能欄位名稱不同，做個相容性處理
                 let qText = w.question || w.q;
                 let qAns = w.answer || w.ans;
                 let qHint = w.hint || "無提示";
-                let qCount = w.count || 1; // 如果單場錯了多次也算進去
+                let qCount = w.count || 1;
 
                 if (errorStatsMap.has(qText)) {
                   errorStatsMap.get(qText).totalCount += qCount;
@@ -407,7 +565,6 @@
               });
             }
 
-            // --- 歷史紀錄列表生成 (這段維持您原本的邏輯) ---
             let dateStr = rec.timestamp
               ? rec.timestamp.toDate().toLocaleString("zh-TW", {
                   month: "numeric",
@@ -416,7 +573,6 @@
                   minute: "2-digit",
                 })
               : "剛剛";
-
             let unitLabel = "🎮 未知";
             if (rec.unit === "trig") unitLabel = "📐 三角";
             else if (rec.unit === "space") unitLabel = "🚀 空間";
@@ -449,25 +605,21 @@
             }
           });
 
-          // 渲染統計數字
           document.getElementById("stat-games").innerText = records.length;
           document.getElementById("stat-high").innerText = maxScore;
           updateTitleUI(maxScore === -999 ? 0 : maxScore);
           document.getElementById("stat-deaths").innerText = deathCount;
           document.getElementById("history-container").innerHTML = historyHTML;
 
-          // --- ✨ ✨ 渲染錯題本 (加入排序與徽章) ---
+          // --- ✨ 渲染錯題本 (完美套用 formatMathHTML) ---
           const wrongContainer = document.getElementById("wrong-q-container");
           if (errorStatsMap.size > 0) {
-            // 1. 轉成陣列並排序 (次數多的排前面)
             let sortedErrors = Array.from(errorStatsMap.entries()).sort(
               (a, b) => b[1].totalCount - a[1].totalCount
             );
-
             let wrongHTML = "";
             sortedErrors.forEach(([q, info]) => {
-              // 根據次數決定顏色
-              let badgeStyle = "background:#95a5a6; color:white;"; // 預設灰色
+              let badgeStyle = "background:#95a5a6; color:white;";
               let prefix = "錯誤";
               if (info.totalCount >= 5) {
                 badgeStyle = "background:#c0392b; color:white;";
@@ -481,10 +633,16 @@
                 <li class="wrong-q-item">
                   <div style="width:100%">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                      <span style="font-weight:bold;">${q}</span>
-                      <span style="${badgeStyle} padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold;">${prefix} ${info.totalCount} 次</span>
+                      <span style="font-weight:bold;">${formatMathHTML(
+                        q
+                      )}</span>
+                      <span style="${badgeStyle} font-size:11px; padding:2px 8px; border-radius:12px; font-weight:bold;">${prefix} ${
+                info.totalCount
+              } 次</span>
                     </div>
-                    <div class="ans" style="margin-top:5px;">➡ 正解: ${info.answer}</div>
+                    <div class="ans" style="margin-top:5px;">➡ 正解: ${formatMathHTML(
+                      info.answer
+                    )}</div>
                     <span class="hint">💡 ${info.hint}</span>
                   </div>
                 </li>
@@ -497,50 +655,163 @@
             wrongContainer.innerHTML =
               '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 目前為止零錯題，太神啦！</li>';
           }
+
+          // ==========================================
+          // ✨ 雷達圖能力運算引擎
+          // ==========================================
+          let stats = {
+            trig: { correct: 0, err: 0, games: 0 },
+            space: { correct: 0, err: 0, games: 0 },
+            perm: { correct: 0, err: 0, games: 0 },
+            practice: { correct: 0, err: 0, games: 0 },
+          };
+
+          let totalGamesPlayed = records.length;
+          let survivedGames = 0;
+
+          records.forEach((rec) => {
+            let u = rec.unit || "practice";
+            let s = rec.score || 0;
+            let exactCorrect =
+              rec.correctCount !== undefined
+                ? rec.correctCount
+                : Math.max(0, Math.floor(s / 10));
+            let exactWrong = rec.wrongCount !== undefined ? rec.wrongCount : 0;
+
+            if (
+              rec.wrongCount === undefined &&
+              rec.wrongLog &&
+              Array.isArray(rec.wrongLog)
+            ) {
+              rec.wrongLog.forEach((w) => (exactWrong += w.count || 1));
+            }
+
+            if (stats[u]) {
+              stats[u].games++;
+              stats[u].correct += exactCorrect;
+              stats[u].err += exactWrong;
+            }
+            if (rec.status !== "dead" && s > -20) survivedGames++;
+          });
+
+          function getAccuracy(unitData) {
+            if (unitData.games === 0) return 0;
+            let totalAttempts = unitData.correct + unitData.err;
+            if (totalAttempts <= 0) return 0;
+            return Math.round((unitData.correct / totalAttempts) * 100);
+          }
+
+          let accTrig = getAccuracy(stats.trig);
+          let accSpace = getAccuracy(stats.space);
+          let accPerm = getAccuracy(stats.perm);
+          let accPrac = getAccuracy(stats.practice);
+          let effortScore = Math.min(
+            100,
+            Math.round((totalGamesPlayed / 30) * 100)
+          );
+          let survivalRate =
+            totalGamesPlayed > 0
+              ? Math.round((survivedGames / totalGamesPlayed) * 100)
+              : 0;
+
+          const canvasEl = document.getElementById("abilityRadar");
+          if (canvasEl) {
+            const ctx = canvasEl.getContext("2d");
+            if (window.myRadarChart) window.myRadarChart.destroy();
+            window.myRadarChart = new Chart(ctx, {
+              type: "radar",
+              data: {
+                labels: [
+                  "📐 三角準確率",
+                  "🚀 空間準確率",
+                  "🎲 排列準確率",
+                  "🛡️ 生存防禦力",
+                  "🔥 綜合實戰力",
+                  "💪 勤奮鍛鍊度",
+                ],
+                datasets: [
+                  {
+                    label: "真實能力值",
+                    data: [
+                      accTrig,
+                      accSpace,
+                      accPerm,
+                      survivalRate,
+                      accPrac,
+                      effortScore,
+                    ],
+                    backgroundColor: "rgba(52, 152, 219, 0.3)",
+                    borderColor: "rgba(41, 128, 185, 1)",
+                    pointBackgroundColor: "#e74c3c",
+                    pointBorderColor: "#fff",
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderColor: "#e74c3c",
+                    borderWidth: 2,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  r: {
+                    angleLines: { color: "rgba(0, 0, 0, 0.1)" },
+                    grid: { color: "rgba(0, 0, 0, 0.05)" },
+                    pointLabels: {
+                      font: { size: 12, weight: "bold" },
+                      color: "#2c3e50",
+                    },
+                    ticks: { display: false, min: 0, max: 100, stepSize: 20 },
+                  },
+                },
+                plugins: { legend: { display: false } },
+              },
+            });
+          }
         } catch (error) {
           console.error("讀取戰績失敗:", error);
           document.getElementById("wrong-q-container").innerHTML =
             '<li style="color: #e74c3c;">讀取失敗，請重新整理網頁</li>';
         }
       }
+
       function startWeaknessTraining() {
-        // 抓取清單中所有的錯題項目
         const wrongItems = document.querySelectorAll(
           "#wrong-q-container .wrong-q-item"
         );
         let trainingPool = [];
-
         wrongItems.forEach((item) => {
-          // 這裡我們抓取題目文字
-          // 考慮到你的 HTML 結構，我們抓取第一個粗體 span 或是 div
           const qText = item.querySelector('span[style*="bold"]').innerText;
-
-          // 抓取正解 (去掉 prefix)
           const ansText = item
             .querySelector(".ans")
             .innerText.replace("➡ 正解: ", "")
             .trim();
-
-          // 抓取提示
           const hintText = item
             .querySelector(".hint")
             .innerText.replace("💡 ", "")
             .trim();
-
           trainingPool.push({ q: qText, a: ansText, hint: hintText });
         });
-
         if (trainingPool.length === 0) {
           alert("目前沒有錯題可以特訓喔！");
           return;
         }
-
-        // 排序前 10 題最常錯的 (這部分邏輯不變)
         const finalPool = trainingPool.slice(0, 10);
         localStorage.setItem("mathGameReviewPool", JSON.stringify(finalPool));
         window.location.href = "review.html";
       }
-      // ✨ 30天冷卻期改名與戰績同步引擎 (除錯升級版)
+
+      function toggleRadarInfo() {
+        const modal = document.getElementById("radar-info-modal");
+        if (modal.style.opacity === "1") {
+          modal.style.opacity = "0";
+          modal.style.pointerEvents = "none";
+        } else {
+          modal.style.opacity = "1";
+          modal.style.pointerEvents = "auto";
+        }
+      }
+
       async function renameUser() {
         const user = auth.currentUser;
         if (!user) {
@@ -553,7 +824,6 @@
           const userRef = db.collection("users").doc(uid);
           const userDoc = await userRef.get();
 
-          // 1. 檢查 30 天冷卻期
           if (userDoc.exists && userDoc.data().lastRenameDate) {
             const lastDate = userDoc.data().lastRenameDate.toMillis();
             const now = Date.now();
@@ -566,19 +836,16 @@
             }
           }
 
-          // 2. 詢問新暱稱
           let newName = prompt(
             "請輸入您的專屬遊戲暱稱 (最多 10 個字，30 天內無法再次修改，請謹慎輸入！)："
           );
-          if (newName === null) return; // 玩家按取消
-
+          if (newName === null) return;
           newName = newName.trim();
           if (newName.length === 0 || newName.length > 10) {
             alert("⚠️ 暱稱格式不符！請輸入 1~10 個字。");
             return;
           }
 
-          // 3. 雙重確認
           if (
             !confirm(
               `確定要將暱稱改為「${newName}」嗎？\n⚠️ 注意：更改後 30 天內將無法再次修改！`
@@ -589,7 +856,6 @@
           document.getElementById("user-name").innerText = "🔄 雲端同步中...";
           document.getElementById("edit-name-btn").disabled = true;
 
-          // 4. 更新 users 資料庫 (記錄名字與冷卻時間)
           await userRef.set(
             {
               name: newName,
@@ -598,37 +864,30 @@
             { merge: true }
           );
 
-          // 5. ✨ Firebase 批次更新魔法 (加入防呆機制)
           const recordsSnapshot = await db
             .collection("game_records")
             .where("uid", "==", uid)
             .get();
-
-          // 只有當玩家有歷史戰績時，才執行批次更新！
           if (!recordsSnapshot.empty) {
             const batch = db.batch();
             recordsSnapshot.forEach((doc) => {
               batch.update(doc.ref, { name: newName });
             });
-            await batch.commit(); // 一口氣把所有戰績換上新名字
+            await batch.commit();
           }
 
-          // 6. 更新畫面與本地快取
           localStorage.setItem("mathGamePlayerName", newName);
           document.getElementById("user-name").innerText = newName;
           document.getElementById("edit-name-btn").disabled = false;
           alert("✅ 暱稱更改成功！您的新名字已同步至所有伺服器排行榜！");
         } catch (error) {
           console.error("改名詳細錯誤:", error);
-
-          // ✨ 把真實的錯誤原因顯示在螢幕上！
           let errorMsg = error.message;
           if (error.message.includes("Missing or insufficient permissions")) {
             errorMsg =
               "Firebase 資料庫權限不足！請檢查 Rules 設定是否允許 update 與 write。";
           }
           alert(`❌ 改名失敗：\n${errorMsg}`);
-
           document.getElementById("edit-name-btn").disabled = false;
           document.getElementById("user-name").innerText =
             localStorage.getItem("mathGamePlayerName") || user.displayName;
