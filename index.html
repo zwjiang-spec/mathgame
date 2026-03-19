@@ -70,7 +70,6 @@
         letter-spacing: normal;
       }
 
-      /* ✨ 模式切換頁籤樣式 (改為三個) */
       .tabs {
         display: flex;
         background: #e0e0e0;
@@ -83,7 +82,7 @@
         padding: 10px 5px;
         border: none;
         background: none;
-        font-size: 14px; /* 稍微縮小字體以容納三個按鈕 */
+        font-size: 14px;
         font-weight: bold;
         color: #7f8c8d;
         cursor: pointer;
@@ -94,7 +93,6 @@
         color: white;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
-      /* 地獄模式按鈕被選中時的特殊顏色 */
       #btn-hell.active {
         background: #c0392b;
         color: white;
@@ -170,7 +168,6 @@
       .btn-practice:hover {
         background-color: #d35400;
       }
-
       .btn-locked {
         background-color: #e0e0e0;
         color: #95a5a6;
@@ -196,7 +193,6 @@
         opacity: 0.7;
       }
 
-      /* ✨ 獨立的地獄卡片專屬樣式 */
       .btn-hell-theme {
         background: #1a1a1a !important;
         border: 2px solid #c0392b;
@@ -211,7 +207,6 @@
         box-shadow: 0 0 20px rgba(192, 57, 43, 0.8);
       }
 
-      /* ✨ 勾選框樣式 */
       .checkbox-group {
         text-align: left;
         background: #f8f9fa;
@@ -340,7 +335,6 @@
         line-height: 1.6;
       }
 
-      /* ✨ 意見回饋懸浮按鈕 */
       .feedback-btn {
         position: fixed;
         bottom: 15px;
@@ -364,7 +358,7 @@
         transform: scale(1.05) translateY(-2px);
         box-shadow: 0 6px 15px rgba(243, 156, 18, 0.6);
       }
-      /* ✨ 💀 領域展開：全網頁地獄主題變色特效 */
+
       body {
         transition: background-color 0.5s ease, background-image 0.5s ease;
       }
@@ -414,6 +408,7 @@
     <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
+    <script src="common.js"></script>
   </head>
   <body>
     <div id="version-btn" onclick="toggleUpdateLog()">v3.0.0 更新日誌</div>
@@ -701,7 +696,7 @@
         >
           <li>
             <b>📅 每日破綻加成：</b>每天會公告魔王的弱點單元，挑戰該單元將獲得
-            <b style="color: #f1c40f">1.5 倍</b> 真實傷害！<br /><span
+            <b style="color: #f1c40f">1.25 倍</b> 真實傷害！<br /><span
               style="font-size: 12px; color: #7f8c8d"
               >(一四:三角 / 二五:空間 / 三六:排列 / 週日:全單元加成)</span
             >
@@ -838,6 +833,7 @@
         </div>
       </div>
     </div>
+
     <div class="main-container">
       <h1><span class="teacher"></span>數學領域展開</h1>
 
@@ -874,7 +870,6 @@
         >
           ✏️ 更改暱稱
         </button>
-
         <button
           onclick="toggleLegend()"
           style="
@@ -937,20 +932,6 @@
               flex-shrink: 0;
             "
           ></span>
-          <span
-            id="user-avg-badge"
-            style="
-              display: none;
-              font-size: 11px;
-              color: #7f8c8d;
-              background: #e0e0e0;
-              padding: 2px 6px;
-              border-radius: 12px;
-              font-weight: bold;
-              white-space: nowrap;
-              flex-shrink: 0;
-            "
-          ></span>
         </div>
         <div
           style="display: flex; gap: 6px; align-items: center; flex-shrink: 0"
@@ -1001,39 +982,11 @@
           padding: 15px;
           margin-bottom: 20px;
           box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-          text-align: center;
           border: 2px solid #34495e;
           position: relative;
           overflow: hidden;
         "
       >
-        <button
-          onclick="toggleBossInfo()"
-          style="
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #bdc3c7;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 10;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: 0.2s;
-          "
-          onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='#fff'"
-          onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#bdc3c7'"
-          title="點擊查看討伐說明"
-        >
-          ?
-        </button>
         <div
           style="
             position: absolute;
@@ -1050,19 +1003,77 @@
             pointer-events: none;
           "
         ></div>
-        <h3
-          id="boss-title"
+
+        <div
           style="
-            margin: 0 0 10px 0;
-            color: #e74c3c;
-            font-size: 18px;
-            text-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
             position: relative;
             z-index: 1;
           "
         >
-          💀 世界 Boss：數學死神
-        </h3>
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 6px;
+              text-align: left;
+            "
+          >
+            <h3
+              id="boss-title"
+              style="
+                margin: 0;
+                color: #e74c3c;
+                font-size: 18px;
+                text-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+              "
+            >
+              世界 Boss Lv.1 : 數學死神
+            </h3>
+            <span
+              id="boss-bonus-badge"
+              style="
+                font-size: 11.5px;
+                color: #f1c40f;
+                border: 1px solid #f1c40f;
+                padding: 3px 8px;
+                border-radius: 12px;
+                background: rgba(241, 196, 15, 0.1);
+              "
+              >讀取中...</span
+            >
+          </div>
+          <button
+            onclick="toggleBossInfo()"
+            style="
+              background: rgba(255, 255, 255, 0.2);
+              color: #fff;
+              border: 1px solid rgba(255, 255, 255, 0.4);
+              width: 30px;
+              height: 30px;
+              border-radius: 50%;
+              font-size: 16px;
+              font-weight: bold;
+              cursor: pointer;
+              flex-shrink: 0;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+              transition: 0.2s;
+            "
+            onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+            onmouseout="this.style.background='rgba(255,255,255,0.2)'"
+            title="點擊查看討伐說明"
+          >
+            ?
+          </button>
+        </div>
+
         <div
           style="
             background: #000;
@@ -1106,18 +1117,19 @@
             血量偵測中...
           </div>
         </div>
+
         <div
           style="
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 8px;
+            margin-top: 10px;
             position: relative;
             z-index: 1;
           "
         >
-          <div style="color: #95a5a6; font-size: 11px">
-            ⚔️ 所有玩家總傷害累積：<span
+          <div style="color: #95a5a6; font-size: 11.5px; text-align: left">
+            ⚔️ 累積傷害：<span
               id="boss-damage-text"
               style="color: #f39c12; font-weight: bold; font-size: 14px"
               >0</span
@@ -1129,9 +1141,9 @@
               background: rgba(243, 156, 18, 0.15);
               color: #f39c12;
               border: 1px solid rgba(243, 156, 18, 0.5);
-              padding: 3px 10px;
+              padding: 4px 12px;
               border-radius: 12px;
-              font-size: 11px;
+              font-size: 11.5px;
               font-weight: bold;
               cursor: pointer;
               transition: 0.2s;
@@ -1364,55 +1376,9 @@
     </div>
 
     <script>
-      // ==========================================
-      // 🚀 1. Firebase 初始化 (必須放在最前面！)
-      // ==========================================
-      const firebaseConfig = {
-        apiKey: "AIzaSyC7ed0il_ScCdHeWOHepj56ycjRXYt_Mf4",
-        authDomain: "mathgame-6ab85.firebaseapp.com",
-        projectId: "mathgame-6ab85",
-        storageBucket: "mathgame-6ab85.firebasestorage.app",
-        messagingSenderId: "790458098592",
-        appId: "1:790458098592:web:298e23dbb8ba82a3ee3ac5",
-      };
-
-      firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const provider = new firebase.auth.GoogleAuthProvider();
-      const db = firebase.firestore(); // 先準備好 db，下面才能用！
-
-      // ==========================================
-      // 🏆 2. 新舊融合！Firebase + CSV 即時雲端排行榜引擎
-      // ==========================================
-      const TRIG_CSV =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
-      const SPACE_CSV =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
-      const PERM_CSV =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwQuA4SuPuNdHk6sUV9yyOU9g6z7uKNqIPsQw0Rj8u8g6-2WTLRMW-oeFhLRbiw2v7Oiz8v2g1XwNP/pub?output=csv";
-
-      function parseCSV(text) {
-        let p = "",
-          row = [""],
-          ret = [row],
-          i = 0,
-          r = 0,
-          s = !0,
-          l;
-        for (l of text) {
-          if ('"' === l) {
-            if (s && l === p) row[i] += l;
-            s = !s;
-          } else if ("," === l && s) l = row[++i] = "";
-          else if ("\n" === l && s) {
-            if ("\r" === p) row[i] = row[i].slice(0, -1);
-            row = ret[++r] = [(l = "")];
-            i = 0;
-          } else row[i] += l;
-          p = l;
-        }
-        return ret;
-      }
+      const db = firebase.firestore();
 
       async function loadTopScore(
         unit,
@@ -1424,8 +1390,6 @@
         const el = document.getElementById(elementId);
         try {
           let allRecords = [];
-
-          // 去雲端撈新成績
           const snapshot = await db
             .collection("game_records")
             .where("unit", "==", unit)
@@ -1433,7 +1397,6 @@
             .get();
           snapshot.forEach((doc) => allRecords.push(doc.data()));
 
-          // 去 CSV 撈老前輩的成績
           if (csvUrl) {
             try {
               let res = await fetch(csvUrl + "&t=" + new Date().getTime(), {
@@ -1460,12 +1423,9 @@
             }
           }
 
-          // ==========================================
-          // ✨ 1. 去除重複玩家，只保留個人的最高分！
-          // ==========================================
+          // 1. 去除重複玩家，保留最高分
           let uniqueMap = new Map();
           allRecords.forEach((r) => {
-            // 如果還沒記錄過這個名字，或是這次分數更高，就更新
             if (
               !uniqueMap.has(r.name) ||
               r.score > uniqueMap.get(r.name).score
@@ -1473,14 +1433,11 @@
               uniqueMap.set(r.name, r);
             }
           });
-          // 將過濾後的結果由高到低排序
           let sortedUniqueRanks = Array.from(uniqueMap.values()).sort(
             (a, b) => b.score - a.score
           );
 
-          // ==========================================
-          // ✨ 2. 抓出玩家自己的最高紀錄與名次！
-          // ==========================================
+          // 2. 抓出玩家自己的最高紀錄與名次
           const myName = localStorage.getItem("mathGamePlayerName");
           let myBestScore = null;
           let myRank = null;
@@ -1495,9 +1452,7 @@
             }
           }
 
-          // ==========================================
-          // ✨ 3. 畫出排行榜 (大廳卡片專用)
-          // ==========================================
+          // 3. 畫出大廳專屬排行榜 UI
           let topList = sortedUniqueRanks.slice(0, limit);
           let html = "";
 
@@ -1520,104 +1475,77 @@
             html += `<div style="margin-top: 5px; font-size: 12px; color: rgba(255,255,255,0.6);">👑 尚無挑戰者</div>`;
           }
 
-          // ==========================================
-          // ✨ 4. 將個人紀錄掛在排行榜下方
-          // ==========================================
+          // 4. 將個人紀錄掛在排行榜下方
           if (myName && myName !== "Guest" && myName !== "---") {
             if (myRank !== null) {
-              let myRankColor = myRank <= limit ? "#2ecc71" : "#f1c40f"; // 有上榜用綠色，沒上榜用金黃色
+              let myRankColor = myRank <= limit ? "#2ecc71" : "#f1c40f";
               html += `
                 <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.3); font-size: 11.5px; color: rgba(255,255,255,0.9);">
                   🙋‍♂️ 我的最高: <span style="color: #f1c40f; font-weight: bold;">${myBestScore}</span> 
                   <span style="opacity:0.8;">(第 <span style="color: ${myRankColor}; font-weight: bold;">${myRank}</span> 名)</span>
                 </div>`;
             } else {
-              html += `
-                <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.3); font-size: 11px; color: rgba(255,255,255,0.5);">
-                  🙋‍♂️ 尚未留下挑戰紀錄
-                </div>`;
+              html += `<div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.3); font-size: 11px; color: rgba(255,255,255,0.5);">🙋‍♂️ 尚未留下挑戰紀錄</div>`;
             }
           }
-
           el.innerHTML = html;
         } catch (e) {
           el.innerHTML = `<div style="margin-top: 5px; font-size: 12px; color: #e74c3c;">👑 讀取失敗，請重新整理</div>`;
         }
       }
 
-      // ==========================================
-      // 🚀 3. 其他大廳 UI 功能
-      // ==========================================
-      // 開關更新日誌視窗
       function toggleUpdateLog() {
         const modal = document.getElementById("update-modal");
         modal.classList.contains("show")
           ? modal.classList.remove("show")
           : modal.classList.add("show");
       }
-
-      // ✨ 開關階級說明視窗
       function toggleLegend() {
         const modal = document.getElementById("legend-modal");
-        if (modal.style.opacity === "1") {
-          modal.style.opacity = "0";
-          modal.style.pointerEvents = "none";
-        } else {
-          modal.style.opacity = "1";
-          modal.style.pointerEvents = "auto";
-        }
+        modal.style.opacity === "1"
+          ? ((modal.style.opacity = "0"), (modal.style.pointerEvents = "none"))
+          : ((modal.style.opacity = "1"), (modal.style.pointerEvents = "auto"));
       }
-      // ✨ 開關魔王討伐說明視窗
       function toggleBossInfo() {
         const modal = document.getElementById("boss-info-modal");
-        if (modal.style.opacity === "1") {
-          modal.style.opacity = "0";
-          modal.style.pointerEvents = "none";
-        } else {
-          modal.style.opacity = "1";
-          modal.style.pointerEvents = "auto";
-        }
+        modal.style.opacity === "1"
+          ? ((modal.style.opacity = "0"), (modal.style.pointerEvents = "none"))
+          : ((modal.style.opacity = "1"), (modal.style.pointerEvents = "auto"));
       }
       function toggleBossRank() {
         const modal = document.getElementById("boss-rank-modal");
-        if (modal.style.opacity === "1") {
-          modal.style.opacity = "0";
-          modal.style.pointerEvents = "none";
-        } else {
-          modal.style.opacity = "1";
-          modal.style.pointerEvents = "auto";
-        }
+        modal.style.opacity === "1"
+          ? ((modal.style.opacity = "0"), (modal.style.pointerEvents = "none"))
+          : ((modal.style.opacity = "1"), (modal.style.pointerEvents = "auto"));
       }
-      // ✨ 世界 Boss 2.0 終極引擎 (時間軸推演 + 獨立排行 + 永久稱號)
+
+      // ✨ 世界 Boss 2.0 終極引擎
       function loadBossData() {
         const hpText = document.getElementById("boss-hp-text");
         const hpBar = document.getElementById("boss-hp-bar");
         const dmgText = document.getElementById("boss-damage-text");
         const bossTitle = document.getElementById("boss-title");
+        const badgeEl = document.getElementById("boss-bonus-badge");
 
         db.collection("game_records")
           .where("score", ">", 0)
           .get()
           .then((snapshot) => {
             let allRecords = [];
-
-            // 1. 將所有紀錄提取出來，並給予時間戳記防呆
             snapshot.forEach((doc) => {
               let d = doc.data();
               d._ts = d.timestamp ? d.timestamp.toMillis() : Date.now();
               allRecords.push(d);
             });
 
-            // 2. 按照時間先後順序排序 (時間軸推演的關鍵！)
             allRecords.sort((a, b) => a._ts - b._ts);
 
             let level = 1;
             let levelMaxHp = 500000;
             let currentLevelTotalDamage = 0;
-            let currentLevelPlayerMap = {}; // 只記錄「當前魔王」的貢獻
-            let mvpHistory = {}; // 記錄玩家獲得過的所有 MVP 稱號 { uid: { title, level } }
+            let currentLevelPlayerMap = {};
+            let mvpHistory = {};
 
-            // 魔王名字與對應的專屬 MVP 稱號
             const bossDataList = [
               { name: "數學死神", mvpTitle: "🗡️ 死神終結者" },
               { name: "混沌魔將", mvpTitle: "⚔️ 混沌斬裂者" },
@@ -1628,7 +1556,6 @@
               { name: "無盡惡夢", mvpTitle: "👑 傳說中的弒神者" },
             ];
 
-            // 3. 逐筆推演歷史傷害
             for (let i = 0; i < allRecords.length; i++) {
               let r = allRecords[i];
               let s = parseInt(r.score) || 0;
@@ -1637,7 +1564,7 @@
               let uid = r.uid;
               let name = r.name || "神秘勇者";
 
-              // 計算每日加成 (依據玩家當時遊玩的日期)
+              // 🌟 核心：每日 1.25 倍傷害加成
               let dayOfWeek = new Date(r._ts).getDay();
               let isBonus = false;
               if ((dayOfWeek === 1 || dayOfWeek === 4) && unit === "trig")
@@ -1649,30 +1576,26 @@
               if (dayOfWeek === 0) isBonus = true;
 
               let dmg = s;
-              if (isBonus) dmg = Math.floor(dmg * 1.5);
+              if (isBonus) dmg = Math.floor(dmg * 1.25);
               if (mode === "hell") dmg *= 2;
 
-              // 處理傷害扣減與魔王轉生
               while (dmg > 0) {
                 let hpLeft = levelMaxHp - currentLevelTotalDamage;
                 if (dmg >= hpLeft) {
-                  // 💥 當前魔王死亡！
                   if (uid) {
                     if (!currentLevelPlayerMap[uid])
                       currentLevelPlayerMap[uid] = { uid, name, damage: 0 };
                     currentLevelPlayerMap[uid].damage += hpLeft;
                   }
                   currentLevelTotalDamage += hpLeft;
-                  dmg -= hpLeft; // 溢出的傷害保留給下一隻魔王
+                  dmg -= hpLeft;
 
-                  // 結算本輪 MVP 並發放永久稱號
                   let topPlayers = Object.values(currentLevelPlayerMap).sort(
                     (a, b) => b.damage - a.damage
                   );
                   if (topPlayers.length > 0) {
                     let mvp = topPlayers[0];
                     let bossIdx = Math.min(level - 1, bossDataList.length - 1);
-                    // 記錄該玩家獲得的稱號 (如果他殺了多隻，保留最高階的)
                     if (
                       !mvpHistory[mvp.uid] ||
                       mvpHistory[mvp.uid].level < level
@@ -1684,44 +1607,39 @@
                     }
                   }
 
-                  // 🆙 魔王轉生重置
                   level++;
-                  levelMaxHp = 500000 + (level - 1) * 200000; // 每級多 20 萬血
+                  levelMaxHp = 500000 + (level - 1) * 200000;
                   currentLevelTotalDamage = 0;
-                  currentLevelPlayerMap = {}; // ✨ 排行榜清空！
+                  currentLevelPlayerMap = {};
                 } else {
-                  // 🔪 魔王還沒死，扣血
                   if (uid) {
                     if (!currentLevelPlayerMap[uid])
                       currentLevelPlayerMap[uid] = { uid, name, damage: 0 };
                     currentLevelPlayerMap[uid].damage += dmg;
                   }
                   currentLevelTotalDamage += dmg;
-                  dmg = 0; // 傷害用完
+                  dmg = 0;
                 }
               }
             }
 
-            // ==========================================
-            // 🌟 結算完畢！開始渲染當前魔王 UI
-            // ==========================================
             let currentHP = levelMaxHp - currentLevelTotalDamage;
             let hpPercent = (currentHP / levelMaxHp) * 100;
             let bossIdx = Math.min(level - 1, bossDataList.length - 1);
             let currentBossName = bossDataList[bossIdx].name;
 
-            // 顯示今天的加成公告
             const todayDay = new Date().getDay();
             let bonusStr = "";
             if (todayDay === 1 || todayDay === 4)
-              bonusStr = "📐 今日弱點：三角比 (傷害1.5倍)";
+              bonusStr = "📐 今日弱點：三角比 (傷害 1.25 倍)";
             else if (todayDay === 2 || todayDay === 5)
-              bonusStr = "🚀 今日弱點：空間 (傷害1.5倍)";
+              bonusStr = "🚀 今日弱點：空間坐標 (傷害 1.25 倍)";
             else if (todayDay === 3 || todayDay === 6)
-              bonusStr = "🎲 今日弱點：排列 (傷害1.5倍)";
-            else bonusStr = "🔥 週末狂歡：全單元傷害 1.5 倍！";
+              bonusStr = "🎲 今日弱點：排列組合 (傷害 1.25 倍)";
+            else bonusStr = "🔥 週末狂歡：全單元傷害 1.25 倍！";
 
-            bossTitle.innerHTML = `Lv.${level} ${currentBossName} <span style="display:inline-block; font-size:11px; color:#f1c40f; margin-left:8px; border:1px solid #f1c40f; padding:2px 6px; border-radius:10px; vertical-align:middle;">${bonusStr}</span>`;
+            bossTitle.innerText = `世界 Boss Lv.${level} : ${currentBossName}`;
+            badgeEl.innerText = bonusStr;
             hpText.innerText = `HP: ${currentHP.toLocaleString()} / ${levelMaxHp.toLocaleString()}`;
 
             let currentDmgDisplay = 0;
@@ -1732,14 +1650,10 @@
                 clearInterval(dmgInterval);
               }
               dmgText.innerText = currentDmgDisplay.toLocaleString();
-              document.getElementById(
-                "boss-damage-text"
-              ).parentElement.innerHTML = `⚔️ 本輪討伐累積傷害：<span id="boss-damage-text" style="color: #f39c12; font-weight: bold; font-size: 14px">${currentDmgDisplay.toLocaleString()}</span>`;
             }, 50);
 
             setTimeout(() => (hpBar.style.width = hpPercent + "%"), 300);
 
-            // --- 🏆 渲染「當前魔王」專屬排行榜 UI ---
             let currentTopPlayers = Object.values(currentLevelPlayerMap).sort(
               (a, b) => b.damage - a.damage
             );
@@ -1789,9 +1703,6 @@
             document.getElementById("boss-rank-list").innerHTML =
               rankHtml + myRankHtml;
 
-            // ==========================================
-            // 🎉 發放歷史永久稱號！(覆蓋原本的稱號)
-            // ==========================================
             if (currentUid && mvpHistory[currentUid]) {
               setTimeout(() => {
                 const titleBadge = document.getElementById("user-title-badge");
@@ -1803,7 +1714,7 @@
                     "0 0 15px rgba(192, 57, 43, 0.8)";
                   titleBadge.style.display = "inline-block";
                 }
-              }, 800); // 延遲確保蓋過 Firebase 原始的評分稱號
+              }, 800);
             }
           })
           .catch((err) => {
@@ -1811,6 +1722,7 @@
             hpText.innerText = "💀 靈壓干擾，血量讀取失敗";
           });
       }
+
       function switchTab(tabId) {
         ["ranked", "hell", "practice"].forEach((id) => {
           document.getElementById("btn-" + id).classList.remove("active");
@@ -1818,12 +1730,8 @@
         });
         document.getElementById("btn-" + tabId).classList.add("active");
         document.getElementById("content-" + tabId).classList.add("active");
-
-        if (tabId === "hell") {
-          document.body.classList.add("hell-theme");
-        } else {
-          document.body.classList.remove("hell-theme");
-        }
+        if (tabId === "hell") document.body.classList.add("hell-theme");
+        else document.body.classList.remove("hell-theme");
       }
 
       function startPractice() {
@@ -1842,7 +1750,6 @@
         window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
       }
 
-      // 監聽玩家的登入狀態與專屬暱稱
       auth.onAuthStateChanged(async (user) => {
         const nameDisplay = document.getElementById("user-name-display");
         const titleBadge = document.getElementById("user-title-badge");
@@ -1850,14 +1757,12 @@
         const renameBtn = document.getElementById("lobby-rename-btn");
 
         if (user) {
-          // --- 登入狀態 ---
           document.getElementById("profile-btn").style.display = "block";
           authBtn.innerText = "登出";
           authBtn.style.background = "#e74c3c";
           authBtn.style.boxShadow = "0 2px 5px rgba(231, 76, 60, 0.3)";
-          renameBtn.style.display = "block"; // 顯示改名按鈕
+          renameBtn.style.display = "block";
 
-          // ✨ 優先去資料庫查他有沒有自訂暱稱
           let finalName = user.displayName;
           try {
             const userDoc = await db.collection("users").doc(user.uid).get();
@@ -1868,12 +1773,10 @@
             console.error("讀取自訂名字失敗", error);
           }
 
-          // 更新大廳顯示的名字與快取
           nameDisplay.innerHTML = `<img src="${user.photoURL}" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-right:8px;"> ${finalName}`;
           localStorage.setItem("mathGamePlayerName", finalName);
           localStorage.setItem("mathGamePlayerUid", user.uid);
 
-          // ✨ 核心稱號計算
           db.collection("game_records")
             .where("uid", "==", user.uid)
             .get()
@@ -1909,9 +1812,8 @@
               }
             });
         } else {
-          // --- 登出狀態 ---
           document.getElementById("profile-btn").style.display = "none";
-          renameBtn.style.display = "none"; // 隱藏改名按鈕
+          renameBtn.style.display = "none";
           nameDisplay.innerHTML = "👤 尚未登入";
           titleBadge.style.display = "none";
           authBtn.innerText = "Google 登入";
@@ -1922,6 +1824,7 @@
           localStorage.removeItem("mathGamePlayerUid");
         }
       });
+
       function toggleLogin() {
         if (auth.currentUser) {
           if (confirm("確定要登出嗎？")) auth.signOut();
@@ -1931,7 +1834,7 @@
             .catch((error) => alert("登入失敗：" + error.message));
         }
       }
-      // ✨ 大廳專屬：30天冷卻期改名與戰績同步引擎
+
       async function renameUser() {
         const user = auth.currentUser;
         if (!user) {
@@ -1944,30 +1847,28 @@
           const userRef = db.collection("users").doc(uid);
           const userDoc = await userRef.get();
 
-          // 1. 檢查 30 天冷卻期
           if (userDoc.exists && userDoc.data().lastRenameDate) {
             const lastDate = userDoc.data().lastRenameDate.toMillis();
             const now = Date.now();
             const daysPassed = (now - lastDate) / (1000 * 60 * 60 * 24);
-
             if (daysPassed < 30) {
-              const daysLeft = Math.ceil(30 - daysPassed);
-              alert(`⏳ 魔法冷卻中！距離下次可改名還有 ${daysLeft} 天。`);
+              alert(
+                `⏳ 魔法冷卻中！距離下次可改名還有 ${Math.ceil(
+                  30 - daysPassed
+                )} 天。`
+              );
               return;
             }
           }
 
-          // 2. 詢問新暱稱
           let newName = prompt("請輸入您的專屬遊戲暱稱 (最多 10 個字)：");
           if (newName === null) return;
-
           newName = newName.trim();
           if (newName.length === 0 || newName.length > 10) {
             alert("⚠️ 暱稱格式不符！請輸入 1~10 個字。");
             return;
           }
 
-          // 3. 雙重確認
           if (
             !confirm(
               `確定要將暱稱改為「${newName}」嗎？\n⚠️ 注意：更改後 30 天內將無法再次修改！`
@@ -1979,7 +1880,6 @@
           btn.disabled = true;
           btn.innerText = "🔄 同步中...";
 
-          // 4. 更新 users 資料庫 (記錄名字與冷卻時間)
           await userRef.set(
             {
               name: newName,
@@ -1988,44 +1888,48 @@
             { merge: true }
           );
 
-          // 5. Firebase 批次更新魔法 (改掉所有歷史戰績的名字)
           const recordsSnapshot = await db
             .collection("game_records")
             .where("uid", "==", uid)
             .get();
           if (!recordsSnapshot.empty) {
             const batch = db.batch();
-            recordsSnapshot.forEach((doc) => {
-              batch.update(doc.ref, { name: newName });
-            });
+            recordsSnapshot.forEach((doc) =>
+              batch.update(doc.ref, { name: newName })
+            );
             await batch.commit();
           }
 
-          // 6. 成功後直接刷新網頁，讓所有排行榜瞬間抓取新名字！
           alert("✅ 暱稱更改成功！您的新名字已同步至所有伺服器排行榜！");
           window.location.reload();
         } catch (error) {
           console.error("改名詳細錯誤:", error);
           let errorMsg = error.message;
-          if (error.message.includes("Missing or insufficient permissions")) {
+          if (error.message.includes("Missing or insufficient permissions"))
             errorMsg = "Firebase 資料庫權限不足！請檢查 Rules。";
-          }
           alert(`❌ 改名失敗：\n${errorMsg}`);
-
           const btn = document.getElementById("lobby-rename-btn");
           btn.disabled = false;
           btn.innerText = "✏️ 更改暱稱";
         }
       }
-      // 網頁載入時啟動
+      const TRIG_CSV =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
+      const SPACE_CSV =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
+      const PERM_CSV =
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwQuA4SuPuNdHk6sUV9yyOU9g6z7uKNqIPsQw0Rj8u8g6-2WTLRMW-oeFhLRbiw2v7Oiz8v2g1XwNP/pub?output=csv";
       window.onload = () => {
+        // 在這裡把 CSV 變數傳進去，讓大廳大腦也能讀取舊紀錄！
         loadTopScore("trig", "normal", "top-trig", 3, TRIG_CSV);
         loadTopScore("space", "normal", "top-space", 3, SPACE_CSV);
         loadTopScore("perm", "normal", "top-perm", 3, PERM_CSV);
+
+        // 地獄模式沒有舊紀錄，所以不需要傳 CSV
         loadTopScore("trig", "hell", "top-hell-trig", 1);
         loadTopScore("space", "hell", "top-hell-space", 1);
         loadTopScore("perm", "hell", "top-hell-perm", 1);
-        // ✨ 召喚大魔王血條！
+
         loadBossData();
       };
     </script>
