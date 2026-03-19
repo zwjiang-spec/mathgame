@@ -839,14 +839,38 @@
 
       <div
         style="
-          text-align: right;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           margin-top: -15px;
           margin-bottom: 10px;
-          padding-right: 5px;
+          padding: 0 5px;
           position: relative;
           z-index: 5;
         "
       >
+        <button
+          id="lobby-rename-btn"
+          onclick="renameUser()"
+          style="
+            display: none;
+            background: #f39c12;
+            color: white;
+            border: 1px solid #e67e22;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(243, 156, 18, 0.3);
+            transition: 0.2s;
+          "
+          onmouseover="this.style.background='#e67e22'"
+          onmouseout="this.style.background='#f39c12'"
+        >
+          ✏️ 更改暱稱
+        </button>
+
         <button
           onclick="toggleLegend()"
           style="
@@ -1645,24 +1669,38 @@
         window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
       }
 
-      // 監聽玩家的登入狀態
-      auth.onAuthStateChanged((user) => {
+      // 監聽玩家的登入狀態與專屬暱稱
+      auth.onAuthStateChanged(async (user) => {
         const nameDisplay = document.getElementById("user-name-display");
-        const titleBadge = document.getElementById("user-title-badge"); // 抓取標籤
+        const titleBadge = document.getElementById("user-title-badge");
         const authBtn = document.getElementById("auth-btn");
+        const renameBtn = document.getElementById("lobby-rename-btn");
 
         if (user) {
           // --- 登入狀態 ---
           document.getElementById("profile-btn").style.display = "block";
-          nameDisplay.innerHTML = `<img src="${user.photoURL}" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-right:8px;"> ${user.displayName}`;
           authBtn.innerText = "登出";
           authBtn.style.background = "#e74c3c";
           authBtn.style.boxShadow = "0 2px 5px rgba(231, 76, 60, 0.3)";
+          renameBtn.style.display = "block"; // 顯示改名按鈕
 
-          localStorage.setItem("mathGamePlayerName", user.displayName);
+          // ✨ 優先去資料庫查他有沒有自訂暱稱
+          let finalName = user.displayName;
+          try {
+            const userDoc = await db.collection("users").doc(user.uid).get();
+            if (userDoc.exists && userDoc.data().name) {
+              finalName = userDoc.data().name;
+            }
+          } catch (error) {
+            console.error("讀取自訂名字失敗", error);
+          }
+
+          // 更新大廳顯示的名字與快取
+          nameDisplay.innerHTML = `<img src="${user.photoURL}" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-right:8px;"> ${finalName}`;
+          localStorage.setItem("mathGamePlayerName", finalName);
           localStorage.setItem("mathGamePlayerUid", user.uid);
 
-          // ✨ 核心稱號計算 (必須放在 if(user) 裡面才不會報錯)
+          // ✨ 核心稱號計算
           db.collection("game_records")
             .where("uid", "==", user.uid)
             .get()
@@ -1673,13 +1711,12 @@
                 if (s > maxScore) maxScore = s;
               });
 
-              // 稱號等級定義
               const TITLES = [
                 { min: 0, name: "初心者", color: "#95a5a6" },
                 { min: 300, name: "狙擊手", color: "#3498db" },
                 { min: 600, name: "預言家", color: "#9b59b6" },
                 { min: 1000, name: "煉金師", color: "#e67e22" },
-                { min: 2000, name: "戰神", color: "#df22e6" },
+                { min: 1500, name: "戰神", color: "#df22e6" },
                 { min: 2000, name: "🌌 數學至尊", color: "#c0392b" },
               ];
 
@@ -1691,12 +1728,9 @@
                 }
               }
 
-              // ✨ 渲染稱號到標籤上
               titleBadge.style.display = "inline-block";
               titleBadge.innerText = myTitle.name;
               titleBadge.style.background = myTitle.color;
-
-              // 至尊專屬閃爍特效
               if (maxScore >= 2000) {
                 titleBadge.style.boxShadow = "0 0 10px " + myTitle.color;
               }
@@ -1704,8 +1738,9 @@
         } else {
           // --- 登出狀態 ---
           document.getElementById("profile-btn").style.display = "none";
+          renameBtn.style.display = "none"; // 隱藏改名按鈕
           nameDisplay.innerHTML = "👤 尚未登入";
-          titleBadge.style.display = "none"; // 登出就隱藏稱號
+          titleBadge.style.display = "none";
           authBtn.innerText = "Google 登入";
           authBtn.style.background = "#3498db";
           authBtn.style.boxShadow = "0 2px 5px rgba(52, 152, 219, 0.3)";
@@ -1723,7 +1758,92 @@
             .catch((error) => alert("登入失敗：" + error.message));
         }
       }
+      // ✨ 大廳專屬：30天冷卻期改名與戰績同步引擎
+      async function renameUser() {
+        const user = auth.currentUser;
+        if (!user) {
+          alert("無法取得登入狀態，請重新整理網頁！");
+          return;
+        }
+        const uid = user.uid;
 
+        try {
+          const userRef = db.collection("users").doc(uid);
+          const userDoc = await userRef.get();
+
+          // 1. 檢查 30 天冷卻期
+          if (userDoc.exists && userDoc.data().lastRenameDate) {
+            const lastDate = userDoc.data().lastRenameDate.toMillis();
+            const now = Date.now();
+            const daysPassed = (now - lastDate) / (1000 * 60 * 60 * 24);
+
+            if (daysPassed < 30) {
+              const daysLeft = Math.ceil(30 - daysPassed);
+              alert(`⏳ 魔法冷卻中！距離下次可改名還有 ${daysLeft} 天。`);
+              return;
+            }
+          }
+
+          // 2. 詢問新暱稱
+          let newName = prompt("請輸入您的專屬遊戲暱稱 (最多 10 個字)：");
+          if (newName === null) return;
+
+          newName = newName.trim();
+          if (newName.length === 0 || newName.length > 10) {
+            alert("⚠️ 暱稱格式不符！請輸入 1~10 個字。");
+            return;
+          }
+
+          // 3. 雙重確認
+          if (
+            !confirm(
+              `確定要將暱稱改為「${newName}」嗎？\n⚠️ 注意：更改後 30 天內將無法再次修改！`
+            )
+          )
+            return;
+
+          const btn = document.getElementById("lobby-rename-btn");
+          btn.disabled = true;
+          btn.innerText = "🔄 同步中...";
+
+          // 4. 更新 users 資料庫 (記錄名字與冷卻時間)
+          await userRef.set(
+            {
+              name: newName,
+              lastRenameDate: firebase.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+
+          // 5. Firebase 批次更新魔法 (改掉所有歷史戰績的名字)
+          const recordsSnapshot = await db
+            .collection("game_records")
+            .where("uid", "==", uid)
+            .get();
+          if (!recordsSnapshot.empty) {
+            const batch = db.batch();
+            recordsSnapshot.forEach((doc) => {
+              batch.update(doc.ref, { name: newName });
+            });
+            await batch.commit();
+          }
+
+          // 6. 成功後直接刷新網頁，讓所有排行榜瞬間抓取新名字！
+          alert("✅ 暱稱更改成功！您的新名字已同步至所有伺服器排行榜！");
+          window.location.reload();
+        } catch (error) {
+          console.error("改名詳細錯誤:", error);
+          let errorMsg = error.message;
+          if (error.message.includes("Missing or insufficient permissions")) {
+            errorMsg = "Firebase 資料庫權限不足！請檢查 Rules。";
+          }
+          alert(`❌ 改名失敗：\n${errorMsg}`);
+
+          const btn = document.getElementById("lobby-rename-btn");
+          btn.disabled = false;
+          btn.innerText = "✏️ 更改暱稱";
+        }
+      }
       // 網頁載入時啟動
       window.onload = () => {
         loadTopScore("trig", "normal", "top-trig", 3, TRIG_CSV);
