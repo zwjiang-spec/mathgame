@@ -1603,7 +1603,43 @@
             if (rankHtml === "")
               rankHtml =
                 '<div style="color:#7f8c8d; text-align:center;">尚無人造成傷害</div>';
-            document.getElementById("boss-rank-list").innerHTML = rankHtml;
+
+            // ✨ 新增魔法：尋找「我」的專屬貢獻與名次
+            const currentUid = localStorage.getItem("mathGamePlayerUid");
+            let myRankHtml = "";
+
+            if (currentUid) {
+              let myData = playerDamageMap[currentUid];
+              let myDamage = myData ? myData.damage : 0;
+              let myName =
+                localStorage.getItem("mathGamePlayerName") || "神秘勇者";
+              let myRank = myData
+                ? topPlayers.findIndex((p) => p.uid === currentUid) + 1
+                : "-";
+
+              myRankHtml = `
+                <div style="margin-top: 12px; padding-top: 10px; border-top: 2px solid #34495e;">
+                  <div style="color: #bdc3c7; font-size: 12px; margin-bottom: 6px;">👇 我的討伐戰況</div>
+                  <div style="display:flex; justify-content: space-between; align-items: center; background: rgba(243, 156, 18, 0.15); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(243, 156, 18, 0.4);">
+                    <span style="font-weight:bold; color:#fff; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                      <span style="color:#f1c40f; margin-right:4px;">#${myRank}</span> ${myName}
+                    </span>
+                    <span style="color: #f39c12; font-weight: bold; font-size: 13px;">⚔️ ${myDamage.toLocaleString()}</span>
+                  </div>
+                </div>
+              `;
+            } else {
+              // 沒登入的訪客看到的畫面
+              myRankHtml = `
+                <div style="margin-top: 12px; padding-top: 10px; border-top: 2px solid #34495e; text-align:center; color:#95a5a6; font-size:12px;">
+                  ⚠️ 請先登入以查看您的專屬貢獻度
+                </div>
+              `;
+            }
+
+            // 把 Top 5 跟我的戰況組合在一起，丟到畫面上
+            document.getElementById("boss-rank-list").innerHTML =
+              rankHtml + myRankHtml;
 
             // --- 🎉 隱藏彩蛋：魔王被擊殺 & MVP 稱號動態覆蓋 ---
             if (currentHP === 0 && topPlayers.length > 0) {
@@ -1785,7 +1821,7 @@
           }
 
           // 2. 詢問新暱稱
-          let newName = prompt("請輸入您的專屬遊戲暱稱 (最多 10 個字，30 天內無法再更改！)：");
+          let newName = prompt("請輸入您的專屬遊戲暱稱 (最多 10 個字)：");
           if (newName === null) return;
 
           newName = newName.trim();
