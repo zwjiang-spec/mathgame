@@ -1462,15 +1462,63 @@
             let medals = ["🥇", "🥈", "🥉"];
             let colors = ["#ffd700", "#e0e0e0", "#ffb07c"];
 
-            topList.forEach((player, index) => {
+            const TITLES = [
+              { min: 0, name: "初心者", color: "#95a5a6" },
+              { min: 300, name: "狙擊手", color: "#3498db" },
+              { min: 600, name: "預言家", color: "#9b59b6" },
+              { min: 1000, name: "煉金師", color: "#e67e22" },
+              { min: 1500, name: "戰神", color: "#df22e6" },
+              { min: 2000, name: "至尊", color: "#c0392b" },
+            ];
+
+            // 為了不卡頓，我們先印出基本名字，然後非同步去查真實稱號
+            for (let index = 0; index < topList.length; index++) {
+              let player = topList[index];
               let icon = limit === 1 ? "👑" : medals[index];
               let textColor = limit === 1 ? "#ff4d4d" : colors[index];
+
+              // 預設稱號 (用這局的分數當保底，照顧舊版 CSV 沒帳號的玩家)
+              let globalMax = player.score;
+
+              // ✨ 帳號綁定制核心：如果有 uid，就去 users 表查他真正的歷史最高分！
+              if (player.uid) {
+                try {
+                  let userDoc = await db
+                    .collection("users")
+                    .doc(player.uid)
+                    .get();
+                  if (
+                    userDoc.exists &&
+                    userDoc.data().globalMaxScore !== undefined
+                  ) {
+                    globalMax = Math.max(
+                      globalMax,
+                      userDoc.data().globalMaxScore
+                    );
+                  }
+                } catch (e) {
+                  console.warn("讀取稱號失敗", e);
+                }
+              }
+
+              // 找尋對應稱號
+              let pTitle = TITLES[0];
+              for (let i = TITLES.length - 1; i >= 0; i--) {
+                if (globalMax >= TITLES[i].min) {
+                  pTitle = TITLES[i];
+                  break;
+                }
+              }
+
+              let titleBadge = `<span style="background: ${pTitle.color}; color: white; font-size: 9px; padding: 2px 5px; border-radius: 6px; font-weight: bold; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.3); margin-right: 2px;">${pTitle.name}</span>`;
+
               html += `<div style="background: rgba(0, 0, 0, 0.15); padding: 3px 6px; border-radius: 6px; font-size: 11px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.1);">
                          ${icon}
-                         <span style="max-width: 55px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: white;" title="${player.name}">${player.name}</span>
-                         <span style="color: ${textColor}; font-weight: bold;">${player.score}</span>
+                         ${titleBadge}
+                         <span style="max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: white;" title="${player.name}">${player.name}</span>
+                         <span style="color: ${textColor}; font-weight: bold; margin-left: 2px;">${player.score}</span>
                        </div>`;
-            });
+            }
             html += `</div>`;
           } else {
             html += `<div style="margin-top: 5px; font-size: 12px; color: rgba(255,255,255,0.6);">👑 尚無挑戰者</div>`;
@@ -1720,6 +1768,17 @@
             // ✨ 等級公式：Lv = 根號(總經驗 / 100) + 1
             let level = Math.floor(Math.sqrt(totalExp / 100)) + 1;
 
+            // ✨ 效能救星：把「全域最高分」和「等級」一起寫入使用者的身分證裡！
+            db.collection("users")
+              .doc(user.uid)
+              .set(
+                {
+                  globalMaxScore: maxScore,
+                  level: level, // 👈 把等級也存起來，以後排行榜就不用慢慢算了！
+                },
+                { merge: true }
+              )
+              .catch((e) => console.log("寫入資料失敗", e));
             // 儲存到本地備份，方便上傳成績時標記
             localStorage.setItem("mathGamePlayerName", finalName);
             localStorage.setItem("mathGamePlayerUid", user.uid);
