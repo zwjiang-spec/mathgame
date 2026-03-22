@@ -7,134 +7,140 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>弱點特訓教室</title>
+
     <link rel="stylesheet" href="style.css" />
     <style>
-      /* ✨ 繼承虛擬鍵盤的專屬顏色變數 */
       :root {
-        --bg-main: #f8f9fa;
+        --bg-main: #fdf2f2;
         --text-dark: #1c2833;
-        --text-gray: #95a5a6;
+        --text-gray: #7f8c8d;
+        --color-gold: #e74c3c; /* 特訓模式專屬紅色基調 */
+
         --btn-white: #ffffff;
-        --btn-blue-bg: #eaf2f8;
-        --btn-blue-text: #2980b9;
         --btn-del-bg: #fae5e5;
         --btn-del-text: #c0392b;
         --btn-sqrt-bg: #fdf2e3;
         --btn-sqrt-text: #d68910;
+        --btn-blue-bg: #eaf2f8;
+        --btn-blue-text: #2980b9;
         --btn-enter-bg: #2ecc71;
         --btn-enter-text: #ffffff;
       }
-
       body {
-        background: #fdf2f2;
-        text-align: center;
-        padding: 15px;
-        overflow-x: hidden;
-      }
-
-      #review-container {
-        width: 90%;
-        max-width: 600px;
-        margin: 0 auto 20px auto;
-        background: white;
-        padding: 25px 20px;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        box-sizing: border-box;
-      }
-
-      .progress {
-        color: #7f8c8d;
-        font-size: 15px;
-        margin-bottom: 15px;
-        font-weight: bold;
-      }
-
-      #question-display {
-        font-size: 28px;
-        font-weight: 800;
-        margin: 15px 0;
-        color: #c0392b;
-      }
-
-      /* ✨ 輸入框樣式 (完美對齊遊戲主畫面) */
-      #input-box {
-        min-height: 50px;
-        min-width: 150px;
-        font-size: 24px;
-        font-weight: bold;
-        color: #2980b9;
-        background: #f8f9fa;
-        border: 2px dashed #bdc3c7;
-        border-radius: 12px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 0 auto 15px auto;
-        padding: 10px;
-        transition: 0.2s;
-      }
-
-      .error-text {
-        color: #e74c3c !important;
-        border-color: #e74c3c !important;
-        background: #fae5e5 !important;
-      }
-      .correct-flash {
-        background: #d4efdf !important;
-        border-color: #27ae60 !important;
-        color: #27ae60 !important;
-      }
-
-      #hint-area {
-        margin-top: 15px;
-        color: #7f8c8d;
-        font-size: 15px;
-        font-weight: bold;
-        min-height: 25px;
-      }
-
-      /* ✨ 鍵盤專屬容器 */
-      #keypad-container {
-        width: 90%;
-        max-width: 600px;
-        margin: 0 auto;
-        padding-bottom: 20px;
+        background: var(--bg-main);
       }
     </style>
+
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+    <script src="common.js"></script>
   </head>
+
   <body>
-    <div id="review-container">
-      <div style="text-align: left; margin-bottom: 10px">
-        <a
-          href="profile.html"
+    <div id="header">
+      <div class="stat-group">
+        <div class="stat-label">STUDENT</div>
+        <div id="ui-name" class="stat-value" style="color: var(--text-gray)">
+          ---
+        </div>
+      </div>
+      <div class="stat-group">
+        <div class="stat-label">剩餘題數</div>
+        <div id="ui-remain" class="stat-value" style="color: #e74c3c">0</div>
+      </div>
+      <div
+        class="stat-group"
+        style="
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+        "
+      >
+        <button
+          onclick="fleeTraining()"
           style="
-            text-decoration: none;
-            color: #95a5a6;
-            font-size: 15px;
+            background: #fae5e5;
+            color: #c0392b;
+            border: 1px solid #e74c3c;
+            border-radius: 8px;
+            font-size: 12px;
             font-weight: bold;
+            padding: 4px 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
+            white-space: nowrap;
           "
-          >⬅ 逃避特訓 (返回戰績室)</a
         >
+          🚪 儲存退出
+        </button>
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <div class="stat-label">SCORE</div>
+          <div id="ui-score" class="stat-value">0</div>
+        </div>
       </div>
-      <h2 style="margin-top: 0; color: #c0392b">🔥 弱點特訓中</h2>
-      <div class="progress" id="progress-text">第 0 / 0 題</div>
+    </div>
 
-      <div id="display-area">
-        <div id="question-display">載入中...</div>
-        <div id="input-box"></div>
+    <div id="combo-gauge-wrapper">
+      <div class="combo-label">COMBO</div>
+      <div id="combo-gauge-bg">
+        <div id="combo-gauge-fill" style="background: var(--color-gold)"></div>
+      </div>
+      <div id="combo-gauge-text">0</div>
+    </div>
+    <div id="phase-indicator" style="color: #c0392b; font-weight: bold">
+      🔥 弱點特訓中 (錯題消滅)
+    </div>
+
+    <div id="display-area">
+      <div
+        id="question-text"
+        style="font-size: 24px; font-weight: bold; color: var(--text-gray)"
+      >
+        讀取中...
       </div>
 
-      <div id="hint-area"></div>
+      <div
+        style="
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 12px;
+          margin-top: 15px;
+          margin-bottom: 5px;
+        "
+      >
+        <div
+          style="
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--text-dark);
+            line-height: 1;
+          "
+        >
+          =
+        </div>
+        <div id="input-box" style="margin-top: 0; min-width: 120px"></div>
+      </div>
+
+      <div
+        id="hint-area"
+        style="
+          margin-top: 10px;
+          color: #7f8c8d;
+          font-size: 15px;
+          font-weight: bold;
+          min-height: 25px;
+        "
+      ></div>
     </div>
 
     <div id="keypad-container">
       <div id="keypad"></div>
     </div>
 
-    <script src="common.js"></script>
     <script>
-      // ✨ 增加防呆機制：確保不會因為抓取失敗而整組壞掉
       let pool = [];
       try {
         let rawData = localStorage.getItem("mathGameReviewPool");
@@ -147,7 +153,17 @@
 
       let currentIndex = 0;
       let userInput = "";
-      let isProcessing = false; // 防連點鎖
+      let isProcessing = false;
+
+      // 遊戲數據系統
+      let score = 0;
+      let combo = 0;
+      let resolvedMap = new Map();
+      let correctCount = 0;
+      let wrongCount = 0;
+
+      // ✨ 新增：用來判斷現在這題是不是「座標題」
+      let isCoordinate = false;
 
       window.onload = () => {
         if (!pool || pool.length === 0) {
@@ -155,10 +171,14 @@
           window.location.href = "profile.html";
           return;
         }
-        // ✨ 不再呼叫 common.js 的鍵盤，而是召喚「究極特訓專用鍵盤」
+
+        let pName = localStorage.getItem("mathGamePlayerName") || "神秘勇者";
+        document.getElementById("ui-name").innerText = pName;
+
         renderUltimateKeypad();
         loadNext();
       };
+
       function renderUltimateKeypad() {
         const container = document.getElementById("keypad");
         container.innerHTML = `
@@ -189,81 +209,138 @@
           
           <div class="key key-blue" onclick="input('(')">(</div>
           <div class="key key-blue" onclick="input(')')">)</div>
-          <div class="key key-enter" style="grid-column: span 2" onclick="submitAnswer()">ENTER</div>
+          <div class="key key-enter" style="grid-column: span 2; background: #2ecc71; color: white;" onclick="submitAnswer()">ENTER</div>
         `;
       }
 
       function loadNext() {
         if (currentIndex >= pool.length) {
-          alert("🎉 太神啦！你已成功克服所有弱點！");
-          window.location.href = "profile.html";
+          isProcessing = true;
+          document.getElementById("question-text").innerHTML =
+            "✨ 正在將消滅紀錄同步至雲端...";
+          document.getElementById("input-box").style.display = "none";
+          document.getElementById("hint-area").innerHTML = "";
+
+          if (typeof uploadGameRecord === "function") {
+            uploadGameRecord(
+              "review_complete",
+              score,
+              null,
+              false,
+              correctCount,
+              wrongCount,
+              resolvedMap
+            )
+              .then(() => {
+                alert("🎉 太神啦！特訓完成，你的錯題業障已經順利消減！");
+                window.location.href = "profile.html";
+              })
+              .catch((err) => {
+                alert("上傳失敗，請檢查網路連線。");
+                window.location.href = "profile.html";
+              });
+          } else {
+            window.location.href = "profile.html";
+          }
           return;
         }
-        const qData = pool[currentIndex];
-        document.getElementById("progress-text").innerText = `第 ${
-          currentIndex + 1
-        } / ${pool.length} 題`;
 
-        // ✨ 防彈處理：確保強制轉成文字，避免吃 HTML 標籤
+        const qData = pool[currentIndex];
+        document.getElementById("ui-remain").innerText =
+          pool.length - currentIndex;
+
+        // ✨ 自動判斷：如果答案裡面有逗號，就把這題標記為「座標題」
+        const correctAns = String(qData.a || "");
+        isCoordinate = correctAns.includes(",");
+
         let safeQ = String(qData.q || "");
         let displayQ =
-          typeof formatMathHTML === "function" &&
-          !safeQ.includes("<span") &&
-          !safeQ.includes("<svg")
+          typeof formatMathHTML === "function" && !safeQ.includes("<svg")
             ? formatMathHTML(safeQ)
             : safeQ;
 
-        document.getElementById("question-display").innerHTML = displayQ + " =";
-        document.getElementById("hint-area").innerHTML = ""; // 清空提示
+        document.getElementById("question-text").innerHTML = displayQ;
+        document.getElementById("hint-area").innerHTML = "";
 
         userInput = "";
         renderInput();
       }
 
-      // 1. 處理鍵盤點擊
       function input(val) {
         if (isProcessing) return;
-        if (val === "DEL") {
-          userInput = userInput.slice(0, -1);
-        } else {
-          userInput += val;
-        }
+
+        // ✨ 防呆機制：如果是座標題，直接沒收括號按鈕的功能，只能打數字和逗號！
+        if (isCoordinate && (val === "(" || val === ")")) return;
+
+        if (val === "DEL") userInput = userInput.slice(0, -1);
+        else userInput += val;
         renderInput();
       }
 
-      // 2. 渲染輸入框
       function renderInput() {
         const box = document.getElementById("input-box");
-        if (typeof formatMathHTML === "function") {
-          box.innerHTML = formatMathHTML(userInput);
+        let content =
+          typeof formatMathHTML === "function"
+            ? formatMathHTML(userInput)
+            : userInput;
+
+        // ✨ 視覺魔法：如果是座標題，直接在輸入框前後自動掛上淺灰色的括號
+        if (isCoordinate) {
+          box.innerHTML = `<span style="color: #bdc3c7; margin-right: 4px;">(</span>${content}<span style="color: #bdc3c7; margin-left: 4px;">)</span>`;
         } else {
-          box.innerText = userInput;
+          box.innerHTML = content;
         }
+
         box.classList.remove("error-text", "correct-flash");
       }
 
-      // 3. 提交答案 (對應 common.js 鍵盤的 ENTER 鍵)
+      function updateUI() {
+        document.getElementById("ui-score").innerText = score;
+        const comboFill = document.getElementById("combo-gauge-fill");
+        const comboText = document.getElementById("combo-gauge-text");
+        let fillPercent = Math.min((combo / 10) * 100, 100);
+        comboFill.style.width = fillPercent + "%";
+
+        comboText.classList.remove("bump-anim");
+        void comboText.offsetWidth;
+        if (combo > 0) comboText.classList.add("bump-anim");
+
+        if (combo === 0) {
+          comboText.innerHTML = "0";
+          comboText.style.color = "var(--text-gray)";
+        } else if (combo < 10) {
+          comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`;
+          comboText.style.color = "#c0392b";
+        } else {
+          comboText.innerHTML = `<span style="color:#c0392b; font-weight:900;">${combo} FEVER</span>`;
+        }
+      }
+
       function submitAnswer() {
         if (userInput === "" || isProcessing) return;
-        isProcessing = true; // 上鎖
+        isProcessing = true;
 
-        const correctAns = String(pool[currentIndex].a || "");
+        const currentQData = pool[currentIndex];
+        const correctAns = String(currentQData.a || "");
         const box = document.getElementById("input-box");
         let isCorrect = false;
 
-        // ✨ 強化判定：先清空所有空格再比對
+        // 格式化處理
         let cleanUser = userInput.replace(/\s+/g, "");
         let cleanTarget = correctAns.replace(/\s+/g, "");
+        let nakedUser = cleanUser.replace(/[()（）]/g, "");
+        let nakedTarget = cleanTarget.replace(/[()（）]/g, "");
 
+        // 判定邏輯
         if (cleanUser === cleanTarget) {
           isCorrect = true;
-        } else if (!cleanTarget.includes(",")) {
-          // ✨ 如果不是座標題（沒有逗號），才啟用數值大腦，避免座標被錯誤運算
+        } else if (nakedTarget.includes(",")) {
+          if (nakedUser === nakedTarget) isCorrect = true;
+        } else {
           let userVal =
             typeof evalMath === "function" ? evalMath(userInput) : NaN;
           let targetVal =
             typeof evalMath === "function" ? evalMath(correctAns) : NaN;
-
           if (
             !isNaN(userVal) &&
             !isNaN(targetVal) &&
@@ -274,48 +351,107 @@
         }
 
         if (isCorrect) {
-          // ✅ 答對了！
+          // ✅ 答對：消滅業障
+          correctCount++;
+          let qText = currentQData.q;
+          resolvedMap.set(qText, (resolvedMap.get(qText) || 0) + 1);
+
+          combo++;
+          score += 10 + combo * 2;
+          updateUI();
+
+          if (typeof spawnComboParticle === "function") spawnComboParticle();
           if (typeof playCorrect === "function") playCorrect();
+
           box.classList.add("correct-flash");
           document.getElementById("hint-area").innerHTML =
-            '<span style="color:#27ae60;">✅ 正確！完美克服！</span>';
+            '<span style="color:#27ae60; font-weight:bold;">✅ 正確！這題業障已消滅。</span>';
 
-          // 延遲跳下一題
           setTimeout(() => {
             currentIndex++;
             isProcessing = false;
             loadNext();
           }, 800);
         } else {
-          // ❌ 答錯了！
+          // ❌ 答錯：顯示答案，但不紀錄到 resolvedMap (下次特訓會再出現)
+          wrongCount++;
+          combo = 0;
+          score -= 5;
+          updateUI();
+
           if (typeof playWrong === "function") playWrong();
+          if (typeof flashScoreRed === "function") flashScoreRed();
           box.classList.add("error-text");
 
-          // 顯示提示
-          let hintText =
-            pool[currentIndex].hint || "這題好像沒有提示喔，再想想看！";
+          // ✨ 顯示正確答案與提示
+          let displayAns =
+            typeof formatMathHTML === "function"
+              ? formatMathHTML(correctAns)
+              : correctAns;
+          let hintText = currentQData.hint || "再接再厲！";
           let displayHint =
             typeof formatMathHTML === "function" &&
             !String(hintText).includes("<span")
               ? formatMathHTML(String(hintText))
               : hintText;
-          document.getElementById("hint-area").innerHTML =
-            "💡 提示：" + displayHint;
 
-          // 畫面震動特效
-          const area = document.getElementById("review-container");
+          document.getElementById("hint-area").innerHTML = `
+            <div style="background:#fdeaea; border-left:4px solid #e74c3c; padding:8px; margin-top:5px; text-align:left;">
+              <b style="color:#e74c3c;">❌ 答錯了，請記住正確答案：</b><br>
+              <span style="font-size:1.1em; font-weight:bold;">${displayAns}</span><br>
+              <small style="color:#7f8c8d;">💡 提示：${displayHint}</small>
+            </div>
+          `;
+
+          const area = document.getElementById("display-area");
           area.classList.remove("shake-animation");
-          void area.offsetWidth; // 觸發重繪
+          void area.offsetWidth;
           area.classList.add("shake-animation");
 
-          // 延遲清空輸入框，強迫學生重打加深記憶
+          // 停留較長時間 (2.5秒)，讓學生學習答案
           setTimeout(() => {
-            userInput = "";
-            renderInput();
+            currentIndex++; // 依然前往下一題
             isProcessing = false;
-          }, 800);
+            loadNext();
+          }, 2500);
         }
       }
+      function fleeTraining() {
+        if (resolvedMap.size > 0) {
+          document.getElementById("question-text").innerHTML =
+            "💾 正在儲存特訓進度...";
+          document.getElementById("input-box").style.display = "none";
+          if (typeof uploadGameRecord === "function") {
+            uploadGameRecord(
+              "review_flee",
+              score,
+              null,
+              false,
+              correctCount,
+              wrongCount,
+              resolvedMap
+            ).finally(() => (window.location.href = "profile.html"));
+          } else {
+            window.location.href = "profile.html";
+          }
+        } else {
+          window.location.href = "profile.html";
+        }
+      }
+
+      window.addEventListener("pagehide", () => {
+        if (resolvedMap.size > 0 && typeof uploadGameRecord === "function") {
+          uploadGameRecord(
+            "review_abandoned",
+            score,
+            null,
+            false,
+            correctCount,
+            wrongCount,
+            resolvedMap
+          );
+        }
+      });
     </script>
   </body>
 </html>
