@@ -1,4 +1,205 @@
-// ================= 共用工具與排行榜 =================
+// ==========================================
+// 🚀 0. Firebase 雲端資料庫模組 (全域共用)
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyC7ed0il_ScCdHeWOHepj56ycjRXYt_Mf4",
+  authDomain: "mathgame-6ab85.firebaseapp.com",
+  projectId: "mathgame-6ab85",
+  storageBucket: "mathgame-6ab85.firebasestorage.app",
+  messagingSenderId: "790458098592",
+  appId: "1:790458098592:web:298e23dbb8ba82a3ee3ac5",
+};
+
+// 確保 Firebase 只被初始化一次
+if (typeof firebase !== "undefined" && !firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+// ==========================================
+// 🧠 1. 等級計算大腦
+// ==========================================
+function calculateLevel(exp) {
+  const e = Number(exp) || 0;
+  if (e <= 0) return 1;
+  return Math.floor(Math.sqrt(e / 100)) + 1;
+}
+
+async function fetchPlayerStatsFromHistory(uid) {
+  if (!uid || uid === "guest") return { totalExp: 0, level: 1 };
+  try {
+    const db = firebase.firestore();
+    const snapshot = await db
+      .collection("game_records")
+      .where("uid", "==", uid)
+      .get();
+    let totalExp = 0;
+    snapshot.forEach((doc) => {
+      const s = Number(doc.data().score) || 0;
+      if (s > 0) totalExp += s;
+    });
+    return { totalExp, level: calculateLevel(totalExp) };
+  } catch (err) {
+    console.error("統計歷史失敗:", err);
+    return { totalExp: 0, level: 1 };
+  }
+}
+
+// ================= 2. 萬能上傳函數 (支援錯題消滅系統) =================
+async function uploadGameRecord(
+  status,
+  score,
+  errorLogMap,
+  isHellMode,
+  correctCount = 0,
+  wrongCount = 0,
+  resolvedLogMap = null // ✨ 新增這把武器：消滅清單
+) {
+  if (typeof firebase === "undefined") return Promise.reject("Firebase 未載入");
+  const db = firebase.firestore();
+
+  let user = null;
+  if (firebase.auth && typeof firebase.auth === "function")
+    user = firebase.auth().currentUser;
+
+  const playerUid = user
+    ? user.uid
+    : localStorage.getItem("mathGamePlayerUid") || "guest";
+  let name = document.getElementById("ui-name")
+    ? document.getElementById("ui-name").innerText
+    : "Guest";
+  if (name === "---" || !name)
+    name = localStorage.getItem("mathGamePlayerName") || "Guest";
+
+  let wrongLog = [];
+  if (errorLogMap && typeof errorLogMap.forEach === "function") {
+    errorLogMap.forEach((data, qStr) => {
+      wrongLog.push({
+        question: String(qStr),
+        answer: data.ans,
+        hint: data.hint || "無提示",
+      });
+    });
+  }
+
+  // ✨ 整理被消滅的錯題 (徹底解除圖形封印)
+  let resolvedLog = [];
+  if (resolvedLogMap && typeof resolvedLogMap.forEach === "function") {
+    resolvedLogMap.forEach((count, qStr) => {
+      resolvedLog.push({
+        question: String(qStr),
+        count: Number(count),
+      });
+    });
+  }
+
+  let unit = "unknown";
+  let path = window.location.pathname.toLowerCase();
+  if (path.includes("trig")) unit = "trig";
+  else if (path.includes("space")) unit = "space";
+  else if (path.includes("perm")) unit = "perm";
+  else if (path.includes("practice")) unit = "practice";
+  else if (path.includes("review")) unit = "review"; // ✨ 弱點特訓專屬標記
+
+  const recordData = {
+    uid: playerUid,
+    name: name,
+    unit: unit,
+    mode: isHellMode ? "hell" : unit === "practice" ? "mixed" : "normal",
+    score: Number(score),
+    status: status,
+    wrongLog: wrongLog,
+    resolvedLog: resolvedLog, // ✨ 把消滅紀錄存進雲端！
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    correctCount: Number(correctCount),
+    wrongCount: Number(wrongCount),
+    level: localStorage.getItem("mathGamePlayerLevel") || 1,
+  };
+
+  return db
+    .collection("game_records")
+    .add(recordData)
+    .then(async () => {
+      if (playerUid !== "guest" && Number(score) > 0) {
+        db.collection("users")
+          .doc(playerUid)
+          .set(
+            {
+              exp: firebase.firestore.FieldValue.increment(Number(score)),
+            },
+            { merge: true }
+          )
+          .catch((e) => console.warn("EXP 更新失敗", e));
+
+        // 世界 Boss 傷害存錢筒...
+        const bossRef = db.collection("global").doc("boss_state");
+        try {
+          await db.runTransaction(async (t) => {
+            const doc = await t.get(bossRef);
+            let bData = doc.exists
+              ? doc.data()
+              : { level: 1, totalDamage: 0, playerMap: {}, pastMVPs: {} };
+            let day = new Date().getDay();
+            let isBonus = false;
+            if ((day === 1 || day === 4) && unit === "trig") isBonus = true;
+            if ((day === 2 || day === 5) && unit === "space") isBonus = true;
+            if ((day === 3 || day === 6) && unit === "perm") isBonus = true;
+            if (day === 0) isBonus = true;
+            let dmg = Number(score);
+            if (isBonus) dmg = Math.floor(dmg * 1.25);
+            if (isHellMode) dmg *= 2;
+            let maxHp = 500000 + (bData.level - 1) * 200000;
+            bData.totalDamage = (bData.totalDamage || 0) + dmg;
+            if (!bData.playerMap) bData.playerMap = {};
+            if (!bData.playerMap[playerUid])
+              bData.playerMap[playerUid] = { name: name, damage: 0 };
+            bData.playerMap[playerUid].damage += dmg;
+            bData.playerMap[playerUid].name = name;
+
+            if (bData.totalDamage >= maxHp) {
+              let mvp = null,
+                maxD = -1;
+              for (let uid in bData.playerMap) {
+                if (bData.playerMap[uid].damage > maxD) {
+                  maxD = bData.playerMap[uid].damage;
+                  mvp = uid;
+                }
+              }
+              const titles = [
+                "🗡️ 死神終結者",
+                "⚔️ 混沌斬裂者",
+                "🌌 虛空粉碎者",
+                "🌀 維度主宰",
+                "📐 幾何救世主",
+                "👁️ 真理超越者",
+                "👑 傳說中的弒神者",
+              ];
+              let tIdx = Math.min(bData.level - 1, titles.length - 1);
+              if (mvp) {
+                if (!bData.pastMVPs) bData.pastMVPs = {};
+                bData.pastMVPs[mvp] = {
+                  title: titles[tIdx],
+                  level: bData.level,
+                };
+              }
+              bData.level += 1;
+              bData.totalDamage = bData.totalDamage - maxHp;
+              bData.playerMap = {};
+              if (bData.totalDamage > 0)
+                bData.playerMap[playerUid] = {
+                  name: name,
+                  damage: bData.totalDamage,
+                };
+            }
+            t.set(bossRef, bData);
+          });
+        } catch (e) {}
+      }
+    });
+}
+
+// ==========================================
+// 🏆 3. 萬能排行榜 (Firebase + CSV + 排名與等級)
+// ==========================================
 function parseCSV(text) {
   let p = "",
     row = [""],
@@ -22,11 +223,205 @@ function parseCSV(text) {
   return ret;
 }
 
-// ================= 萬能新舊融合排行榜 (獨一無二個人排行版) =================
 async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
   const dailyBoard = document.getElementById("daily-board");
   const allTimeBoard = document.getElementById("alltime-board");
   if (!dailyBoard || !allTimeBoard) return;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  let currentMode = urlParams.get("mode") || "normal";
+  let limit = currentMode === "hell" ? 3 : 5;
+
+  let combinedRanks = [];
+  const myName = localStorage.getItem("mathGamePlayerName");
+
+  let unit = "trig";
+  if (window.location.pathname.toLowerCase().includes("space")) unit = "space";
+  if (window.location.pathname.toLowerCase().includes("perm")) unit = "perm";
+
+  // --- A. 抓取 Firebase 紀錄 ---
+  try {
+    if (typeof firebase !== "undefined") {
+      const db = firebase.firestore();
+      const snapshot = await db
+        .collection("game_records")
+        .where("unit", "==", unit)
+        .where("mode", "==", currentMode)
+        .get();
+      snapshot.forEach((doc) => {
+        let d = doc.data();
+        let ts = d.timestamp ? d.timestamp.toDate() : new Date();
+        combinedRanks.push({
+          n: d.name,
+          s: d.score,
+          dateObj: ts,
+          uid: d.uid,
+          lvl: null,
+        });
+      });
+    }
+  } catch (e) {
+    console.warn("Firebase 讀取受阻，跳過:", e);
+  }
+
+  // --- B. 抓取舊 CSV 紀錄 ---
+  if (csvUrl && csvUrl.startsWith("http")) {
+    try {
+      let res = await fetch(csvUrl + "&t=" + new Date().getTime(), {
+        cache: "no-store",
+      });
+      let text = await res.text();
+      let csvData = parseCSV(text);
+      for (let i = 1; i < csvData.length; i++) {
+        if (csvData[i].length >= 3) {
+          let scoreRaw = parseInt(csvData[i][2]);
+          if (!isNaN(scoreRaw)) {
+            let csvDate = new Date(csvData[i][0] || "");
+            if (isNaN(csvDate.getTime())) csvDate = new Date("2000-01-01"); // 防禦無效日期
+            combinedRanks.push({
+              n: (csvData[i][1] || "").split(" (")[0].trim(),
+              s: scoreRaw,
+              dateObj: csvDate,
+              uid: null,
+              lvl: null,
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("CSV 讀取受阻，跳過:", e);
+    }
+  }
+
+  if (newRecord) {
+    combinedRanks.push({
+      n: newRecord.n,
+      s: newRecord.s,
+      dateObj: new Date(),
+      uid: localStorage.getItem("mathGamePlayerUid") || "guest",
+      lvl: null,
+    });
+  }
+
+  // --- C. 排序與去重複 ---
+  let now = new Date();
+  const processMap = (data, isDaily = false) => {
+    let map = new Map();
+    data
+      .sort((a, b) => b.s - a.s)
+      .forEach((r) => {
+        if (
+          isDaily &&
+          (!r.dateObj ||
+            isNaN(r.dateObj.getTime()) ||
+            r.dateObj.toDateString() !== now.toDateString())
+        )
+          return;
+        if (!map.has(r.n) || r.s > map.get(r.n).s) map.set(r.n, r);
+      });
+    return Array.from(map.values()).sort((a, b) => b.s - a.s);
+  };
+
+  let fullDailyList = processMap(combinedRanks, true);
+  let fullAllTimeList = processMap(combinedRanks, false);
+
+  // --- D. 會員等級同步 ---
+  const syncLevels = async (list) => {
+    let topList = list.slice(0, limit);
+    let myEntry = list.find((r) => r.n === myName);
+    let syncTargets = [...topList];
+    if (myEntry && !topList.includes(myEntry)) syncTargets.push(myEntry);
+
+    const tasks = syncTargets
+      .filter((p) => p.uid && p.uid !== "guest")
+      .map(async (player) => {
+        try {
+          const hSnap = await firebase
+            .firestore()
+            .collection("game_records")
+            .where("uid", "==", player.uid)
+            .get();
+          let totalExp = 0;
+          hSnap.forEach((d) => {
+            totalExp += Number(d.data().score) || 0;
+          });
+          player.lvl = calculateLevel(totalExp);
+        } catch (e) {}
+      });
+    await Promise.all(tasks);
+    return { topList, myEntry, fullList: list };
+  };
+
+  const dailyData = await syncLevels(fullDailyList);
+  const allTimeData = await syncLevels(fullAllTimeList);
+
+  // --- E. 渲染 UI ---
+  const renderBoard = (dataObj, title, isHell, fullList) => {
+    const { topList, myEntry } = dataObj;
+    let html = `<h3 style="${isHell ? "color:#ff4d4d" : ""}">${title}</h3>`;
+
+    if (!topList.length) {
+      html +=
+        "<div class='board-row' style='justify-content:center;'>尚無挑戰者</div>";
+    } else {
+      topList.forEach((r, i) => {
+        let lvlBadge =
+          r.uid && r.uid !== "guest" && r.lvl
+            ? `<span style="background:#f39c12; color:white; font-size:10px; padding:1px 5px; border-radius:6px; margin-left:6px;">Lv.${r.lvl}</span>`
+            : "";
+        html += `<div class="board-row" style="border-bottom: 1px solid #eee"><span>${
+          i + 1
+        }. ${r.n}${lvlBadge}</span><strong>${r.s}</strong></div>`;
+      });
+    }
+
+    if (myName && myName !== "Guest" && myEntry) {
+      let myRank = fullList.findIndex((r) => r.n === myName) + 1;
+      let myRankColor = myRank <= limit ? "#2ecc71" : "#f1c40f";
+      let myLvlBadge =
+        myEntry.uid && myEntry.uid !== "guest" && myEntry.lvl
+          ? `<span style="background:#f39c12; color:white; font-size:10px; padding:1px 5px; border-radius:6px; margin-left:4px;">Lv.${myEntry.lvl}</span>`
+          : "";
+
+      html += `
+        <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #ccc; font-size: 11.5px; color: #2c3e50; text-align: left;">
+          🙋‍♂️ 我的最高: <span style="color: #f39c12; font-weight: bold;">${myEntry.s}</span> ${myLvlBadge}
+          <span style="opacity:0.8; float:right;">(排名第 <span style="color: ${myRankColor}; font-weight: bold;">${myRank}</span>)</span>
+        </div>`;
+    } else if (myName && myName !== "Guest") {
+      html += `<div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #eee; font-size: 11px; color: #95a5a6;">🙋‍♂️ 尚未留下紀錄</div>`;
+    }
+    return html;
+  };
+
+  if (currentMode !== "hell") {
+    dailyBoard.innerHTML = renderBoard(
+      dailyData,
+      `🌟 今日 Top ${limit}`,
+      false,
+      fullDailyList
+    );
+    dailyBoard.style.display = "";
+  } else {
+    dailyBoard.style.display = "none";
+  }
+  allTimeBoard.innerHTML = renderBoard(
+    allTimeData,
+    currentMode === "hell"
+      ? `🏆 歷史地獄 Top ${limit}`
+      : `🏆 歷史單元 Top ${limit}`,
+    currentMode === "hell",
+    fullAllTimeList
+  );
+}
+
+// ==========================================
+// 📊 4. 單元平均分數計算引擎
+// ==========================================
+async function loadUnitAverageLeaderboard() {
+  const avgBoardContainer = document.getElementById("unit-avg-board");
+  const avgListEl = document.getElementById("unit-avg-list");
+  if (!avgBoardContainer || !avgListEl) return;
 
   let currentUnit = "unknown";
   let path = window.location.pathname.toLowerCase();
@@ -36,179 +431,86 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
 
   const urlParams = new URLSearchParams(window.location.search);
   let currentMode = urlParams.get("mode") || "normal";
-  let limit = currentMode === "hell" ? 3 : 5;
-  let boardStyle =
-    currentMode === "hell"
-      ? "background: #111; color: #ff4d4d; border: 1px solid #c0392b; padding: 10px; border-radius: 10px; box-shadow: 0 0 10px rgba(192, 57, 43, 0.3);"
-      : "";
+
+  if (currentMode === "hell") {
+    document.getElementById("unit-avg-title").innerHTML = "💀 地獄平均 Top 3";
+    document.getElementById("unit-avg-title").style.color = "#ff4d4d";
+    avgBoardContainer.style.background = "#111";
+    avgBoardContainer.style.border = "1px solid #c0392b";
+  }
 
   try {
-    let combinedRanks = [];
+    if (typeof firebase === "undefined") return;
+    const db = firebase.firestore();
+    const snapshot = await db
+      .collection("game_records")
+      .where("unit", "==", currentUnit)
+      .where("mode", "==", currentMode)
+      .get();
 
-    // --- A. 抓取 Firebase 實時紀錄 ---
-    if (typeof firebase !== "undefined") {
-      const db = firebase.firestore();
-      const snapshot = await db
-        .collection("game_records")
-        .where("unit", "==", currentUnit)
-        .where("mode", "==", currentMode)
-        .get();
-      snapshot.forEach((doc) => {
-        let data = doc.data();
-        let ts = data.timestamp ? data.timestamp.toDate() : new Date();
-        combinedRanks.push({ n: data.name, s: data.score, dateObj: ts });
-      });
-    }
-
-    // --- B. 抓取舊 CSV ---
-    if (csvUrl && csvUrl.startsWith("http")) {
-      try {
-        let res = await fetch(csvUrl + "&t=" + new Date().getTime(), {
-          cache: "no-store",
-        });
-        let text = await res.text();
-        let csvData = parseCSV(text);
-        for (let i = 1; i < csvData.length; i++) {
-          if (csvData[i].length >= 3) {
-            let timeStr = csvData[i][0] || "";
-            let nameRaw = csvData[i][1] || "";
-            let scoreRaw = parseInt(csvData[i][2]);
-            if (!isNaN(scoreRaw)) {
-              combinedRanks.push({
-                n: nameRaw.split(" (")[0].trim(),
-                s: scoreRaw,
-                dateObj: new Date(timeStr),
-              });
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("CSV 載入失敗");
-      }
-    }
-
-    // --- C. 加入剛剛遊玩的新紀錄 (若是結算畫面呼叫) ---
-    if (newRecord)
-      combinedRanks.push({
-        n: newRecord.n,
-        s: newRecord.s,
-        dateObj: new Date(),
-      });
-
-    // ==========================================
-    // ✨ D. 核心魔法：過濾重複玩家，只保留個人的最高分！
-    // ==========================================
-    function getUniqueTopRanks(ranksArray) {
-      let map = new Map();
-      ranksArray.forEach((r) => {
-        // 如果這個人還沒被記錄，或是他這次的分數比之前記錄的還要高，就更新！
-        if (!map.has(r.n) || r.s > map.get(r.n).s) {
-          map.set(r.n, r);
-        }
-      });
-      // 將 Map 轉回陣列，並由高到低排序
-      return Array.from(map.values()).sort((a, b) => b.s - a.s);
-    }
-
-    // --- E. 分別處理「今日」與「歷史」的獨一無二榜單 ---
-    let now = new Date();
-    let isSameDay = (d1, d2) =>
-      d1.getFullYear() === d2.getFullYear() &&
-      d1.getMonth() === d2.getMonth() &&
-      d1.getDate() === d2.getDate();
-
-    let dailyRanks = combinedRanks.filter((r) => isSameDay(r.dateObj, now));
-    let finalDaily = getUniqueTopRanks(dailyRanks);
-    let finalAllTime = getUniqueTopRanks(combinedRanks);
-
-    // ==========================================
-    // ✨ F. 抓出玩家自己的最高紀錄與名次！
-    // ==========================================
-    const myName =
-      localStorage.getItem("mathGamePlayerName") ||
-      (newRecord ? newRecord.n : null);
-    let myBestScore = null;
-    let myRank = null;
-
-    if (myName && myName !== "Guest" && myName !== "---") {
-      // 找出自己的名字在全服排行榜的第幾個位置 (陣列從 0 開始，所以名次要 +1)
-      let myRecordIdx = finalAllTime.findIndex((r) => r.n === myName);
-      if (myRecordIdx !== -1) {
-        myRank = myRecordIdx + 1;
-        myBestScore = finalAllTime[myRecordIdx].s;
-      }
-    }
-
-    // --- G. 渲染 UI ---
-    let titleDaily = `🌟 今日單元 Top ${limit}`;
-    let titleAllTime =
-      currentMode === "hell"
-        ? `🏆 歷史地獄 Top ${limit}`
-        : `🏆 歷史單元 Top ${limit}`;
-
-    // 渲染今日榜單
-    if (currentMode === "hell") {
-      dailyBoard.style.display = "none";
-    } else {
-      dailyBoard.style.display = "";
-      let daily = finalDaily.slice(0, limit);
-      let dailyHtml = `<h3>${titleDaily}</h3>`;
-      if (daily.length === 0)
-        dailyHtml +=
-          "<div class='board-row' style='justify-content:center;'>尚無挑戰者</div>";
-      daily.forEach((r, i) => {
-        dailyHtml += `<div class="board-row" style="border-bottom: 1px solid #eee"><span>${
-          i + 1
-        }. ${r.n}</span><strong>${r.s}</strong></div>`;
-      });
-      dailyBoard.innerHTML = dailyHtml;
-    }
-
-    // 渲染歷史榜單
-    let allTime = finalAllTime.slice(0, limit);
-    let allTimeHtml = `<h3 style="${
-      currentMode === "hell" ? "color:#ff4d4d" : ""
-    }">${titleAllTime}</h3>`;
-    if (allTime.length === 0)
-      allTimeHtml +=
-        "<div class='board-row' style='justify-content:center;'>尚無挑戰者</div>";
-    allTime.forEach((r, i) => {
-      allTimeHtml += `<div class="board-row" style="border-bottom: 1px solid ${
-        currentMode === "hell" ? "#333" : "#eee"
-      }"><span>${i + 1}. ${r.n}</span><strong>${r.s}</strong></div>`;
+    let userStats = {};
+    snapshot.forEach((doc) => {
+      let data = doc.data();
+      let name = data.name;
+      let score = data.score || 0;
+      if (name === "Guest" || name === "---" || !name) return;
+      if (!userStats[name]) userStats[name] = { totalScore: 0, count: 0 };
+      userStats[name].totalScore += score;
+      userStats[name].count += 1;
     });
 
-    // ==========================================
-    // ✨ H. 將個人紀錄掛在歷史榜單最下方
-    // ==========================================
-    if (myName && myName !== "Guest" && myName !== "---") {
-      let modeTextColor = currentMode === "hell" ? "#bdc3c7" : "#7f8c8d";
-      let borderColor = currentMode === "hell" ? "#c0392b" : "#bdc3c7";
+    let avgArray = [];
+    let currentUserAvg = "尚無紀錄";
+    const currentSavedName = localStorage.getItem("mathGamePlayerName");
 
-      if (myRank !== null) {
-        let myRankColor = myRank <= limit ? "#27ae60" : "#e74c3c"; // 若排進前幾名用綠色，否則紅色
-        allTimeHtml += `
-          <div style="margin-top: 12px; padding-top: 10px; border-top: 2px dashed ${borderColor}; font-size: 13px; color: ${modeTextColor}; text-align: center; line-height: 1.6;">
-            🙋‍♂️ 我的最高: <span style="color: #e67e22; font-weight: bold; font-size: 14px;">${myBestScore}</span> 分 
-            <br>
-            ( 🏆 全服第 <span style="color: ${myRankColor}; font-weight: bold; font-size: 14px;">${myRank}</span> 名 )
-          </div>`;
-      } else {
-        allTimeHtml += `
-          <div style="margin-top: 12px; padding-top: 10px; border-top: 2px dashed ${borderColor}; font-size: 13px; color: ${modeTextColor}; text-align: center;">
-            🙋‍♂️ 尚未留下您的足跡
-          </div>`;
+    for (let name in userStats) {
+      let stats = userStats[name];
+      let avg = Math.round(stats.totalScore / stats.count);
+      if (name === currentSavedName) currentUserAvg = avg;
+      if (stats.count >= 3) {
+        avgArray.push({ name: name, avgScore: avg, playCount: stats.count });
       }
     }
 
-    allTimeBoard.innerHTML = allTimeHtml;
-    if (currentMode === "hell") allTimeBoard.style = boardStyle;
-  } catch (err) {
-    console.error(err);
+    const myAvgBadge = document.getElementById("my-unit-avg");
+    if (myAvgBadge && currentSavedName) {
+      myAvgBadge.style.display = "inline-block";
+      myAvgBadge.innerText = `我的平均: ${currentUserAvg}`;
+    }
+
+    avgArray.sort((a, b) => b.avgScore - a.avgScore);
+    let top3 = avgArray.slice(0, 3);
+
+    if (top3.length === 0) {
+      avgListEl.innerHTML = `<span style="color: #ccc; font-size: 12px; margin: 0 auto;">尚無符合資格的強者</span>`;
+      return;
+    }
+
+    let html = "";
+    let medals = ["🥇", "🥈", "🥉"];
+    top3.forEach((player, index) => {
+      html += `
+          <div style="background: rgba(0,0,0,0.2); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
+              <span style="font-size: 13px;">${medals[index]}</span>
+              <span style="font-weight: bold; font-size: 12px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${player.name}">${player.name}</span>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 4px;">
+              <span style="color: #f1c40f; font-weight: 900; font-size: 16px; line-height: 1;">${player.avgScore}</span>
+              <span style="font-size: 10px; color: #95a5a6;">(${player.playCount}場)</span>
+            </div>
+          </div>
+        `;
+    });
+    avgListEl.innerHTML = html;
+  } catch (error) {
+    avgListEl.innerHTML = `<span style="color: #e74c3c;">連線失敗</span>`;
   }
 }
 
-// ================= 數學與 UI 工具 =================
+// ==========================================
+// 🛠️ 5. 數學與 UI 工具
+// ==========================================
 function formatMathHTML(str) {
   if (str === null || str === undefined) return "";
   return String(str).replace(/√(\d*)/g, (match, num) => {
@@ -294,7 +596,9 @@ function spawnComboParticle() {
   }, 400);
 }
 
-// ================= 音效引擎 =================
+// ==========================================
+// 🎵 6. 音效引擎
+// ==========================================
 let audioCtx;
 function initAudio() {
   if (!audioCtx)
@@ -334,7 +638,9 @@ function playFeverCorrect() {
   setTimeout(() => playTone(1200, "sine", 0.1), 120);
 }
 
-// ✨ 動態生成虛擬鍵盤
+// ==========================================
+// ⌨️ 7. 動態虛擬鍵盤
+// ==========================================
 function renderKeypad(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -346,6 +652,7 @@ function renderKeypad(containerId) {
       <div class="key key-del" onclick="input('DEL')">
         <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
       </div>
+      
       <div class="key" onclick="input('4')">4</div>
       <div class="key" onclick="input('5')">5</div>
       <div class="key" onclick="input('6')">6</div>
@@ -359,178 +666,20 @@ function renderKeypad(containerId) {
           <span class="sqrt-num" style="min-width: 0.6em"></span>
         </span>
       </div>
+      
       <div class="key" onclick="input('1')">1</div>
       <div class="key" onclick="input('2')">2</div>
       <div class="key" onclick="input('3')">3</div>
       <div class="key key-blue" onclick="input('-')">-</div>
+      
       <div class="key" onclick="input('0')">0</div>
       <div class="key key-blue" onclick="input('/')">/</div>
       <div class="key key-blue normal-key" style="grid-column: span 2; font-size: 32px" onclick="input(',')">,</div>
       <div class="key key-blue hell-key" onclick="input('(')">(</div>
       <div class="key key-blue hell-key" onclick="input(')')">)</div>
+      
       <div class="key key-enter normal-key" style="grid-column: span 4" onclick="submitAnswer()">ENTER</div>
       <div class="key key-blue hell-key" style="grid-column: span 2" onclick="input('+')">+</div>
       <div class="key key-enter hell-key" style="grid-column: span 2" onclick="submitAnswer()">ENTER</div>
     `;
-}
-
-// 📦 萬能上傳函數
-async function uploadGameRecord(
-  status,
-  score,
-  errorLogMap,
-  isHellMode,
-  correctCount = 0,
-  wrongCount = 0
-) {
-  if (typeof firebase === "undefined") return Promise.reject("Firebase 未載入");
-  const db = firebase.firestore();
-
-  let name = document.getElementById("ui-name")
-    ? document.getElementById("ui-name").innerText
-    : "Guest";
-  if (name === "---" || !name) name = "Guest";
-  const playerUid = localStorage.getItem("mathGamePlayerUid") || "guest";
-
-  let wrongQuestionsArray = [];
-  if (errorLogMap && typeof errorLogMap.forEach === "function") {
-    errorLogMap.forEach((data, qStr) => {
-      if (data) {
-        wrongQuestionsArray.push({
-          question: qStr.replace(/<[^>]*>?/gm, ""),
-          answer: data.ans,
-          hint: data.hint || "無提示",
-        });
-      }
-    });
-  }
-
-  let currentUnit = "unknown";
-  let path = window.location.pathname.toLowerCase();
-  if (path.includes("trig")) currentUnit = "trig";
-  else if (path.includes("space")) currentUnit = "space";
-  else if (path.includes("perm")) currentUnit = "perm";
-  else if (path.includes("practice")) currentUnit = "practice";
-
-  let currentMode = isHellMode ? "hell" : "normal";
-  if (currentUnit === "practice") currentMode = "mixed";
-
-  const recordData = {
-    uid: playerUid,
-    name: name,
-    unit: currentUnit,
-    mode: currentMode,
-    score: score,
-    status: status,
-    wrongLog: wrongQuestionsArray,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    correctCount: correctCount,
-    wrongCount: wrongCount,
-  };
-
-  return db.collection("game_records").add(recordData);
-}
-
-// ================= 📊 單元專屬：平均分數計算引擎 =================
-async function loadUnitAverageLeaderboard() {
-  const avgBoardContainer = document.getElementById("unit-avg-board");
-  const avgListEl = document.getElementById("unit-avg-list");
-  if (!avgBoardContainer || !avgListEl) return;
-
-  let currentUnit = "unknown";
-  let path = window.location.pathname.toLowerCase();
-  if (path.includes("trig")) currentUnit = "trig";
-  else if (path.includes("space")) currentUnit = "space";
-  else if (path.includes("perm")) currentUnit = "perm";
-
-  const urlParams = new URLSearchParams(window.location.search);
-  let currentMode = urlParams.get("mode") || "normal";
-
-  if (currentMode === "hell") {
-    document.getElementById("unit-avg-title").innerHTML = "💀 地獄平均 Top 3";
-    document.getElementById("unit-avg-title").style.color = "#ff4d4d";
-    avgBoardContainer.style.background = "#111";
-    avgBoardContainer.style.border = "1px solid #c0392b";
-  }
-
-  try {
-    if (typeof firebase === "undefined") return;
-    const db = firebase.firestore();
-    const snapshot = await db
-      .collection("game_records")
-      .where("unit", "==", currentUnit)
-      .where("mode", "==", currentMode)
-      .get();
-
-    let userStats = {};
-    snapshot.forEach((doc) => {
-      let data = doc.data();
-      let name = data.name;
-      let score = data.score || 0;
-      if (name === "Guest" || name === "---" || !name) return;
-      if (!userStats[name]) userStats[name] = { totalScore: 0, count: 0 };
-      userStats[name].totalScore += score;
-      userStats[name].count += 1;
-    });
-
-    let avgArray = [];
-    let currentUserAvg = "尚無紀錄";
-    const currentSavedName = localStorage.getItem("mathGamePlayerName");
-
-    for (let name in userStats) {
-      let stats = userStats[name];
-      let avg = Math.round(stats.totalScore / stats.count);
-      if (name === currentSavedName) currentUserAvg = avg;
-      if (stats.count >= 3)
-        avgArray.push({ name: name, avgScore: avg, playCount: stats.count });
-    }
-
-    const myAvgBadge = document.getElementById("my-unit-avg");
-    if (myAvgBadge && currentSavedName) {
-      myAvgBadge.style.display = "inline-block";
-      myAvgBadge.innerText = `我的平均: ${currentUserAvg}`;
-    }
-
-    avgArray.sort((a, b) => b.avgScore - a.avgScore);
-    let top3 = avgArray.slice(0, 3);
-
-    if (top3.length === 0) {
-      avgListEl.innerHTML = `<span style="color: #ccc; font-size: 12px; margin: 0 auto;">尚無符合資格的強者</span>`;
-      return;
-    }
-
-    let html = "";
-    let medals = ["🥇", "🥈", "🥉"];
-    top3.forEach((player, index) => {
-      html += `
-          <div style="background: rgba(0,0,0,0.2); padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0;">
-            <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 2px;">
-              <span style="font-size: 13px;">${medals[index]}</span>
-              <span style="font-weight: bold; font-size: 12px; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${player.name}">${player.name}</span>
-            </div>
-            <div style="display: flex; align-items: baseline; gap: 4px;">
-              <span style="color: #f1c40f; font-weight: 900; font-size: 16px; line-height: 1;">${player.avgScore}</span>
-              <span style="font-size: 10px; color: #95a5a6;">(${player.playCount}場)</span>
-            </div>
-          </div>
-        `;
-    });
-    avgListEl.innerHTML = html;
-  } catch (error) {
-    console.error("讀取平均成績失敗:", error);
-    avgListEl.innerHTML = `<span style="color: #e74c3c;">連線失敗</span>`;
-  }
-}
-// ==========================================
-// 🚀 Firebase 雲端資料庫初始化 (防撞名安全版)
-// ==========================================
-if (typeof firebase !== "undefined" && !firebase.apps.length) {
-  firebase.initializeApp({
-    apiKey: "AIzaSyC7ed0il_ScCdHeWOHepj56ycjRXYt_Mf4",
-    authDomain: "mathgame-6ab85.firebaseapp.com",
-    projectId: "mathgame-6ab85",
-    storageBucket: "mathgame-6ab85.firebasestorage.app",
-    messagingSenderId: "790458098592",
-    appId: "1:790458098592:web:298e23dbb8ba82a3ee3ac5",
-  });
 }
