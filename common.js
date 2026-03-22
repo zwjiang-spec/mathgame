@@ -1,3 +1,11 @@
+const GLOBAL_TITLES = [
+  { min: 0, name: "初心者", color: "#95a5a6" },
+  { min: 300, name: "狙擊手", color: "#3498db" },
+  { min: 600, name: "預言家", color: "#9b59b6" },
+  { min: 1000, name: "煉金師", color: "#e67e22" },
+  { min: 1500, name: "戰神", color: "#df22e6" },
+  { min: 2000, name: "至尊", color: "#c0392b" },
+];
 // ==========================================
 // 🚀 0. Firebase 雲端資料庫模組 (全域共用)
 // ==========================================
@@ -119,16 +127,39 @@ async function uploadGameRecord(
     .collection("game_records")
     .add(recordData)
     .then(async () => {
-      if (playerUid !== "guest" && Number(score) > 0) {
+      // ✨ 升級：不只加經驗值，連同遊玩次數、各單元答對/答錯數一起寫入身分證！
+      if (playerUid !== "guest") {
+        let expAdd = Number(score) > 0 ? Number(score) : 0;
+
+        // ✨ 關鍵：先宣告這行，否則下面的 currentLvl 會報錯導致遊戲卡死
+        let currentLvl = localStorage.getItem("mathGamePlayerLevel") || 1;
+
+        // 準備要自動累加的數據包 (利用 Firebase 免費的 increment 魔法)
+        let userUpdates = {
+          exp: firebase.firestore.FieldValue.increment(expAdd),
+          level: Number(currentLvl), // ✨ 這裡補上自動校正等級
+          total_plays: firebase.firestore.FieldValue.increment(1),
+          total_correct: firebase.firestore.FieldValue.increment(
+            Number(correctCount) || 0
+          ),
+          total_wrong: firebase.firestore.FieldValue.increment(
+            Number(wrongCount) || 0
+          ),
+          // 針對不同單元分別記錄 (戰力面板的數據來源)
+          [`${unit}_plays`]: firebase.firestore.FieldValue.increment(1),
+          [`${unit}_correct`]: firebase.firestore.FieldValue.increment(
+            Number(correctCount) || 0
+          ),
+          [`${unit}_wrong`]: firebase.firestore.FieldValue.increment(
+            Number(wrongCount) || 0
+          ),
+        };
+
+        // 寫入身分證 (users 表)
         db.collection("users")
           .doc(playerUid)
-          .set(
-            {
-              exp: firebase.firestore.FieldValue.increment(Number(score)),
-            },
-            { merge: true }
-          )
-          .catch((e) => console.warn("EXP 更新失敗", e));
+          .set(userUpdates, { merge: true })
+          .catch((e) => console.warn("玩家數據更新失敗", e));
 
         // 世界 Boss 傷害存錢筒...
         const bossRef = db.collection("global").doc("boss_state");
@@ -257,6 +288,7 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
           dateObj: ts,
           uid: d.uid,
           lvl: null,
+          globalMax: undefined, // 預留位置給全域最高分
         });
       });
     }
@@ -277,13 +309,14 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
           let scoreRaw = parseInt(csvData[i][2]);
           if (!isNaN(scoreRaw)) {
             let csvDate = new Date(csvData[i][0] || "");
-            if (isNaN(csvDate.getTime())) csvDate = new Date("2000-01-01"); // 防禦無效日期
+            if (isNaN(csvDate.getTime())) csvDate = new Date("2000-01-01");
             combinedRanks.push({
               n: (csvData[i][1] || "").split(" (")[0].trim(),
               s: scoreRaw,
               dateObj: csvDate,
               uid: null,
               lvl: null,
+              globalMax: undefined,
             });
           }
         }
@@ -300,6 +333,7 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
       dateObj: new Date(),
       uid: localStorage.getItem("mathGamePlayerUid") || "guest",
       lvl: null,
+      globalMax: undefined,
     });
   }
 
@@ -325,7 +359,7 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
   let fullDailyList = processMap(combinedRanks, true);
   let fullAllTimeList = processMap(combinedRanks, false);
 
-  // --- D. 會員等級同步 ---
+  // --- D. 會員身分大調查 (極速省電版 ⚡) ---
   const syncLevels = async (list) => {
     let topList = list.slice(0, limit);
     let myEntry = list.find((r) => r.n === myName);
@@ -336,17 +370,26 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
       .filter((p) => p.uid && p.uid !== "guest")
       .map(async (player) => {
         try {
-          const hSnap = await firebase
-            .firestore()
-            .collection("game_records")
-            .where("uid", "==", player.uid)
-            .get();
-          let totalExp = 0;
-          hSnap.forEach((d) => {
-            totalExp += Number(d.data().score) || 0;
-          });
-          player.lvl = calculateLevel(totalExp);
-        } catch (e) {}
+          const db =
+            typeof firebase !== "undefined" ? firebase.firestore() : null;
+          if (!db) return;
+
+          // ✨ 極速讀取：直接看使用者的身分證 (1次讀取)，絕不去翻歷史成績單 (幾百次讀取)
+          const userDoc = await db.collection("users").doc(player.uid).get();
+          if (userDoc.exists) {
+            let ud = userDoc.data();
+            // 優先讀取 level 欄位，沒有就用 exp 現算 (解決 Lv.1 問題)
+            player.lvl = ud.level || (ud.exp ? calculateLevel(ud.exp) : 1);
+            player.globalMax = ud.globalMaxScore || player.s;
+          } else {
+            player.lvl = 1;
+            player.globalMax = player.s;
+          }
+        } catch (e) {
+          console.warn("身分調查失敗", e);
+          player.lvl = 1;
+          player.globalMax = player.s;
+        }
       });
     await Promise.all(tasks);
     return { topList, myEntry, fullList: list };
@@ -355,10 +398,31 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
   const dailyData = await syncLevels(fullDailyList);
   const allTimeData = await syncLevels(fullAllTimeList);
 
-  // --- E. 渲染 UI ---
+  // --- E. 渲染 UI (加入稱號徽章) ---
   const renderBoard = (dataObj, title, isHell, fullList) => {
     const { topList, myEntry } = dataObj;
     let html = `<h3 style="${isHell ? "color:#ff4d4d" : ""}">${title}</h3>`;
+
+    // 🏆 稱號判斷小精靈
+    const TITLES = [
+      { min: 0, name: "初心者", color: "#95a5a6" },
+      { min: 300, name: "狙擊手", color: "#3498db" },
+      { min: 600, name: "預言家", color: "#9b59b6" },
+      { min: 1000, name: "煉金師", color: "#e67e22" },
+      { min: 1500, name: "戰神", color: "#df22e6" },
+      { min: 2000, name: "至尊", color: "#c0392b" },
+    ];
+
+    const getTitleHtml = (score) => {
+      let pTitle = TITLES[0];
+      for (let i = TITLES.length - 1; i >= 0; i--) {
+        if (score >= TITLES[i].min) {
+          pTitle = TITLES[i];
+          break;
+        }
+      }
+      return `<span style="background: ${pTitle.color}; color: white; font-size: 9px; padding: 2px 5px; border-radius: 6px; font-weight: bold; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.3); margin-right: 4px; vertical-align: middle;">${pTitle.name}</span>`;
+    };
 
     if (!topList.length) {
       html +=
@@ -367,11 +431,24 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
       topList.forEach((r, i) => {
         let lvlBadge =
           r.uid && r.uid !== "guest" && r.lvl
-            ? `<span style="background:#f39c12; color:white; font-size:10px; padding:1px 5px; border-radius:6px; margin-left:6px;">Lv.${r.lvl}</span>`
+            ? `<span style="background:#f39c12; color:white; font-size:10px; padding:1px 5px; border-radius:6px; margin-left:6px; vertical-align: middle;">Lv.${r.lvl}</span>`
             : "";
-        html += `<div class="board-row" style="border-bottom: 1px solid #eee"><span>${
-          i + 1
-        }. ${r.n}${lvlBadge}</span><strong>${r.s}</strong></div>`;
+
+        // 抓取剛剛算好的全域最高分 (如果沒有就用這局的分數)
+        let currentMax = r.globalMax !== undefined ? r.globalMax : r.s;
+        let titleBadge = getTitleHtml(currentMax);
+
+        // 排版微調：讓名字太長時會自動變成 ... 而不會把分數擠下去
+        html += `<div class="board-row" style="border-bottom: 1px solid #eee; display: flex; align-items: center; padding: 4px 0;">
+                   <div style="flex: 1; display: flex; align-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+                     <span style="margin-right: 4px;">${i + 1}.</span>
+                     ${titleBadge}
+                     <span style="cursor:pointer; text-decoration:underline; text-underline-offset:2px;" 
+      onclick="showPlayerStats('${r.uid}','${r.n}')">${r.n}</span>
+                     ${lvlBadge}
+                   </div>
+                   <strong style="margin-left: 8px;">${r.s}</strong>
+                 </div>`;
       });
     }
 
@@ -380,13 +457,22 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
       let myRankColor = myRank <= limit ? "#2ecc71" : "#f1c40f";
       let myLvlBadge =
         myEntry.uid && myEntry.uid !== "guest" && myEntry.lvl
-          ? `<span style="background:#f39c12; color:white; font-size:10px; padding:1px 5px; border-radius:6px; margin-left:4px;">Lv.${myEntry.lvl}</span>`
+          ? `<span style="background:#f39c12; color:white; font-size:10px; padding:1px 5px; border-radius:6px; margin-left:4px; vertical-align: middle;">Lv.${myEntry.lvl}</span>`
           : "";
+
+      let myMax =
+        myEntry.globalMax !== undefined ? myEntry.globalMax : myEntry.s;
+      let myTitleBadge = getTitleHtml(myMax);
 
       html += `
         <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #ccc; font-size: 11.5px; color: #2c3e50; text-align: left;">
-          🙋‍♂️ 我的最高: <span style="color: #f39c12; font-weight: bold;">${myEntry.s}</span> ${myLvlBadge}
-          <span style="opacity:0.8; float:right;">(排名第 <span style="color: ${myRankColor}; font-weight: bold;">${myRank}</span>)</span>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🙋‍♂️ 我的最高: <span style="color: #f39c12; font-weight: bold;">${myEntry.s}</span></span>
+            <span style="opacity:0.8;">(排名第 <span style="color: ${myRankColor}; font-weight: bold;">${myRank}</span>)</span>
+          </div>
+          <div style="margin-top: 5px; display: flex; align-items: center;">
+            ${myTitleBadge} ${myLvlBadge}
+          </div>
         </div>`;
     } else if (myName && myName !== "Guest") {
       html += `<div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed #eee; font-size: 11px; color: #95a5a6;">🙋‍♂️ 尚未留下紀錄</div>`;
@@ -405,6 +491,7 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
   } else {
     dailyBoard.style.display = "none";
   }
+
   allTimeBoard.innerHTML = renderBoard(
     allTimeData,
     currentMode === "hell"
@@ -682,4 +769,91 @@ function renderKeypad(containerId) {
       <div class="key key-blue hell-key" style="grid-column: span 2" onclick="input('+')">+</div>
       <div class="key key-enter hell-key" style="grid-column: span 2" onclick="submitAnswer()">ENTER</div>
     `;
+}
+// ==========================================
+// 📊 8. 玩家戰力偵測面板 (極速省電版)
+// ==========================================
+async function showPlayerStats(uid, playerName) {
+  if (!uid || uid === "guest" || uid === "null") {
+    alert("⚠️ 這位玩家是神秘的訪客，無法查看詳細資料！");
+    return;
+  }
+
+  // 1. 建立並顯示黑色的彈出視窗 (Modal)
+  let modal = document.getElementById("player-stats-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "player-stats-modal";
+    modal.style.cssText =
+      "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s; pointer-events: none;";
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div style="background: #1a1a2e; border: 2px solid #3498db; border-radius: 15px; padding: 20px; width: 85%; max-width: 350px; color: white; text-align: left; box-shadow: 0 10px 30px rgba(52, 152, 219, 0.4); position: relative;">
+      <span onclick="document.getElementById('player-stats-modal').style.opacity='0'; setTimeout(()=>document.getElementById('player-stats-modal').style.pointerEvents='none',300);" style="position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #bdc3c7;">&times;</span>
+      <h2 style="margin: 0 0 5px 0; color: #3498db; border-bottom: 1px solid #2c3e50; padding-bottom: 10px;">📊 玩家戰力雷達</h2>
+      <div style="margin-top: 15px; text-align: center;">
+        <span style="font-size: 20px; font-weight: bold; color: #ecf0f1;">${playerName}</span>
+        <div id="stats-loading" style="color: #f1c40f; font-size: 13px; margin-top: 10px;">📡 正在連線偵測戰力...</div>
+      </div>
+      <div id="stats-content" style="display: none; margin-top: 15px;"></div>
+    </div>
+  `;
+
+  modal.style.pointerEvents = "auto";
+  modal.style.opacity = "1";
+
+  // 2. 📡 僅花費 1 次讀取去拿他的身分證！
+  try {
+    const db = firebase.firestore();
+    const userDoc = await db.collection("users").doc(uid).get();
+
+    if (userDoc.exists) {
+      let d = userDoc.data();
+
+      // 計算答對率的公式
+      const calcAcc = (c, w) => {
+        let total = (c || 0) + (w || 0);
+        return total === 0 ? "0%" : Math.round((c / total) * 100) + "%";
+      };
+
+      let totalPlays = d.total_plays || 0;
+      let trigAcc = calcAcc(d.trig_correct, d.trig_wrong);
+      let spaceAcc = calcAcc(d.space_correct, d.space_wrong);
+      let permAcc = calcAcc(d.perm_correct, d.perm_wrong);
+      let lvl = d.level || 1;
+
+      document.getElementById("stats-loading").style.display = "none";
+      document.getElementById("stats-content").style.display = "block";
+      document.getElementById("stats-content").innerHTML = `
+        <div style="display: flex; justify-content: space-between; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px;">
+          <span style="color: #bdc3c7;">🌟 當前等級</span>
+          <span style="color: #f1c40f; font-weight: bold;">Lv. ${lvl}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px;">
+          <span style="color: #bdc3c7;">🎮 總遊玩局數</span>
+          <span style="color: #fff; font-weight: bold;">${totalPlays} 局</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; background: rgba(39, 174, 96, 0.15); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #27ae60;">
+          <span style="color: #27ae60; font-weight: bold;">📐 三角比答對率</span>
+          <span style="color: #fff; font-weight: bold;">${trigAcc}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; background: rgba(142, 68, 173, 0.15); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #8e44ad;">
+          <span style="color: #8e44ad; font-weight: bold;">🚀 空間坐標答對率</span>
+          <span style="color: #fff; font-weight: bold;">${spaceAcc}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; background: rgba(22, 160, 133, 0.15); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #16a085;">
+          <span style="color: #16a085; font-weight: bold;">🎲 排列組合答對率</span>
+          <span style="color: #fff; font-weight: bold;">${permAcc}</span>
+        </div>
+      `;
+    } else {
+      document.getElementById("stats-loading").innerText =
+        "⚠️ 找不到這位玩家的詳細資料！";
+    }
+  } catch (err) {
+    document.getElementById("stats-loading").innerText =
+      "⚠️ 連線失敗，無法偵測戰力！";
+  }
 }
