@@ -141,7 +141,9 @@
         border-bottom: none;
       }
     </style>
+
     <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
   </head>
   <body>
@@ -179,11 +181,9 @@
         style="position: absolute; top: 15px; left: 15px"
         >🏠 回主選單</a
       >
-
       <h1 style="color: #1c2833; margin-bottom: 15px; margin-top: 50px">
         排列組合真有趣！
       </h1>
-
       <h2
         id="final-score-text"
         class="hidden"
@@ -219,8 +219,8 @@
             (5分、10分...)。
           </li>
           <li>
-            <b style="color: #2980b9">難度進化：</b>總分達
-            <b>100分</b> 解鎖「進階階段(重複組合等)」。
+            <b style="color: #2980b9">難度進化：</b
+            >連續答對將會解鎖進階與魔王題。
           </li>
           <li>
             <b style="color: #f39c12">狂熱時間：</b>最後 30
@@ -249,7 +249,6 @@
             padding: 10px 15px;
             color: white;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-            /* ✨ 這裡做了瘦身與置中魔法！ */
             width: 90%;
             max-width: 460px;
             margin: 0 auto 20px auto;
@@ -370,9 +369,8 @@
               font-weight: bold;
               margin-top: 5px;
             "
+            >🏠 回到數學天地主選單</a
           >
-            🏠 回到數學天地主選單
-          </a>
         </div>
       </div>
     </div>
@@ -400,7 +398,7 @@
         "
       >
         <button
-          onclick="if(confirm('確定要放棄這局遊戲並返回主選單嗎？')) location.href='index.html'"
+          onclick="abandonGame()"
           style="
             background: #fae5e5;
             color: #c0392b;
@@ -416,7 +414,6 @@
         >
           🚪 退出
         </button>
-
         <div style="display: flex; flex-direction: column; align-items: center">
           <div class="stat-label">SCORE</div>
           <div id="ui-score" class="stat-value">0</div>
@@ -431,7 +428,7 @@
       </div>
       <div id="combo-gauge-text">0</div>
     </div>
-    <div id="phase-indicator">🌱 階段一：符號暖身</div>
+    <div id="phase-indicator">🌱 階段一：觀念暖身</div>
 
     <div id="display-area">
       <div
@@ -489,8 +486,100 @@
     <script src="common.js"></script>
     <script>
       let isGameOver = false; // 🚩 這就是我們的守門員
+      // ✨ 動態生成結算經驗條動畫
+      function showExpAnimation(finalScore, containerId) {
+        const uid = localStorage.getItem("mathGamePlayerUid");
+        if (!uid || uid === "guest") return; // 訪客不顯示
+
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const oldUi = document.getElementById("dynamic-exp-ui");
+        if (oldUi) oldUi.remove();
+
+        let gainedExp = Math.max(0, finalScore);
+        let oldExp = window.initialPlayerExp || 0;
+        let newExp = oldExp + gainedExp;
+
+        let oldLevel = Math.floor(Math.sqrt(oldExp / 100)) + 1;
+        let newLevel = Math.floor(Math.sqrt(newExp / 100)) + 1;
+
+        let oldTierBase = Math.pow(oldLevel - 1, 2) * 100;
+        let oldNextTier = Math.pow(oldLevel, 2) * 100;
+        let oldPercent =
+          ((oldExp - oldTierBase) / (oldNextTier - oldTierBase)) * 100;
+
+        const uiDiv = document.createElement("div");
+        uiDiv.id = "dynamic-exp-ui";
+        uiDiv.style.cssText =
+          "width: 100%; max-width: 320px; margin: 15px auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);";
+
+        uiDiv.innerHTML = `
+          <div style="font-size: 15px; font-weight: bold; color: #f1c40f; margin-bottom: 8px;">
+            戰鬥結算 <span style="color: #2ecc71; margin-left: 10px;">+${gainedExp} EXP</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: #bdc3c7; margin-bottom: 5px;">
+            <span id="exp-lvl-current">Lv.${oldLevel}</span>
+            <span id="exp-lvl-next">Lv.${oldLevel + 1}</span>
+          </div>
+          <div style="width: 100%; height: 12px; background: rgba(0,0,0,0.4); border-radius: 6px; overflow: hidden; position: relative;">
+            <div id="exp-bar-base" style="position: absolute; top: 0; left: 0; height: 100%; width: ${oldPercent}%; background: #7f8c8d;"></div>
+            <div id="exp-bar-gained" style="position: absolute; top: 0; left: 0; height: 100%; width: ${oldPercent}%; background: linear-gradient(90deg, #f1c40f, #f39c12); transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1);"></div>
+          </div>
+          <div id="exp-text-details" style="font-size: 12px; color: #95a5a6; margin-top: 8px;">${oldExp} / ${oldNextTier}</div>
+          <div id="exp-levelup-toast" style="display:none; color: #f1c40f; font-weight: 900; font-size: 16px; margin-top: 8px; text-shadow: 0 0 10px rgba(241,196,15,0.5); transform: scale(0.5); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">🎉 LEVEL UP! 🎉</div>
+        `;
+
+        const firstBtn = container.querySelector("button");
+        if (firstBtn) container.insertBefore(uiDiv, firstBtn);
+        else container.appendChild(uiDiv);
+
+        setTimeout(() => {
+          const barGained = uiDiv.querySelector("#exp-bar-gained");
+          const txtDetails = uiDiv.querySelector("#exp-text-details");
+          const toast = uiDiv.querySelector("#exp-levelup-toast");
+
+          if (newLevel > oldLevel) {
+            barGained.style.width = "100%";
+            setTimeout(() => {
+              toast.style.display = "block";
+              setTimeout(() => {
+                toast.style.transform = "scale(1)";
+              }, 10);
+
+              let newTierBase = Math.pow(newLevel - 1, 2) * 100;
+              let newNextTier = Math.pow(newLevel, 2) * 100;
+              let newPercent =
+                ((newExp - newTierBase) / (newNextTier - newTierBase)) * 100;
+
+              uiDiv.querySelector(
+                "#exp-lvl-current"
+              ).innerText = `Lv.${newLevel}`;
+              uiDiv.querySelector("#exp-lvl-next").innerText = `Lv.${
+                newLevel + 1
+              }`;
+              uiDiv.querySelector("#exp-bar-base").style.width = "0%";
+              barGained.style.transition = "none";
+              barGained.style.width = "0%";
+              txtDetails.innerText = `${newExp} / ${newNextTier}`;
+
+              setTimeout(() => {
+                barGained.style.transition =
+                  "width 1s cubic-bezier(0.25, 1, 0.5, 1)";
+                barGained.style.width = newPercent + "%";
+                localStorage.setItem("mathGamePlayerLevel", newLevel);
+              }, 50);
+            }, 1500);
+          } else {
+            let newPercent =
+              ((newExp - oldTierBase) / (oldNextTier - oldTierBase)) * 100;
+            barGained.style.width = newPercent + "%";
+            txtDetails.innerText = `${newExp} / ${oldNextTier}`;
+          }
+        }, 500);
+      }
       // ==========================================
-      // 🚀 Firebase 雲端資料庫初始化
+      // 🎲 排列組合題庫庫存 (保留最經典的題目)
       // ==========================================
       const permQuestions = [
         { q: "4!", a: "24", hint: "4 × 3 × 2 × 1", level: 1 },
@@ -584,42 +673,182 @@
         },
       ];
 
-      function generateGridQuestions() {
-        function C(n, k) {
-          if (k < 0 || k > n) return 0;
-          if (k === 0 || k === n) return 1;
-          let res = 1;
-          for (let i = 1; i <= k; i++) res = (res * (n - i + 1)) / i;
-          return res;
+      // ==========================================
+      // 🎲 無限隨機題目產生器 (動態生成數字 + 隨機情境 + 去重)
+      // ==========================================
+      function rand(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+      function fact(n) {
+        return n <= 1 ? 1 : n * fact(n - 1);
+      }
+      function calcC(n, k) {
+        if (k < 0 || k > n) return 0;
+        if (k === 0 || k === n) return 1;
+        let res = 1;
+        for (let i = 1; i <= k; i++) res = (res * (n - i + 1)) / i;
+        return res;
+      }
+      function calcP(n, k) {
+        if (k < 0 || k > n) return 0;
+        let res = 1;
+        for (let i = 0; i < k; i++) res *= n - i;
+        return res;
+      }
+
+      function generateDynamicQuestions() {
+        function addUnique(newObj) {
+          if (!permQuestions.some((q) => q.q === newObj.q))
+            permQuestions.push(newObj);
         }
+
+        const addScenarios = [
+          (n1, n2) => ({
+            q: `書店有 ${n1} 本數學書，${n2} 本英文書，想買「一本書」有幾種選擇？`,
+            hint: `加法原理：只能擇一 ➡ ${n1} + ${n2} = ${n1 + n2}`,
+          }),
+          (n1, n2) => ({
+            q: `搭火車有 ${n1} 種班次，搭客運有 ${n2} 種班次，若只能「擇一搭乘」，有幾種選擇？`,
+            hint: `加法原理：火車或客運擇一 ➡ ${n1} + ${n2} = ${n1 + n2}`,
+          }),
+          (n1, n2) => ({
+            q: `冰淇淋店有 ${n1} 種水果口味，${n2} 種巧克力口味，只能選「一球」，有幾種選擇？`,
+            hint: `加法原理：互斥的選擇 ➡ ${n1} + ${n2} = ${n1 + n2}`,
+          }),
+          (n1, n2) => ({
+            q: `早餐店有 ${n1} 種吐司，${n2} 種蛋餅，小明只想買「一份」餐點，有幾種選法？`,
+            hint: `加法原理：只能擇一 ➡ ${n1} + ${n2} = ${n1 + n2}`,
+          }),
+        ];
+        const mulScenarios = [
+          (n1, n2) => ({
+            q: `有 ${n1} 件不同的上衣，${n2} 件不同的褲子，搭配「一套」出門有幾種穿法？`,
+            hint: `乘法原理：兩步皆需完成 ➡ ${n1} × ${n2} = ${n1 * n2}`,
+          }),
+          (n1, n2) => ({
+            q: `餐廳有 ${n1} 種主餐與 ${n2} 種飲料，點一份「主餐＋飲料」的套餐，共有幾種搭配？`,
+            hint: `乘法原理：分步驟完成 ➡ ${n1} × ${n2} = ${n1 * n2}`,
+          }),
+          (n1, n2) => ({
+            q: `從甲地到乙地有 ${n1} 條路，從乙地到丙地有 ${n2} 條路。從甲經乙走到丙有幾種走法？`,
+            hint: `乘法原理：連續走兩段路 ➡ ${n1} × ${n2} = ${n1 * n2}`,
+          }),
+          (n1, n2) => ({
+            q: `社團有 ${n1} 位男同學與 ${n2} 位女同學，要選出一男一女搭檔表演，有幾種選法？`,
+            hint: `乘法原理：各選一個 ➡ ${n1} × ${n2} = ${n1 * n2}`,
+          }),
+        ];
+
+        // 1. 暖身題區 (設定為 Level 1，會被提前淘汰)
+        for (let i = 0; i < 12; i++) {
+          let b1 = rand(3, 6);
+          let b2 = rand(2, 5);
+          let addS = addScenarios[rand(0, addScenarios.length - 1)](b1, b2);
+          addUnique({
+            q: addS.q,
+            a: (b1 + b2).toString(),
+            hint: addS.hint,
+            level: 1,
+          });
+
+          let c1 = rand(3, 5);
+          let c2 = rand(3, 4);
+          let mulS = mulScenarios[rand(0, mulScenarios.length - 1)](c1, c2);
+          addUnique({
+            q: mulS.q,
+            a: (c1 * c2).toString(),
+            hint: mulS.hint,
+            level: 1,
+          });
+        }
+
+        // 2. 核心題區與地獄題
+        for (let i = 0; i < 30; i++) {
+          let p1 = rand(3, 5);
+          addUnique({
+            q: `${p1} 個人排成一列，共有幾種排法？`,
+            a: fact(p1).toString(),
+            hint: `直線排列：${p1}! = ${fact(p1)}`,
+            level: 2,
+          });
+          let n1 = rand(5, 7);
+          let k1 = rand(2, 3);
+          addUnique({
+            q: `從 ${n1} 個人當中選出 ${k1} 個人組委員會，共有幾種選法？`,
+            a: calcC(n1, k1).toString(),
+            hint: `順序沒差用 C ➡ C(${n1},${k1}) = ${calcC(n1, k1)}`,
+            level: 2,
+          });
+          let n2 = rand(4, 6);
+          let k2 = rand(2, 3);
+          addUnique({
+            q: `從 ${n2} 個人當中選出 ${k2} 個人排成一列，共有幾種排法？`,
+            a: calcP(n2, k2).toString(),
+            hint: `順序有差用 P ➡ P(${n2},${k2}) = ${calcP(n2, k2)}`,
+            level: 2,
+          });
+
+          let countA = rand(2, 3);
+          let countB = rand(1, 2);
+          let totalStr = "A".repeat(countA) + "B".repeat(countB);
+          let ansAB = fact(countA + countB) / (fact(countA) * fact(countB));
+          addUnique({
+            q: `${totalStr} 排成一列，共有幾種排法？`,
+            a: ansAB.toString(),
+            hint: `不盡相異物 ➡ ${
+              countA + countB
+            }! / (${countA}! × ${countB}!) = ${ansAB}`,
+            level: 3,
+          });
+
+          let person = rand(2, 3);
+          let apple = rand(2, 4);
+          let ansH = calcC(person + apple - 1, apple);
+          addUnique({
+            q: `${apple} 個相同蘋果，分給 ${person} 人 (可有人拿0個)，有幾種分法？`,
+            a: ansH.toString(),
+            hint: `重複組合 H(${person},${apple}) = C(${
+              person + apple - 1
+            },${apple}) = ${ansH}`,
+            level: 4,
+          });
+
+          // 🔥 地獄題 (Level 5)
+          let p_hell = rand(2, 3);
+          let a_hell = rand(2, 3);
+          let ansHell = calcC(p_hell + 1 + a_hell - 1, a_hell);
+          addUnique({
+            q: `【地獄題】${a_hell} 個相同蘋果，分給 ${p_hell} 人 (可拿0個，且蘋果「可以不用全部分完」)，有幾種分法？`,
+            a: ansHell.toString(),
+            hint: `加入1個虛擬垃圾桶吃掉剩的蘋果，變成 ${p_hell + 1} 人分 ➡ H(${
+              p_hell + 1
+            },${a_hell}) = ${ansHell}`,
+            level: 5,
+          });
+        }
+      }
+
+      function generateGridQuestions() {
         for (let n = 1; n <= 5; n++) {
           for (let m = 1; m <= 5; m++) {
             if (n === 1 && m === 1) continue;
-            let ans = C(n + m, n);
-            let lvl = n + m <= 5 ? 2 : 3;
+            let ans = calcC(n + m, n);
+            let lvl = 3; // 捷徑統一為進階第三階段
             let s = 30;
             let w = n * s;
             let h = m * s;
             let pathD = "";
             for (let i = 0; i <= m; i++) pathD += `M0,${i * s} H${w} `;
             for (let i = 0; i <= n; i++) pathD += `M${i * s},0 V${h} `;
-
-            let svgStr =
-              `<div style='text-align: center; margin: 8px 0;'>` +
-              `<svg viewBox='-25 -25 ${w + 50} ${
-                h + 50
-              }' style='height: 90px; max-height: 12vh; width: auto; max-width: 100%;'>` +
-              `<path d='${pathD}' stroke='#34495e' stroke-width='3' fill='none'/>` +
-              `<circle cx='0' cy='${h}' r='6' fill='#e74c3c'/>` +
-              `<text x='-20' y='${
-                h + 20
-              }' fill='#e74c3c' font-weight='bold' font-size='20'>A</text>` +
-              `<circle cx='${w}' cy='0' r='6' fill='#27ae60'/>` +
-              `<text x='${
-                w + 8
-              }' y='-6' fill='#27ae60' font-weight='bold' font-size='20'>B</text>` +
-              `</svg></div>`;
-
+            let svgStr = `<div style='text-align: center; margin: 8px 0;'><svg viewBox='-25 -25 ${
+              w + 50
+            } ${
+              h + 50
+            }' style='height: 90px; max-height: 12vh; width: auto; max-width: 100%;'><path d='${pathD}' stroke='#34495e' stroke-width='3' fill='none'/><circle cx='0' cy='${h}' r='6' fill='#e74c3c'/><text x='-20' y='${
+              h + 20
+            }' fill='#e74c3c' font-weight='bold' font-size='20'>A</text><circle cx='${w}' cy='0' r='6' fill='#27ae60'/><text x='${
+              w + 8
+            }' y='-6' fill='#27ae60' font-weight='bold' font-size='20'>B</text></svg></div>`;
             permQuestions.push({
               q: `由 A 到 B 取捷徑${svgStr}`,
               a: ans.toString(),
@@ -629,8 +858,14 @@
           }
         }
       }
+
+      // 產生題庫
+      generateDynamicQuestions();
       generateGridQuestions();
 
+      // ==========================================
+      // 🚀 遊戲系統全域變數 (保證只宣告一次！)
+      // ==========================================
       let score = 0,
         combo = 0,
         consecutiveWrong = 0;
@@ -646,17 +881,14 @@
         startTime,
         lastTickSec = -1;
       const TIME_LIMIT = 90;
-
       let correctQuestionsSet = new Set();
       let errorLogMap = new Map();
       let activeWrongPool = [];
 
-      // ✨ 統一使用 common.js 的極速排行榜讀取邏輯
       const CSV_URL =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwQuA4SuPuNdHk6sUV9yyOU9g6z7uKNqIPsQw0Rj8u8g6-2WTLRMW-oeFhLRbiw2v7Oiz8v2g1XwNP/pub?output=csv";
 
       window.onload = () => {
-        // --- 1. 自動讀取 Google 登入的名字 ---
         const savedName = localStorage.getItem("mathGamePlayerName");
         const nameInput = document.getElementById("player-name");
         if (savedName && nameInput) {
@@ -665,22 +897,14 @@
           nameInput.style.backgroundColor = "#eaf2f8";
           nameInput.style.color = "#2980b9";
         }
-
-        // --- 2. 召喚鍵盤 ---
         renderKeypad("keypad");
 
-        // --- 3. ✨ 聰明的排行榜與平均榜召喚邏輯 ---
         const urlParams = new URLSearchParams(window.location.search);
         const isHell = urlParams.get("mode") === "hell";
-
-        // 載入一般/地獄排行榜
         loadGlobalLeaderboard(isHell ? null : CSV_URL);
-
-        // ✨ 召喚單元專屬平均榜！
         loadUnitAverageLeaderboard();
       };
 
-      // ✨ 2. 最強計算容錯引擎：自動化簡與防呆比對
       function evalMathStr(s) {
         if (!s) return null;
         if (!/^[0-9+\-*/().\s√]+$/.test(s)) return null;
@@ -722,35 +946,32 @@
 
         if (remain <= 30) {
           currentMultiplier = 2;
-          phaseStr = "🔥 狂熱時間 (全難度解禁, 分數 x2)";
-          allowedLevels = [1, 2, 3, 4];
+          phaseStr = "🔥 狂熱時間 (地獄題解禁, 分數 x2)";
+          allowedLevels = [2, 3, 4, 5]; // 🚫 嚴格拔除 Level 1
           document.getElementById("phase-indicator").style.color = "#c0392b";
         } else if (consecutiveWrong >= 2) {
           currentMultiplier = 1;
-          phaseStr = "🌱 基礎保底 (連續失誤，回歸符號暖身)";
-          allowedLevels = [1];
+          phaseStr = "🌱 基礎保底 (連續失誤，回歸暖身)";
+          allowedLevels = [1, 2];
           document.getElementById("phase-indicator").style.color = "#27ae60";
-        } else if (score >= 100) {
+        } else if (score >= 80) {
           currentMultiplier = 1;
           phaseStr = "⚡ 最終階段 (方程式與重複組合解鎖)";
           allowedLevels = [3, 4];
           document.getElementById("phase-indicator").style.color = "#8e44ad";
-        } else if (combo >= 3 || score >= 50) {
+        } else if (combo >= 2 || score >= 30) {
           currentMultiplier = 1;
-          phaseStr = "⚡ 進階階段 (情境與條件限制)";
+          phaseStr = "⚡ 進階階段 (排列組合與情境)";
           allowedLevels = [2, 3];
           document.getElementById("phase-indicator").style.color = "#d68910";
         } else {
           currentMultiplier = 1;
-          phaseStr = `🌱 階段一：符號暖身`;
+          phaseStr = `🌱 階段一：觀念暖身`;
           allowedLevels = [1];
           document.getElementById("phase-indicator").style.color = "#27ae60";
         }
 
-        // ✨ 1. 記住上一題，避免連續重複
         let lastQ = currentQuestionStr;
-
-        // ✨ 2. 錯題本抽題：40% 機率，且排除剛剛才出現的上一題
         let availableWrong = activeWrongPool.filter((item) => item.q !== lastQ);
         if (availableWrong.length > 0 && Math.random() < 0.4) {
           let idx = Math.floor(Math.random() * availableWrong.length);
@@ -767,15 +988,12 @@
           return;
         }
 
-        // ✨ 3. 正常抽題：排除「已答對的」以及「上一題」
         let pool = permQuestions.filter(
           (q) =>
             allowedLevels.includes(q.level) &&
             !correctQuestionsSet.has(q.q) &&
             q.q !== lastQ
         );
-
-        // 題庫見底時的保底機制 (依序放寬條件，但優先排除上一題)
         if (pool.length === 0)
           pool = permQuestions.filter(
             (q) => allowedLevels.includes(q.level) && q.q !== lastQ
@@ -786,7 +1004,7 @@
           );
         if (pool.length === 0)
           pool = permQuestions.filter((q) => q.q !== lastQ);
-        if (pool.length === 0) pool = permQuestions; // 最終防呆
+        if (pool.length === 0) pool = permQuestions;
 
         let selectedQ = pool[Math.floor(Math.random() * pool.length)];
         currentQuestionStr = selectedQ.q;
@@ -830,12 +1048,10 @@
       }
 
       function checkDeath() {
-        // ✨ 死亡也要鎖門！防止重複死兩次，或跟 endGame 撞在一起
         if (isGameOver) return;
         if (score < -20) {
           isGameOver = true;
           clearInterval(timer);
-
           if (
             typeof generateErrorLogHTML === "function" &&
             document.getElementById("death-error-log")
@@ -845,6 +1061,7 @@
           }
           if (document.getElementById("death-screen"))
             document.getElementById("death-screen").classList.add("show");
+          showExpAnimation(score, "death-screen");
           if (document.getElementById("keypad-container"))
             document.getElementById("keypad-container").style.display = "none";
 
@@ -854,7 +1071,6 @@
             deathBtn.innerText = "💀 遺言傳送中...";
           }
 
-          // ✨ 一行指令，直接呼叫 common.js 的萬能上傳函數！
           uploadGameRecord(
             "dead",
             score,
@@ -914,11 +1130,10 @@
         )
           return;
 
-        isProcessing = true; // 上鎖
+        isProcessing = true;
 
         if (isMathEqual(userInput, targetAns)) {
-          correctCount++; // ✨ 動作 3：精準答對加 1！
-
+          correctCount++;
           if (currentQuestionErrors === 0)
             correctQuestionsSet.add(currentQuestionStr);
           activeWrongPool = activeWrongPool.filter(
@@ -933,6 +1148,7 @@
           } else {
             if (typeof playCorrect === "function") playCorrect();
           }
+
           box.classList.add("correct-flash");
           score += (10 + combo * 2) * currentMultiplier;
           combo++;
@@ -948,18 +1164,25 @@
           updateUI();
           setTimeout(() => {
             getNewQuestion();
-            isProcessing = false; // 出完下一題解鎖
+            isProcessing = false;
           }, 150);
         } else {
-          wrongCount++; // ✨ 動作 4：精準答錯加 1！
+          // ❌ 答錯了！
+          wrongCount++;
+
+          // 👈 這裡的 triggerErrorEffect 已經完美幫您把錯題記進 errorLogMap 和 activeWrongPool 了
           triggerErrorEffect();
 
-          // ✨ 答錯延遲 400 毫秒後自動清空輸入框
           setTimeout(() => {
             userInput = "";
             renderInput();
+
+            // ✨ 關鍵神救援：強制換下一題！
+            // 搭配您原本的 getNewQuestion() 邏輯，這題絕對不會馬上連續出現，但會在後面 40% 高機率突擊補考！
+            getNewQuestion();
+
             isProcessing = false;
-          }, 400);
+          }, 400); // 稍微停留 0.8 秒，讓學生看清楚螢幕震動和紅字，再換下一題
         }
       }
 
@@ -969,13 +1192,10 @@
           isProcessing
         )
           return;
-
-        isProcessing = true; // 跳過也上鎖
-        wrongCount++; // ✨ 動作 4：跳過也算答錯 1 題！
-
+        isProcessing = true;
+        wrongCount++;
         let h = typeof currentHint !== "undefined" ? currentHint : "";
 
-        // 跳過一樣算錯一次，記錄次數
         if (errorLogMap.has(currentQuestionStr)) {
           errorLogMap.get(currentQuestionStr).count++;
         } else {
@@ -1004,7 +1224,7 @@
 
         setTimeout(() => {
           getNewQuestion();
-          isProcessing = false; // 出完下一題解鎖
+          isProcessing = false;
         }, 450);
       }
 
@@ -1030,7 +1250,6 @@
           comboFill.classList.remove("fever-fill");
           inputBox.classList.remove("fever-box");
         } else {
-          // ✨ 統一紅色 FEVER
           comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`;
           comboFill.classList.add("fever-fill");
           inputBox.classList.add("fever-box");
@@ -1038,7 +1257,14 @@
       }
 
       function startGame() {
-        isGameOver = false; // 🔓 重新開始新局時，要把門鎖打開
+        isGameOver = false;
+        window.initialPlayerExp = 0;
+        const pUid = localStorage.getItem("mathGamePlayerUid");
+        if (pUid && pUid !== "guest") {
+          fetchPlayerStatsFromHistory(pUid).then((stats) => {
+            window.initialPlayerExp = stats.totalExp;
+          });
+        }
         const nameInput = document.getElementById("player-name");
         if (nameInput) nameInput.blur();
         window.scrollTo(0, 0);
@@ -1101,39 +1327,31 @@
         }, 50);
       }
 
-      // ✨ Google 表單上傳功能
       function endGame() {
         if (isGameOver) return;
         isGameOver = true;
-        // --- 0. 切換按鈕：隱藏開始按鈕，顯示重新開始 ---
         document.getElementById("start-ui-group").classList.add("hidden");
         document.getElementById("end-ui-group").classList.remove("hidden");
 
-        // --- 1. 顯示結算 UI ---
         document.getElementById("overlay").classList.remove("hidden");
         document.getElementById("final-score-text").classList.remove("hidden");
         document.getElementById(
           "final-score-text"
         ).innerText = `最終得分: ${score}`;
         document.getElementById("rules-box").classList.add("hidden");
-
-        // --- 2. 顯示錯題本 (包含提示) ---
+        showExpAnimation(score, "end-ui-group");
         const endLog = document.getElementById("end-error-log");
         endLog.innerHTML = generateErrorLogHTML();
         endLog.classList.remove("hidden");
         window.scrollTo(0, 0);
 
-        // --- 3. 準備上傳資料到 Firebase ---
         document.getElementById("player-name").value = "成績光速傳送中...";
-
-        // ✨ 補上這一行：宣告 restartBtn 是誰！
         const restartBtn = document.querySelector("#end-ui-group button");
         if (restartBtn) {
           restartBtn.disabled = true;
           restartBtn.innerText = "⏳ 成績上傳中...";
         }
 
-        // ✨ 呼叫 common.js 的萬能上傳！
         uploadGameRecord(
           "clear",
           score,
@@ -1151,15 +1369,12 @@
               restartBtn.style.opacity = "1";
               restartBtn.style.cursor = "pointer";
             }
-            // 抓取玩家名字，把這局成績當作 newRecord 傳進去，讓畫面秒速顯示！
             let finalName = document.getElementById("ui-name").innerText;
             if (finalName === "---" || !finalName) finalName = "Guest";
-
             loadGlobalLeaderboard(
               typeof isHellMode !== "undefined" && isHellMode ? null : CSV_URL,
               { n: finalName, s: score }
             );
-
             setTimeout(
               () => (document.getElementById("player-name").value = ""),
               2000
@@ -1176,6 +1391,62 @@
             }
           });
       }
+      // ==========================================
+      // 🚫 防逃跑系統 (Anti-Rage-Quit)
+      // ==========================================
+      function abandonGame() {
+        if (
+          confirm(
+            "確定要放棄這局遊戲嗎？\n⚠️ 警告：中途退出仍會將「目前的分數」送出並計入平均成績！"
+          )
+        ) {
+          if (!isGameOver && typeof startTime !== "undefined" && startTime) {
+            isGameOver = true;
+            if (typeof timer !== "undefined") clearInterval(timer);
+
+            // 標記畫面，讓玩家知道正在上傳 (保留 DOM 結構，確保能抓到名字！)
+            if (document.getElementById("display-area")) {
+              document.getElementById("display-area").innerHTML =
+                "<h2 style='color:#c0392b; text-align:center;'>紀錄送出中...</h2>";
+            }
+            if (document.getElementById("keypad-container")) {
+              document.getElementById("keypad-container").style.display =
+                "none";
+            }
+
+            // 上傳目前成績，狀態標記為 abandoned
+            uploadGameRecord(
+              "abandoned",
+              score,
+              typeof errorLogMap !== "undefined" ? errorLogMap : null,
+              typeof isHellMode !== "undefined" ? isHellMode : false,
+              correctCount,
+              wrongCount
+            ).finally(() => {
+              location.href = "index.html";
+            });
+          } else {
+            location.href = "index.html";
+          }
+        }
+      }
+
+      // 監聽玩家直接「滑掉網頁」、「關閉分頁」或「按上一頁」
+      window.addEventListener("pagehide", () => {
+        // 如果遊戲已經開始，且還沒結算
+        if (!isGameOver && typeof startTime !== "undefined" && startTime) {
+          isGameOver = true;
+          // 直接將當下的殘酷分數送上雲端！
+          uploadGameRecord(
+            "abandoned",
+            score,
+            typeof errorLogMap !== "undefined" ? errorLogMap : null,
+            typeof isHellMode !== "undefined" ? isHellMode : false,
+            correctCount,
+            wrongCount
+          );
+        }
+      });
     </script>
   </body>
 </html>
