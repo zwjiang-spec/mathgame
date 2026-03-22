@@ -84,8 +84,10 @@
         pointer-events: none;
       }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+    <script src="common.js"></script>
   </head>
   <body>
     <div id="toast">答案提示區</div>
@@ -251,7 +253,7 @@
           id="start-ui-group"
           style="
             display: flex;
-            flex-direction: column;
+            flex-direction: column; 
             align-items: center;
             width: 100%;
           "
@@ -265,6 +267,109 @@
             style="text-align: center; margin-bottom: 15px"
           />
           <button class="action-btn" onclick="startGame()">START GAME</button>
+        </div>
+
+          <div
+            id="battle-lobby-ui"
+            class="hidden"
+            style="width: 100%; text-align: center; max-width: 350px"
+          >
+            <h3 style="color: #e74c3c; margin-top: 0; margin-bottom: 15px">
+              ⚔️ 雙人連線對戰
+            </h3>
+
+            <div
+              style="
+                background: #fdf2f2;
+                border: 2px solid #e74c3c;
+                border-radius: 12px;
+                padding: 15px;
+                margin-bottom: 15px;
+              "
+            >
+              <p style="margin: 0 0 10px 0; color: #c0392b; font-weight: bold">
+                [ 創建新房間 ]
+              </p>
+              <button
+                class="action-btn"
+                onclick="hostRoom()"
+                style="
+                  background: #e74c3c;
+                  padding: 10px 20px;
+                  font-size: 16px;
+                  margin-bottom: 0;
+                "
+              >
+                建立房間
+              </button>
+              <div
+                id="room-code-display"
+                style="
+                  font-size: 32px;
+                  font-weight: 900;
+                  color: #2c3e50;
+                  margin-top: 10px;
+                  letter-spacing: 6px;
+                  display: none;
+                "
+              ></div>
+              <div
+                id="room-wait-msg"
+                style="
+                  font-size: 13px;
+                  color: #e67e22;
+                  margin-top: 5px;
+                  display: none;
+                  font-weight: bold;
+                "
+              >
+                ⏳ 等待對手加入中...
+              </div>
+            </div>
+
+            <div
+              style="
+                background: #eaf2f8;
+                border: 2px solid #3498db;
+                border-radius: 12px;
+                padding: 15px;
+              "
+            >
+              <p style="margin: 0 0 10px 0; color: #2980b9; font-weight: bold">
+                [ 加入好友房間 ]
+              </p>
+              <div style="display: flex; justify-content: center; gap: 10px">
+                <input
+                  type="text"
+                  id="join-room-code"
+                  placeholder="輸入 4 碼房號"
+                  maxlength="4"
+                  style="
+                    font-size: 18px;
+                    padding: 8px;
+                    width: 130px;
+                    text-align: center;
+                    text-transform: uppercase;
+                    border: 2px solid #bdc3c7;
+                    border-radius: 8px;
+                    font-weight: bold;
+                  "
+                />
+                <button
+                  class="action-btn"
+                  onclick="joinRoom()"
+                  style="
+                    background: #3498db;
+                    padding: 10px 20px;
+                    font-size: 16px;
+                    margin-bottom: 0;
+                  "
+                >
+                  加入
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div
@@ -320,7 +425,7 @@
         "
       >
         <button
-          onclick="if(confirm('確定要放棄這局遊戲並返回主選單嗎？')) location.href='index.html'"
+          onclick="abandonGame()"
           style="
             background: #fae5e5;
             color: #c0392b;
@@ -799,6 +904,7 @@
           }
           if (document.getElementById("death-screen"))
             document.getElementById("death-screen").classList.add("show");
+            showExpAnimation(score, "death-screen");
           if (document.getElementById("keypad-container"))
             document.getElementById("keypad-container").style.display = "none";
 
@@ -912,13 +1018,22 @@
             isProcessing = false;
           }, 150);
         } else {
-          wrongCount++; // 精準計數
-          triggerErrorEffect();
+          // ❌ 答錯了！
+          wrongCount++; 
+          
+          // 👈 這裡的 triggerErrorEffect 已經完美幫您把錯題記進 errorLogMap 和 activeWrongPool 了
+          triggerErrorEffect(); 
+          
           setTimeout(() => {
             userInput = "";
             renderInput();
+            
+            // ✨ 關鍵神救援：強制換下一題！
+            // 搭配您原本的 getNewQuestion() 邏輯，這題絕對不會馬上連續出現，但會在後面 40% 高機率突擊補考！
+            getNewQuestion(); 
+            
             isProcessing = false;
-          }, 400);
+          }, 400); // 稍微停留 0.4 秒，讓學生看清楚螢幕震動和紅字，再換下一題
         }
       }
 
@@ -967,14 +1082,109 @@
           comboFill.classList.add("fever-fill");
           inputBox.classList.add("fever-box");
         }
+        // ✨ 雙人對戰核心：只要 UI 更新，就把分數同步給對手！
+        if (typeof updateBattleScore === "function" && isBattleMode) {
+          updateBattleScore(score, combo);
+        }
       }
+// ✨ 動態生成結算經驗條動畫
+function showExpAnimation(finalScore, containerId) {
+        const uid = localStorage.getItem("mathGamePlayerUid");
+        if (!uid || uid === "guest") return; // 訪客不顯示
 
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        // 清除上一局留下的經驗條(如果有)
+        const oldUi = document.getElementById("dynamic-exp-ui");
+        if (oldUi) oldUi.remove();
+
+        let gainedExp = Math.max(0, finalScore); // 負分不扣經驗
+        let oldExp = window.initialPlayerExp || 0;
+        let newExp = oldExp + gainedExp;
+
+        let oldLevel = Math.floor(Math.sqrt(oldExp / 100)) + 1;
+        let newLevel = Math.floor(Math.sqrt(newExp / 100)) + 1;
+
+        let oldTierBase = Math.pow(oldLevel - 1, 2) * 100;
+        let oldNextTier = Math.pow(oldLevel, 2) * 100;
+        let oldPercent = ((oldExp - oldTierBase) / (oldNextTier - oldTierBase)) * 100;
+
+        const uiDiv = document.createElement("div");
+        uiDiv.id = "dynamic-exp-ui";
+        uiDiv.style.cssText = "width: 100%; max-width: 320px; margin: 15px auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);";
+        
+        uiDiv.innerHTML = `
+          <div style="font-size: 15px; font-weight: bold; color: #f1c40f; margin-bottom: 8px;">
+            戰鬥結算 <span style="color: #2ecc71; margin-left: 10px;">+${gainedExp} EXP</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: #bdc3c7; margin-bottom: 5px;">
+            <span id="exp-lvl-current">Lv.${oldLevel}</span>
+            <span id="exp-lvl-next">Lv.${oldLevel + 1}</span>
+          </div>
+          <div style="width: 100%; height: 12px; background: rgba(0,0,0,0.4); border-radius: 6px; overflow: hidden; position: relative;">
+            <div id="exp-bar-base" style="position: absolute; top: 0; left: 0; height: 100%; width: ${oldPercent}%; background: #7f8c8d;"></div>
+            <div id="exp-bar-gained" style="position: absolute; top: 0; left: 0; height: 100%; width: ${oldPercent}%; background: linear-gradient(90deg, #f1c40f, #f39c12); transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1);"></div>
+          </div>
+          <div id="exp-text-details" style="font-size: 12px; color: #95a5a6; margin-top: 8px;">${oldExp} / ${oldNextTier}</div>
+          <div id="exp-levelup-toast" style="display:none; color: #f1c40f; font-weight: 900; font-size: 16px; margin-top: 8px; text-shadow: 0 0 10px rgba(241,196,15,0.5); transform: scale(0.5); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">🎉 LEVEL UP! 🎉</div>
+        `;
+
+        // 插入到按鈕前面
+        const firstBtn = container.querySelector("button");
+        if (firstBtn) container.insertBefore(uiDiv, firstBtn);
+        else container.appendChild(uiDiv);
+
+        // 觸發進度條生長動畫
+        setTimeout(() => {
+          const barGained = uiDiv.querySelector("#exp-bar-gained");
+          const txtDetails = uiDiv.querySelector("#exp-text-details");
+          const toast = uiDiv.querySelector("#exp-levelup-toast");
+
+          if (newLevel > oldLevel) {
+            // 升級邏輯：先長滿
+            barGained.style.width = "100%";
+            setTimeout(() => {
+              toast.style.display = "block";
+              setTimeout(() => { toast.style.transform = "scale(1)"; }, 10);
+              
+              let newTierBase = Math.pow(newLevel - 1, 2) * 100;
+              let newNextTier = Math.pow(newLevel, 2) * 100;
+              let newPercent = ((newExp - newTierBase) / (newNextTier - newTierBase)) * 100;
+
+              uiDiv.querySelector("#exp-lvl-current").innerText = `Lv.${newLevel}`;
+              uiDiv.querySelector("#exp-lvl-next").innerText = `Lv.${newLevel + 1}`;
+              uiDiv.querySelector("#exp-bar-base").style.width = "0%";
+              barGained.style.transition = "none";
+              barGained.style.width = "0%";
+              txtDetails.innerText = `${newExp} / ${newNextTier}`;
+              
+              setTimeout(() => {
+                barGained.style.transition = "width 1s cubic-bezier(0.25, 1, 0.5, 1)";
+                barGained.style.width = newPercent + "%";
+                localStorage.setItem("mathGamePlayerLevel", newLevel); // 本地升級
+              }, 50);
+            }, 1500); // 等待跑滿的時間
+          } else {
+            // 沒升級：直接長到新趴數
+            let newPercent = ((newExp - oldTierBase) / (oldNextTier - oldTierBase)) * 100;
+            barGained.style.width = newPercent + "%";
+            txtDetails.innerText = `${newExp} / ${oldNextTier}`;
+          }
+        }, 500);
+      }
       function startGame() {
         isGameOver = false; // 🔓 重新開始新局時，要把門鎖打開
         document.getElementById("player-name").blur();
         window.scrollTo(0, 0);
         initAudio();
-
+        window.initialPlayerExp = 0;
+        const pUid = localStorage.getItem("mathGamePlayerUid");
+        if (pUid && pUid !== "guest") {
+          fetchPlayerStatsFromHistory(pUid).then(stats => {
+            window.initialPlayerExp = stats.totalExp;
+          });
+        }
         const name =
           document.getElementById("player-name").value.trim() || "Guest";
         document.getElementById("ui-name").innerText = name;
@@ -1043,7 +1253,7 @@
           "final-score-text"
         ).innerText = `最終得分: ${score}`;
         document.getElementById("rules-box").classList.add("hidden");
-
+        showExpAnimation(score, "end-ui-group");
         // --- 2. 顯示錯題本 (包含提示) ---
         const endLog = document.getElementById("end-error-log");
         endLog.innerHTML = generateErrorLogHTML();
@@ -1103,6 +1313,157 @@
             }
           });
       }
+      // ==========================================
+      // ⚔️ 雙人對戰模式專屬邏輯
+      // ==========================================
+      let isBattleMode = false;
+      let hasBattleStarted = false;
+
+      // 1. 初始化檢查 (判斷網址有沒有帶 mode=battle)
+      window.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        isBattleMode = urlParams.get("mode") === "battle";
+
+        if (isBattleMode) {
+          document.getElementById("single-player-ui").style.display = "none";
+          document.getElementById("battle-lobby-ui").classList.remove("hidden");
+          document.getElementById("phase-indicator").innerText =
+            "⚔️ 準備進入對戰...";
+          document.getElementById("phase-indicator").style.color = "#e74c3c";
+          document.querySelector("#overlay h1").innerText =
+            "⚔️ 雙人對決：三角比";
+          document.getElementById("rules-box").style.display = "none"; // 隱藏一般規則節省版面
+        }
+      });
+
+      // 2. 建立房間按鈕觸發
+      async function hostRoom() {
+        if (!localStorage.getItem("mathGamePlayerUid")) {
+          alert("⚠️ 請先在首頁進行 Google 登入才能開啟對戰喔！");
+          window.location.href = "index.html";
+          return;
+        }
+        const roomId = await createBattleRoom("trig");
+        if (roomId) {
+          document.getElementById("room-code-display").innerText = roomId;
+          document.getElementById("room-code-display").style.display = "block";
+          document.getElementById("room-wait-msg").style.display = "block";
+          document.querySelector("#battle-lobby-ui button").disabled = true;
+        }
+      }
+
+      // 3. 加入房間按鈕觸發
+      async function joinRoom() {
+        if (!localStorage.getItem("mathGamePlayerUid")) {
+          alert("⚠️ 請先在首頁進行 Google 登入才能開啟對戰喔！");
+          window.location.href = "index.html";
+          return;
+        }
+        const code = document
+          .getElementById("join-room-code")
+          .value.trim()
+          .toUpperCase();
+        if (code.length !== 4) return alert("❌ 請輸入完整的 4 碼房號！");
+
+        const btn = document.querySelector("#battle-lobby-ui input + button");
+        btn.disabled = true;
+        btn.innerText = "連線中...";
+
+        const res = await joinBattleRoom(code, "trig");
+        if (!res.success) {
+          alert(res.msg);
+          btn.disabled = false;
+          btn.innerText = "加入";
+        }
+      }
+
+      // 4. 即時接收 Firebase 資料並更新畫面 (被 common.js 呼叫)
+      function syncBattleUI(roomData) {
+        // 當房間狀態變成 playing 且本地還沒開始遊戲，就立刻觸發 startGame
+        if (roomData.status === "playing" && !hasBattleStarted) {
+          hasBattleStarted = true;
+          alert("🔥 對手已加入！對戰即將開始！");
+          document.getElementById("battle-lobby-ui").classList.add("hidden");
+
+          // 確保名字是抓登入的名字，不讓玩家在對戰亂改
+          const myName =
+            localStorage.getItem("mathGamePlayerName") || "神秘勇者";
+          document.getElementById("player-name").value = myName;
+
+          startGame(); // 呼叫原本的 startGame 開始遊戲
+        }
+
+        // 遊戲進行中：把對手的分數即時顯示在畫面正上方
+        if (roomData.status === "playing" || roomData.status === "finished") {
+          const opponent = isPlayer1 ? roomData.player2 : roomData.player1;
+
+          if (opponent) {
+            let oppUI = document.getElementById("opponent-score-ui");
+            if (!oppUI) {
+              oppUI = document.createElement("div");
+              oppUI.id = "opponent-score-ui";
+              // 將對手分數霸氣地顯示在畫面中間上方
+              oppUI.style =
+                "position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: rgba(231,76,60,0.1); border: 2px solid #e74c3c; padding: 4px 15px; border-radius: 20px; color: #c0392b; font-weight: bold; font-size: 14px; z-index: 10; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap;";
+              document.getElementById("header").appendChild(oppUI);
+            }
+            oppUI.innerHTML = `⚔️ 敵方 <span>${opponent.name}</span> : <span style="font-size:20px; font-weight:900;">${opponent.score}</span> 分 <span style="font-size: 12px; color: #7f8c8d;">(🔥 ${opponent.combo})</span>`;
+          }
+        }
+      }
+      // ==========================================
+      // 🚫 防逃跑系統 (Anti-Rage-Quit)
+      // ==========================================
+      function abandonGame() {
+        if (
+          confirm(
+            "確定要放棄這局遊戲嗎？\n⚠️ 警告：中途退出仍會將「目前的分數」送出並計入平均成績！"
+          )
+        ) {
+          if (!isGameOver && typeof startTime !== "undefined" && startTime) {
+            isGameOver = true;
+            if (typeof timer !== "undefined") clearInterval(timer);
+
+            // 標記畫面，讓玩家知道正在上傳 (保留 DOM 結構，確保能抓到名字！)
+            if (document.getElementById("display-area")) {
+              document.getElementById("display-area").innerHTML = "<h2 style='color:#c0392b; text-align:center;'>紀錄送出中...</h2>";
+            }
+            if (document.getElementById("keypad-container")) {
+              document.getElementById("keypad-container").style.display = "none";
+            }
+            // 上傳目前成績，狀態標記為 abandoned
+            uploadGameRecord(
+              "abandoned",
+              score,
+              typeof errorLogMap !== "undefined" ? errorLogMap : null,
+              typeof isHellMode !== "undefined" ? isHellMode : false,
+              correctCount,
+              wrongCount
+            ).finally(() => {
+              location.href = "index.html";
+            });
+          } else {
+            location.href = "index.html";
+          }
+        }
+      }
+
+      // 監聽玩家直接「滑掉網頁」、「關閉分頁」或「按上一頁」
+      window.addEventListener("pagehide", () => {
+        // 如果遊戲已經開始，且還沒結算
+        if (!isGameOver && typeof startTime !== "undefined" && startTime) {
+          isGameOver = true;
+          // 直接將當下的殘酷分數送上雲端！
+          uploadGameRecord(
+            "abandoned",
+            score,
+            typeof errorLogMap !== "undefined" ? errorLogMap : null,
+            typeof isHellMode !== "undefined" ? isHellMode : false,
+            correctCount,
+            wrongCount
+          );
+        }
+      });
     </script>
   </body>
 </html>
