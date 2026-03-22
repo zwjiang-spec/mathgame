@@ -904,6 +904,7 @@
           align-items: center;
           gap: 10px;
           box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+          flex-wrap: wrap;
         "
       >
         <div style="display: flex; align-items: center; gap: 6px; min-width: 0">
@@ -1519,7 +1520,7 @@
           : ((modal.style.opacity = "1"), (modal.style.pointerEvents = "auto"));
       }
 
-      // ✨ 世界 Boss 2.0 終極引擎
+      // ✨ 世界 Boss 2.0 終極省電引擎 (只讀取 1 次！)
       function loadBossData() {
         const hpText = document.getElementById("boss-hp-text");
         const hpBar = document.getElementById("boss-hp-bar");
@@ -1527,106 +1528,35 @@
         const bossTitle = document.getElementById("boss-title");
         const badgeEl = document.getElementById("boss-bonus-badge");
 
-        db.collection("game_records")
-          .where("score", ">", 0)
+        // 🚀 只讀取 1 份文件，省下幾萬次額度！
+        db.collection("global")
+          .doc("boss_state")
           .get()
-          .then((snapshot) => {
-            let allRecords = [];
-            snapshot.forEach((doc) => {
-              let d = doc.data();
-              d._ts = d.timestamp ? d.timestamp.toMillis() : Date.now();
-              allRecords.push(d);
-            });
+          .then((doc) => {
+            let bData = doc.exists
+              ? doc.data()
+              : { level: 1, totalDamage: 0, playerMap: {}, pastMVPs: {} };
+            let level = bData.level || 1;
+            let totalDmg = bData.totalDamage || 0;
+            let pMap = bData.playerMap || {};
+            let pastMVPs = bData.pastMVPs || {};
 
-            allRecords.sort((a, b) => a._ts - b._ts);
-
-            let level = 1;
-            let levelMaxHp = 500000;
-            let currentLevelTotalDamage = 0;
-            let currentLevelPlayerMap = {};
-            let mvpHistory = {};
+            let levelMaxHp = 500000 + (level - 1) * 200000;
+            let currentHP = levelMaxHp - totalDmg;
+            if (currentHP < 0) currentHP = 0;
+            let hpPercent = (currentHP / levelMaxHp) * 100;
 
             const bossDataList = [
-              { name: "數學死神", mvpTitle: "🗡️ 死神終結者" },
-              { name: "混沌魔將", mvpTitle: "⚔️ 混沌斬裂者" },
-              { name: "虛空支配者", mvpTitle: "🌌 虛空粉碎者" },
-              { name: "維度吞噬者", mvpTitle: "🌀 維度主宰" },
-              { name: "幾何破壞神", mvpTitle: "📐 幾何救世主" },
-              { name: "真·理之眼", mvpTitle: "👁️ 真理超越者" },
-              { name: "無盡惡夢", mvpTitle: "👑 傳說中的弒神者" },
+              "數學死神",
+              "混沌魔將",
+              "虛空支配者",
+              "維度吞噬者",
+              "幾何破壞神",
+              "真·理之眼",
+              "無盡惡夢",
             ];
-
-            for (let i = 0; i < allRecords.length; i++) {
-              let r = allRecords[i];
-              let s = parseInt(r.score) || 0;
-              let unit = r.unit || "practice";
-              let mode = r.mode || "normal";
-              let uid = r.uid;
-              let name = r.name || "神秘勇者";
-
-              // 🌟 核心：每日 1.25 倍傷害加成
-              let dayOfWeek = new Date(r._ts).getDay();
-              let isBonus = false;
-              if ((dayOfWeek === 1 || dayOfWeek === 4) && unit === "trig")
-                isBonus = true;
-              if ((dayOfWeek === 2 || dayOfWeek === 5) && unit === "space")
-                isBonus = true;
-              if ((dayOfWeek === 3 || dayOfWeek === 6) && unit === "perm")
-                isBonus = true;
-              if (dayOfWeek === 0) isBonus = true;
-
-              let dmg = s;
-              if (isBonus) dmg = Math.floor(dmg * 1.25);
-              if (mode === "hell") dmg *= 2;
-
-              while (dmg > 0) {
-                let hpLeft = levelMaxHp - currentLevelTotalDamage;
-                if (dmg >= hpLeft) {
-                  if (uid) {
-                    if (!currentLevelPlayerMap[uid])
-                      currentLevelPlayerMap[uid] = { uid, name, damage: 0 };
-                    currentLevelPlayerMap[uid].damage += hpLeft;
-                  }
-                  currentLevelTotalDamage += hpLeft;
-                  dmg -= hpLeft;
-
-                  let topPlayers = Object.values(currentLevelPlayerMap).sort(
-                    (a, b) => b.damage - a.damage
-                  );
-                  if (topPlayers.length > 0) {
-                    let mvp = topPlayers[0];
-                    let bossIdx = Math.min(level - 1, bossDataList.length - 1);
-                    if (
-                      !mvpHistory[mvp.uid] ||
-                      mvpHistory[mvp.uid].level < level
-                    ) {
-                      mvpHistory[mvp.uid] = {
-                        title: bossDataList[bossIdx].mvpTitle,
-                        level: level,
-                      };
-                    }
-                  }
-
-                  level++;
-                  levelMaxHp = 500000 + (level - 1) * 200000;
-                  currentLevelTotalDamage = 0;
-                  currentLevelPlayerMap = {};
-                } else {
-                  if (uid) {
-                    if (!currentLevelPlayerMap[uid])
-                      currentLevelPlayerMap[uid] = { uid, name, damage: 0 };
-                    currentLevelPlayerMap[uid].damage += dmg;
-                  }
-                  currentLevelTotalDamage += dmg;
-                  dmg = 0;
-                }
-              }
-            }
-
-            let currentHP = levelMaxHp - currentLevelTotalDamage;
-            let hpPercent = (currentHP / levelMaxHp) * 100;
             let bossIdx = Math.min(level - 1, bossDataList.length - 1);
-            let currentBossName = bossDataList[bossIdx].name;
+            let currentBossName = bossDataList[bossIdx];
 
             const todayDay = new Date().getDay();
             let bonusStr = "";
@@ -1642,11 +1572,12 @@
             badgeEl.innerText = bonusStr;
             hpText.innerText = `HP: ${currentHP.toLocaleString()} / ${levelMaxHp.toLocaleString()}`;
 
+            // 數字動畫
             let currentDmgDisplay = 0;
             let dmgInterval = setInterval(() => {
-              currentDmgDisplay += Math.ceil(currentLevelTotalDamage / 20);
-              if (currentDmgDisplay >= currentLevelTotalDamage) {
-                currentDmgDisplay = currentLevelTotalDamage;
+              currentDmgDisplay += Math.ceil(totalDmg / 20);
+              if (currentDmgDisplay >= totalDmg) {
+                currentDmgDisplay = totalDmg;
                 clearInterval(dmgInterval);
               }
               dmgText.innerText = currentDmgDisplay.toLocaleString();
@@ -1654,13 +1585,17 @@
 
             setTimeout(() => (hpBar.style.width = hpPercent + "%"), 300);
 
-            let currentTopPlayers = Object.values(currentLevelPlayerMap).sort(
-              (a, b) => b.damage - a.damage
-            );
+            // 🏆 排行榜渲染
+            let currentTopPlayers = Object.keys(pMap)
+              .map((k) => ({
+                uid: k,
+                name: pMap[k].name,
+                damage: pMap[k].damage,
+              }))
+              .sort((a, b) => b.damage - a.damage);
             let top5 = currentTopPlayers.slice(0, 5);
             let rankHtml = "";
             let icons = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
-
             top5.forEach((p, idx) => {
               rankHtml += `<div style="display:flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.1);">
                   <span style="font-weight:bold; color:#ecf0f1; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${
@@ -1675,16 +1610,13 @@
 
             const currentUid = localStorage.getItem("mathGamePlayerUid");
             let myRankHtml = "";
-
-            if (currentUid) {
-              let myData = currentLevelPlayerMap[currentUid];
-              let myDamage = myData ? myData.damage : 0;
+            if (currentUid && currentUid !== "guest") {
+              let myDmg = pMap[currentUid] ? pMap[currentUid].damage : 0;
               let myName =
                 localStorage.getItem("mathGamePlayerName") || "神秘勇者";
-              let myRank = myData
+              let myRank = pMap[currentUid]
                 ? currentTopPlayers.findIndex((p) => p.uid === currentUid) + 1
                 : "-";
-
               myRankHtml = `
                 <div style="margin-top: 12px; padding-top: 10px; border-top: 2px solid #34495e;">
                   <div style="color: #bdc3c7; font-size: 12px; margin-bottom: 6px;">👇 我的本輪戰況</div>
@@ -1692,22 +1624,21 @@
                     <span style="font-weight:bold; color:#fff; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                       <span style="color:#f1c40f; margin-right:4px;">#${myRank}</span> ${myName}
                     </span>
-                    <span style="color: #f39c12; font-weight: bold; font-size: 13px;">⚔️ ${myDamage.toLocaleString()}</span>
+                    <span style="color: #f39c12; font-weight: bold; font-size: 13px;">⚔️ ${myDmg.toLocaleString()}</span>
                   </div>
-                </div>
-              `;
+                </div>`;
             } else {
               myRankHtml = `<div style="margin-top: 12px; padding-top: 10px; border-top: 2px solid #34495e; text-align:center; color:#95a5a6; font-size:12px;">⚠️ 請先登入以查看您的專屬貢獻度</div>`;
             }
-
             document.getElementById("boss-rank-list").innerHTML =
               rankHtml + myRankHtml;
 
-            if (currentUid && mvpHistory[currentUid]) {
+            // 👑 MVP 稱號派發
+            if (currentUid && pastMVPs[currentUid]) {
               setTimeout(() => {
                 const titleBadge = document.getElementById("user-title-badge");
                 if (titleBadge) {
-                  titleBadge.innerText = mvpHistory[currentUid].title;
+                  titleBadge.innerText = pastMVPs[currentUid].title;
                   titleBadge.style.background =
                     "linear-gradient(135deg, #c0392b, #8e44ad)";
                   titleBadge.style.boxShadow =
@@ -1760,68 +1691,98 @@
           document.getElementById("profile-btn").style.display = "block";
           authBtn.innerText = "登出";
           authBtn.style.background = "#e74c3c";
-          authBtn.style.boxShadow = "0 2px 5px rgba(231, 76, 60, 0.3)";
           renameBtn.style.display = "block";
 
+          // 1. 取得玩家暱稱 (這還是從 users 拿，因為改名資訊存在這)
           let finalName = user.displayName;
-          try {
-            const userDoc = await db.collection("users").doc(user.uid).get();
-            if (userDoc.exists && userDoc.data().name) {
-              finalName = userDoc.data().name;
-            }
-          } catch (error) {
-            console.error("讀取自訂名字失敗", error);
+          const userDoc = await db.collection("users").doc(user.uid).get();
+          if (userDoc.exists && userDoc.data().name) {
+            finalName = userDoc.data().name;
           }
 
-          nameDisplay.innerHTML = `<img src="${user.photoURL}" style="width:24px; height:24px; border-radius:50%; vertical-align:middle; margin-right:8px;"> ${finalName}`;
-          localStorage.setItem("mathGamePlayerName", finalName);
-          localStorage.setItem("mathGamePlayerUid", user.uid);
+          // 2. 🚀 從歷史紀錄計算：總經驗值、等級、最高分
+          try {
+            const snapshot = await db
+              .collection("game_records")
+              .where("uid", "==", user.uid)
+              .get();
 
-          db.collection("game_records")
-            .where("uid", "==", user.uid)
-            .get()
-            .then((snapshot) => {
-              let maxScore = 0;
-              snapshot.forEach((doc) => {
-                let s = parseInt(doc.data().score) || 0;
-                if (s > maxScore) maxScore = s;
-              });
+            let totalExp = 0;
+            let maxScore = 0;
 
-              const TITLES = [
-                { min: 0, name: "初心者", color: "#95a5a6" },
-                { min: 300, name: "狙擊手", color: "#3498db" },
-                { min: 600, name: "預言家", color: "#9b59b6" },
-                { min: 1000, name: "煉金師", color: "#e67e22" },
-                { min: 1500, name: "戰神", color: "#df22e6" },
-                { min: 2000, name: "🌌 數學至尊", color: "#c0392b" },
-              ];
-
-              let myTitle = TITLES[0];
-              for (let i = TITLES.length - 1; i >= 0; i--) {
-                if (maxScore >= TITLES[i].min) {
-                  myTitle = TITLES[i];
-                  break;
-                }
-              }
-
-              titleBadge.style.display = "inline-block";
-              titleBadge.innerText = myTitle.name;
-              titleBadge.style.background = myTitle.color;
-              if (maxScore >= 2000) {
-                titleBadge.style.boxShadow = "0 0 10px " + myTitle.color;
-              }
+            snapshot.forEach((doc) => {
+              const d = doc.data();
+              const s = Number(d.score) || 0;
+              if (s > 0) totalExp += s; // 累加總經驗 (只算正分)
+              if (s > maxScore) maxScore = s; // 找出歷史最高分
             });
+
+            // ✨ 等級公式：Lv = 根號(總經驗 / 100) + 1
+            let level = Math.floor(Math.sqrt(totalExp / 100)) + 1;
+
+            // 儲存到本地備份，方便上傳成績時標記
+            localStorage.setItem("mathGamePlayerName", finalName);
+            localStorage.setItem("mathGamePlayerUid", user.uid);
+            localStorage.setItem("mathGamePlayerLevel", level);
+
+            // 3. 渲染 UI：名字 + 等級標籤 (防擠壓升級版)
+            nameDisplay.style.display = "inline-flex";
+            nameDisplay.style.alignItems = "center";
+            nameDisplay.style.maxWidth = "100%";
+
+            // 3. 渲染 UI：名字 + 等級標籤 (RPG 頭像風格)
+            nameDisplay.style.display = "inline-flex";
+            nameDisplay.style.alignItems = "center";
+            nameDisplay.style.minWidth = "0";
+
+            nameDisplay.innerHTML = `
+              <div style="position: relative; display: inline-block; margin-right: 14px; flex-shrink: 0;">
+                <img src="${user.photoURL}" style="width: 32px; height: 32px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: block;">
+                <span style="position: absolute; bottom: -4px; right: -10px; background: #f39c12; color: white; font-size: 10px; padding: 1px 5px; border-radius: 8px; font-weight: bold; border: 1.5px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); line-height: 1;">
+                  Lv.${level}
+                </span>
+              </div>
+              <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px;">
+                ${finalName}
+              </span>`;
+
+            // 4. 渲染稱號 (根據剛算出的 maxScore)
+            const TITLES = [
+              { min: 0, name: "初心者", color: "#95a5a6" },
+              { min: 300, name: "狙擊手", color: "#3498db" },
+              { min: 600, name: "預言家", color: "#9b59b6" },
+              { min: 1000, name: "煉金師", color: "#e67e22" },
+              { min: 1500, name: "戰神", color: "#df22e6" },
+              { min: 2000, name: "🌌 數學至尊", color: "#c0392b" },
+            ];
+
+            let myTitle = TITLES[0];
+            for (let i = TITLES.length - 1; i >= 0; i--) {
+              if (maxScore >= TITLES[i].min) {
+                myTitle = TITLES[i];
+                break;
+              }
+            }
+
+            titleBadge.style.display = "inline-block";
+            titleBadge.innerText = myTitle.name;
+            titleBadge.style.background = myTitle.color;
+            if (maxScore >= 2000)
+              titleBadge.style.boxShadow = "0 0 10px " + myTitle.color;
+          } catch (err) {
+            console.error("讀取歷史數據失敗", err);
+          }
         } else {
+          // 登出狀態
           document.getElementById("profile-btn").style.display = "none";
           renameBtn.style.display = "none";
           nameDisplay.innerHTML = "👤 尚未登入";
           titleBadge.style.display = "none";
           authBtn.innerText = "Google 登入";
           authBtn.style.background = "#3498db";
-          authBtn.style.boxShadow = "0 2px 5px rgba(52, 152, 219, 0.3)";
-
           localStorage.removeItem("mathGamePlayerName");
           localStorage.removeItem("mathGamePlayerUid");
+          localStorage.removeItem("mathGamePlayerLevel");
         }
       });
 
