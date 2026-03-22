@@ -10,11 +10,9 @@
 
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
-
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
     <script src="common.js"></script>
 
     <style>
@@ -35,8 +33,6 @@
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         text-align: left;
       }
-
-      /* ✨ 調整頭部區塊以容納右側徽章 */
       .header-area {
         display: flex;
         justify-content: space-between;
@@ -59,6 +55,7 @@
         height: 60px;
         border-radius: 50%;
         border: 3px solid #3498db;
+        object-fit: cover;
       }
       .header-left h1 {
         margin: 0;
@@ -70,8 +67,6 @@
         color: #7f8c8d;
         font-size: 14px;
       }
-
-      /* ✨ 縮小並移到右上角的徽章專屬 CSS */
       .header-right {
         display: flex;
         flex-direction: column;
@@ -121,7 +116,6 @@
         transform: scale(1.1);
         opacity: 0.7;
       }
-
       .stats-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -149,7 +143,6 @@
       .stat-card.death .value {
         color: #e74c3c;
       }
-
       h2 {
         font-size: 18px;
         color: #34495e;
@@ -157,6 +150,27 @@
         padding-left: 10px;
         margin-top: 30px;
         margin-bottom: 15px;
+      }
+      .wq-filter-btn {
+        background: #ecf0f1;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: bold;
+        color: #7f8c8d;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .wq-filter-btn:hover {
+        background: #bdc3c7;
+        color: white;
+      }
+      .wq-filter-btn.active {
+        background: #e74c3c;
+        color: white;
+        box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+        transform: scale(1.05);
       }
       .wrong-q-list {
         list-style: none;
@@ -228,19 +242,47 @@
         background: #bdc3c7;
         color: white;
       }
+      /* Modal 彈出視窗樣式 */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      .modal-content-box {
+        background: white;
+        border-radius: 20px;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+      .close-btn {
+        position: absolute;
+        top: 12px;
+        right: 18px;
+        font-size: 26px;
+        cursor: pointer;
+        color: #95a5a6;
+        transition: 0.2s;
+      }
     </style>
   </head>
+
   <body>
     <div class="profile-container">
       <a href="index.html" class="home-btn">⬅ 返回大廳</a>
 
       <div class="header-area" id="profile-header">
         <div class="header-left">
-          <img
-            src="https://via.placeholder.com/60"
-            id="user-avatar"
-            alt="大頭貼"
-          />
+          <img src="" id="user-avatar" alt="大頭貼" style="display: none" />
           <div>
             <div style="display: flex; align-items: center; gap: 10px">
               <h1 id="user-name" style="margin: 0">讀取中...</h1>
@@ -349,13 +391,10 @@
             align-items: center;
             transition: 0.2s;
           "
-          onmouseover="this.style.background='#e0e0e0'; this.style.color='#34495e';"
-          onmouseout="this.style.background='#f8f9fa'; this.style.color='#95a5a6';"
           title="查看能力值計算方式"
         >
           ?
         </button>
-
         <h2
           style="
             margin-top: 0;
@@ -368,13 +407,11 @@
         >
           📊 數學六式 (真實能力分析)
         </h2>
-
         <div
           style="position: relative; height: 280px; width: 100%; margin: 0 auto"
         >
           <canvas id="abilityRadar"></canvas>
         </div>
-
         <p
           style="
             text-align: center;
@@ -389,11 +426,50 @@
       </div>
 
       <h2>📖 我的專屬錯題本 (常錯複習)</h2>
+      <div
+        id="wrong-q-filters"
+        style="
+          display: none;
+          gap: 8px;
+          margin-bottom: 15px;
+          flex-wrap: wrap;
+          justify-content: center;
+        "
+      >
+        <button
+          class="wq-filter-btn active"
+          onclick="filterWrongQ('all')"
+          data-unit="all"
+        >
+          全部
+        </button>
+        <button
+          class="wq-filter-btn"
+          onclick="filterWrongQ('trig')"
+          data-unit="trig"
+        >
+          📐 三角
+        </button>
+        <button
+          class="wq-filter-btn"
+          onclick="filterWrongQ('space')"
+          data-unit="space"
+        >
+          🚀 空間
+        </button>
+        <button
+          class="wq-filter-btn"
+          onclick="filterWrongQ('perm')"
+          data-unit="perm"
+        >
+          🎲 排列
+        </button>
+      </div>
       <ul class="wrong-q-list" id="wrong-q-container">
         <li style="color: #7f8c8d; font-size: 14px">資料載入中...</li>
       </ul>
 
-      <div style="text-align: center; margin-bottom: 20px">
+      <div style="text-align: center; margin-bottom: 20px; margin-top: 15px">
         <button
           id="training-btn"
           onclick="startWeaknessTraining()"
@@ -421,49 +497,17 @@
       </ul>
     </div>
 
-    <div
-      id="badge-info-modal"
-      style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s;
-      "
-    >
+    <div id="badge-info-modal" class="modal-overlay">
       <div
+        class="modal-content-box"
         style="
-          background: white;
           width: 80%;
           max-width: 320px;
-          border-radius: 20px;
           padding: 30px 20px;
           text-align: center;
-          position: relative;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         "
       >
-        <span
-          onclick="closeBadgeInfo()"
-          style="
-            position: absolute;
-            top: 12px;
-            right: 18px;
-            font-size: 26px;
-            cursor: pointer;
-            color: #95a5a6;
-            transition: 0.2s;
-          "
-          >×</span
-        >
+        <span onclick="closeBadgeInfo()" class="close-btn">×</span>
         <div
           id="modal-badge-icon"
           style="
@@ -527,49 +571,12 @@
       </div>
     </div>
 
-    <div
-      id="radar-info-modal"
-      style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s;
-      "
-    >
+    <div id="radar-info-modal" class="modal-overlay">
       <div
-        style="
-          background: white;
-          width: 85%;
-          max-width: 400px;
-          border-radius: 15px;
-          padding: 25px;
-          text-align: left;
-          position: relative;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        "
+        class="modal-content-box"
+        style="width: 85%; max-width: 400px; padding: 25px; text-align: left"
       >
-        <span
-          class="close-btn"
-          onclick="toggleRadarInfo()"
-          style="
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #95a5a6;
-          "
-          >×</span
-        >
+        <span onclick="toggleRadarInfo()" class="close-btn">×</span>
         <h2
           style="
             margin-top: 0;
@@ -635,7 +642,7 @@
         { min: 300, name: "小小狙擊手", color: "#3498db" },
         { min: 600, name: "數字預言家", color: "#9b59b6" },
         { min: 1000, name: "鋼之煉金師", color: "#e67e22" },
-        { min: 2000, name: "數學戰神", color: "#df22e6" },
+        { min: 1500, name: "數學戰神", color: "#df22e6" },
         { min: 2000, name: "🌌 領域展開：數學至尊", color: "#c0392b" },
       ];
 
@@ -653,30 +660,80 @@
         if (score >= 2000) badge.style.animation = "pulse 1.5s infinite";
       }
 
-      auth.onAuthStateChanged(async (user) => {
+      auth.onAuthStateChanged((user) => {
         if (user) {
-          document.getElementById("user-avatar").src = user.photoURL;
-          document.getElementById("user-uid").innerText =
-            "學霸代碼: " + user.uid.substring(0, 8);
+          // 1. 本地防護 UI 渲染
+          let finalName = user.displayName || "神秘勇者";
+          let fallbackLevel = localStorage.getItem("mathGamePlayerLevel") || 1;
+
+          const avatarImg = document.getElementById("user-avatar");
+          const defaultAvatar =
+            "https://ui-avatars.com/api/?name=" +
+            encodeURIComponent(finalName) +
+            "&background=3498db&color=fff";
+          const safeFallback =
+            "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+          avatarImg.src = user.photoURL || defaultAvatar;
+          avatarImg.onerror = function () {
+            this.onerror = null;
+            this.src = safeFallback;
+          };
+          avatarImg.style.display = "block";
           document.getElementById("edit-name-btn").style.display =
             "inline-block";
 
-          try {
-            const userDoc = await db.collection("users").doc(user.uid).get();
-            let finalName = user.displayName;
-            if (userDoc.exists && userDoc.data().name) {
-              finalName = userDoc.data().name;
-            }
-            document.getElementById("user-name").innerText = finalName;
-            localStorage.setItem("mathGamePlayerName", finalName);
-          } catch (error) {
-            console.error("讀取名字失敗", error);
-            document.getElementById("user-name").innerText = user.displayName;
-          }
+          document.getElementById("user-name").innerHTML =
+            finalName +
+            `<span style="background:#f39c12; color:white; font-size:16px; padding:2px 8px; border-radius:10px; margin-left:10px; vertical-align:middle; box-shadow: 0 2px 5px rgba(243,156,18,0.4);">Lv.${fallbackLevel}</span>`;
 
+          // 2. 獲取自訂暱稱
+          db.collection("users")
+            .doc(user.uid)
+            .get()
+            .then((userDoc) => {
+              if (userDoc.exists && userDoc.data().name) {
+                finalName = userDoc.data().name;
+                document.getElementById("user-name").innerHTML =
+                  finalName +
+                  `<span style="background:#f39c12; color:white; font-size:16px; padding:2px 8px; border-radius:10px; margin-left:10px; vertical-align:middle; box-shadow: 0 2px 5px rgba(243,156,18,0.4);">Lv.${fallbackLevel}</span>`;
+              }
+            })
+            .catch((e) => console.warn("無法讀取暱稱", e));
+
+          // 3. 計算歷史經驗值
+          fetchPlayerStatsFromHistory(user.uid)
+            .then((stats) => {
+              let level = stats.level || 1;
+              let exp = stats.totalExp || 0;
+              let nextLevelExp = Math.pow(level, 2) * 100;
+              let currentTierBase = Math.pow(level - 1, 2) * 100;
+              let percent =
+                ((exp - currentTierBase) / (nextLevelExp - currentTierBase)) *
+                100;
+              if (percent > 100) percent = 100;
+
+              document.getElementById("user-name").innerHTML =
+                finalName +
+                `<span style="background:#f39c12; color:white; font-size:16px; padding:2px 8px; border-radius:10px; margin-left:10px; vertical-align:middle; box-shadow: 0 2px 5px rgba(243,156,18,0.4);">Lv.${level}</span>`;
+              document.getElementById("user-uid").innerHTML = `
+              <div style="margin-top: 8px; font-size: 13px; color: #7f8c8d; font-weight: bold;">
+                總經驗值: ${exp} / ${nextLevelExp} <span style="color:#bdc3c7; font-size:11px;">(差 ${
+                nextLevelExp - exp
+              } 升級)</span>
+              </div>
+              <div style="width: 100%; max-width: 250px; height: 8px; background: #ecf0f1; border-radius: 4px; margin-top: 5px; overflow: hidden;">
+                <div style="width: ${percent}%; height: 100%; background: linear-gradient(90deg, #f1c40f, #f39c12); transition: width 0.5s;"></div>
+              </div>
+            `;
+            })
+            .catch((e) => {
+              document.getElementById("user-uid").innerHTML =
+                "<span style='color:#e74c3c; font-size:12px;'>無法讀取經驗值(可能因額度限制)</span>";
+            });
+
+          // 4. 載入戰績本體
           loadUserData(user.uid);
         } else {
-          alert("⚠️ 請先在首頁進行 Google 登入才能查看戰績！");
           window.location.href = "index.html";
         }
       });
@@ -693,21 +750,21 @@
           if (records.length === 0) {
             document.getElementById("stat-games").innerText = 0;
             document.getElementById("wrong-q-container").innerHTML =
-              '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 你還沒有任何錯題，趕快去挑戰吧！</li>';
+              '<li style="color: #27ae60; font-weight:bold; padding: 15px; text-align:center;">🌟 你還沒有任何錯題，趕快去挑戰吧！</li>';
             document.getElementById("history-container").innerHTML =
-              '<li style="color: #7f8c8d; padding: 10px;">尚無紀錄</li>';
+              '<li style="color: #7f8c8d; padding: 15px;">尚無紀錄</li>';
             document.getElementById("badge-container").innerHTML =
               '<span style="color:#7f8c8d; font-size:12px;">尚無紀錄解鎖徽章</span>';
             return;
           }
 
+          // 這裡依照時間「由新到舊」排序 (所以會先讀到未來的特訓消除紀錄)
           records.sort((a, b) => {
             let timeA = a.timestamp ? a.timestamp.toMillis() : 0;
             let timeB = b.timestamp ? b.timestamp.toMillis() : 0;
             return timeB - timeA;
           });
 
-          // --- 📊 統計數據 ---
           let maxScore = -999;
           let deathCount = 0;
           let errorStatsMap = new Map();
@@ -725,6 +782,7 @@
                 : Math.max(0, Math.floor(s / 10));
             let exactWrong = rec.wrongCount !== undefined ? rec.wrongCount : 0;
 
+            // ✨ 1. 整理錯題 (無懼時空錯亂寫法)
             if (rec.wrongLog && Array.isArray(rec.wrongLog)) {
               rec.wrongLog.forEach((w) => {
                 exactWrong += w.count || 1;
@@ -733,19 +791,44 @@
                 let qHint = w.hint || "無提示";
                 let qCount = w.count || 1;
 
-                if (errorStatsMap.has(qText)) {
-                  errorStatsMap.get(qText).totalCount += qCount;
-                } else {
+                if (!errorStatsMap.has(qText)) {
                   errorStatsMap.set(qText, {
+                    unit: rec.unit,
+                    qText: qText,
                     answer: qAns,
                     hint: qHint,
-                    totalCount: qCount,
+                    totalCount: 0,
                   });
+                } else {
+                  // 如果被未來的「消除紀錄」先佔了位子，要把題目和提示等資訊補回去
+                  errorStatsMap.get(qText).unit = rec.unit;
+                  errorStatsMap.get(qText).answer = qAns;
+                  errorStatsMap.get(qText).hint = qHint;
                 }
+                errorStatsMap.get(qText).totalCount += qCount; // 錯題次數 +N
               });
             }
 
-            // 高難度防禦徽章判定
+            // ✨ 2. 扣除特訓消滅的錯題 (無懼時空錯亂寫法)
+            if (rec.resolvedLog && Array.isArray(rec.resolvedLog)) {
+              rec.resolvedLog.forEach((r) => {
+                let qText = r.question || r.q;
+                let rCount = r.count || 1;
+
+                if (!errorStatsMap.has(qText)) {
+                  // 如果未來的消除紀錄先被讀到，就先給它一個空殼，等讀到舊紀錄時加減就會完美抵銷！
+                  errorStatsMap.set(qText, {
+                    unit: "unknown",
+                    qText: qText,
+                    answer: "",
+                    hint: "",
+                    totalCount: 0,
+                  });
+                }
+                errorStatsMap.get(qText).totalCount -= rCount; // 錯題次數 -N
+              });
+            }
+
             if (exactWrong === 0 && exactCorrect >= 10) hasNoMistake = true;
 
             let dateStr = rec.timestamp
@@ -763,6 +846,7 @@
             else if (rec.unit === "space") unitLabel = "🚀 空間";
             else if (rec.unit === "perm") unitLabel = "🎲 排列";
             else if (rec.unit === "practice") unitLabel = "💪 練習";
+            else if (rec.unit === "review") unitLabel = "🔥 特訓";
 
             let modeIcon =
               rec.mode === "hell"
@@ -788,6 +872,13 @@
             }
           });
 
+          // ✨ 3. 將扣到 0 次(或變成負數)的題目超渡！
+          for (let [qText, info] of errorStatsMap.entries()) {
+            if (info.totalCount <= 0) {
+              errorStatsMap.delete(qText);
+            }
+          }
+
           let totalGamesPlayed = records.length;
           document.getElementById("stat-games").innerText = totalGamesPlayed;
           document.getElementById("stat-high").innerText = maxScore;
@@ -795,9 +886,6 @@
           document.getElementById("stat-deaths").innerText = deathCount;
           document.getElementById("history-container").innerHTML = historyHTML;
 
-          // ==========================================
-          // ✨ 右上角精緻化：榮耀徽章產生器
-          // ==========================================
           let badges = [
             {
               id: "score1000",
@@ -841,74 +929,102 @@
             let statusClass = b.unlocked ? "unlocked" : "locked";
             let safeName = b.name.replace(/'/g, "\\'");
             let safeDesc = b.desc.replace(/'/g, "\\'");
-
-            badgeHtml += `
-              <button class="badge-btn ${statusClass}" onclick="showBadgeInfo('${b.icon}', '${safeName}', '${safeDesc}', ${b.unlocked})" title="${b.name}">
-                ${b.icon}
-              </button>
-            `;
+            badgeHtml += `<button class="badge-btn ${statusClass}" onclick="showBadgeInfo('${b.icon}', '${safeName}', '${safeDesc}', ${b.unlocked})" title="${b.name}">${b.icon}</button>`;
           });
           document.getElementById("badge-container").innerHTML = badgeHtml;
 
-          // --- ✨ 渲染錯題本 ---
           const wrongContainer = document.getElementById("wrong-q-container");
+          const filterBox = document.getElementById("wrong-q-filters");
+
           if (errorStatsMap.size > 0) {
-            let sortedErrors = Array.from(errorStatsMap.entries()).sort(
-              (a, b) => b[1].totalCount - a[1].totalCount
+            filterBox.style.display = "flex";
+            window.currentWrongStats = Array.from(errorStatsMap.values()).sort(
+              (a, b) => b.totalCount - a.totalCount
             );
-            let wrongHTML = "";
-            sortedErrors.forEach(([q, info]) => {
-              let badgeStyle = "background:#95a5a6; color:white;";
-              let prefix = "錯誤";
-              if (info.totalCount >= 5) {
-                badgeStyle = "background:#c0392b; color:white;";
-                prefix = "🔥 狂錯";
-              } else if (info.totalCount >= 3) {
-                badgeStyle = "background:#e67e22; color:white;";
-                prefix = "警告";
+
+            window.filterWrongQ = function (targetUnit) {
+              document.querySelectorAll(".wq-filter-btn").forEach((btn) => {
+                if (btn.getAttribute("data-unit") === targetUnit)
+                  btn.classList.add("active");
+                else btn.classList.remove("active");
+              });
+
+              let filtered = window.currentWrongStats;
+              if (targetUnit !== "all") {
+                filtered = window.currentWrongStats.filter(
+                  (item) => item.unit === targetUnit
+                );
               }
 
-              let safeQ = String(q).replace(/"/g, "&quot;");
-              let safeAns = String(info.answer).replace(/"/g, "&quot;");
-              let safeHint = String(info.hint).replace(/"/g, "&quot;");
+              if (filtered.length > 0) {
+                let wrongHTML = "";
+                filtered.forEach((info) => {
+                  let badgeStyle = "background:#95a5a6; color:white;";
+                  let prefix = "錯誤";
+                  if (info.totalCount >= 5) {
+                    badgeStyle = "background:#c0392b; color:white;";
+                    prefix = "🔥 狂錯";
+                  } else if (info.totalCount >= 3) {
+                    badgeStyle = "background:#e67e22; color:white;";
+                    prefix = "警告";
+                  }
 
-              wrongHTML += `
-                <li class="wrong-q-item" data-raw-q="${safeQ}" data-raw-a="${safeAns}" data-raw-hint="${safeHint}">
-                  <div style="width:100%">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                      <span style="font-weight:bold;">${formatMathHTML(
-                        q
-                      )}</span>
-                      <span style="${badgeStyle} font-size:11px; padding:2px 8px; border-radius:12px; font-weight:bold;">${prefix} ${
-                info.totalCount
-              } 次</span>
-                    </div>
-                    <div class="ans" style="margin-top:5px;">➡ 正解: ${formatMathHTML(
-                      info.answer
-                    )}</div>
-                    <span class="hint">💡 ${info.hint}</span>
-                  </div>
-                </li>
-              `;
-            });
-            wrongContainer.innerHTML = wrongHTML;
-            document.getElementById("training-btn").style.display =
-              "inline-block";
+                  let safeQ = String(info.qText).replace(/"/g, "&quot;");
+                  let safeAns = String(info.answer).replace(/"/g, "&quot;");
+                  let safeHint = String(info.hint).replace(/"/g, "&quot;");
+
+                  let unitTag = "";
+                  if (targetUnit === "all" && info.unit) {
+                    let uLabel = "💪 綜合";
+                    if (info.unit === "trig") uLabel = "📐";
+                    if (info.unit === "space") uLabel = "🚀";
+                    if (info.unit === "perm") uLabel = "🎲";
+                    unitTag = `<span style="font-size:10px; background:#ecf0f1; color:#7f8c8d; padding:2px 5px; border-radius:4px; margin-right:6px;">${uLabel}</span>`;
+                  }
+
+                  wrongHTML += `
+                    <li class="wrong-q-item" data-raw-q="${safeQ}" data-raw-a="${safeAns}" data-raw-hint="${safeHint}">
+                      <div style="width:100%">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <span style="font-weight:bold; display:flex; align-items:center;">${unitTag}${formatMathHTML(
+                    info.qText
+                  )}</span>
+                          <span style="${badgeStyle} font-size:11px; padding:2px 8px; border-radius:12px; font-weight:bold; white-space:nowrap; margin-left:8px;">${prefix} ${
+                    info.totalCount
+                  } 次</span>
+                        </div>
+                        <div class="ans" style="margin-top:5px;">➡ 正解: ${formatMathHTML(
+                          info.answer
+                        )}</div>
+                        <span class="hint">💡 ${info.hint}</span>
+                      </div>
+                    </li>
+                  `;
+                });
+                wrongContainer.innerHTML = wrongHTML;
+                document.getElementById("training-btn").style.display =
+                  "inline-block";
+              } else {
+                wrongContainer.innerHTML =
+                  '<li style="color: #27ae60; font-weight:bold; padding: 15px; text-align:center;">🌟 此單元目前零錯題，太神啦！</li>';
+                document.getElementById("training-btn").style.display = "none";
+              }
+            };
+            window.filterWrongQ("all");
           } else {
+            filterBox.style.display = "none";
             wrongContainer.innerHTML =
-              '<li style="color: #27ae60; font-weight:bold; padding: 10px;">🌟 目前為止零錯題，太神啦！</li>';
+              '<li style="color: #27ae60; font-weight:bold; padding: 15px; text-align:center;">🌟 目前為止零錯題，太神啦！</li>';
+            document.getElementById("training-btn").style.display = "none";
           }
 
-          // ==========================================
-          // ✨ 雷達圖能力運算引擎
-          // ==========================================
+          // 能力雷達圖計算
           let stats = {
             trig: { correct: 0, err: 0, games: 0 },
             space: { correct: 0, err: 0, games: 0 },
             perm: { correct: 0, err: 0, games: 0 },
             practice: { correct: 0, err: 0, games: 0 },
           };
-
           records.forEach((rec) => {
             let u = rec.unit || "practice";
             let s = rec.score || 0;
@@ -917,7 +1033,6 @@
                 ? rec.correctCount
                 : Math.max(0, Math.floor(s / 10));
             let exactWrong = rec.wrongCount !== undefined ? rec.wrongCount : 0;
-
             if (
               rec.wrongCount === undefined &&
               rec.wrongLog &&
@@ -925,7 +1040,6 @@
             ) {
               rec.wrongLog.forEach((w) => (exactWrong += w.count || 1));
             }
-
             if (stats[u]) {
               stats[u].games++;
               stats[u].correct += exactCorrect;
@@ -940,10 +1054,9 @@
             return Math.round((unitData.correct / totalAttempts) * 100);
           }
 
-          let accTrig = getAccuracy(stats.trig);
-          let accSpace = getAccuracy(stats.space);
-          let accPerm = getAccuracy(stats.perm);
-          let accPrac = getAccuracy(stats.practice);
+          let accTrig = getAccuracy(stats.trig),
+            accSpace = getAccuracy(stats.space),
+            accPerm = getAccuracy(stats.perm);
           let effortScore = Math.min(
             100,
             Math.round((totalGamesPlayed / 30) * 100)
@@ -967,7 +1080,6 @@
                   "🚀 空間準確率",
                   "🎲 排列準確率",
                   "🛡️ 生存防禦力",
-                  "🔥 綜合實戰力",
                   "💪 勤奮鍛鍊度",
                 ],
                 datasets: [
@@ -978,7 +1090,6 @@
                       accSpace,
                       accPerm,
                       survivalRate,
-                      accPrac,
                       effortScore,
                     ],
                     backgroundColor: "rgba(52, 152, 219, 0.3)",
@@ -1012,64 +1123,40 @@
         } catch (error) {
           console.error("讀取戰績失敗:", error);
           document.getElementById("wrong-q-container").innerHTML =
-            '<li style="color: #e74c3c;">讀取失敗，請重新整理網頁</li>';
+            '<li style="color: #e74c3c; padding: 15px; font-weight:bold; text-align:center;">資料處理發生錯誤，請重新整理網頁！</li>';
         }
       }
 
-      // ✨ 控制徽章資訊視窗
       function showBadgeInfo(icon, name, desc, isUnlocked) {
-        const iconEl = document.getElementById("modal-badge-icon");
-        const nameEl = document.getElementById("modal-badge-name");
-        const statusEl = document.getElementById("modal-badge-status");
-
-        iconEl.innerText = icon;
-        iconEl.style.filter = isUnlocked ? "none" : "grayscale(100%)";
-        iconEl.style.opacity = isUnlocked ? "1" : "0.4";
-
-        nameEl.innerText = name;
-        nameEl.style.color = isUnlocked ? "#d35400" : "#7f8c8d";
-
-        if (isUnlocked) {
-          statusEl.innerText = "✅ 已解鎖";
-          statusEl.style.background = "#d4efdf";
-          statusEl.style.color = "#27ae60";
-        } else {
-          statusEl.innerText = "🔒 未達成條件";
-          statusEl.style.background = "#f2f4f4";
-          statusEl.style.color = "#7f8c8d";
-        }
-
+        document.getElementById("modal-badge-icon").innerText = icon;
+        document.getElementById("modal-badge-icon").style.filter = isUnlocked
+          ? "none"
+          : "grayscale(100%)";
+        document.getElementById("modal-badge-icon").style.opacity = isUnlocked
+          ? "1"
+          : "0.4";
+        document.getElementById("modal-badge-name").innerText = name;
+        document.getElementById("modal-badge-name").style.color = isUnlocked
+          ? "#d35400"
+          : "#7f8c8d";
+        document.getElementById("modal-badge-status").innerText = isUnlocked
+          ? "✅ 已解鎖"
+          : "🔒 未達成條件";
+        document.getElementById("modal-badge-status").style.background =
+          isUnlocked ? "#d4efdf" : "#f2f4f4";
+        document.getElementById("modal-badge-status").style.color = isUnlocked
+          ? "#27ae60"
+          : "#7f8c8d";
         document.getElementById("modal-badge-desc").innerText = desc;
-
-        const modal = document.getElementById("badge-info-modal");
-        modal.style.opacity = "1";
-        modal.style.pointerEvents = "auto";
+        document.getElementById("badge-info-modal").style.opacity = "1";
+        document.getElementById("badge-info-modal").style.pointerEvents =
+          "auto";
       }
 
       function closeBadgeInfo() {
-        const modal = document.getElementById("badge-info-modal");
-        modal.style.opacity = "0";
-        modal.style.pointerEvents = "none";
-      }
-
-      function startWeaknessTraining() {
-        const wrongItems = document.querySelectorAll(
-          "#wrong-q-container .wrong-q-item"
-        );
-        let trainingPool = [];
-        wrongItems.forEach((item) => {
-          const qText = item.getAttribute("data-raw-q");
-          const ansText = item.getAttribute("data-raw-a");
-          const hintText = item.getAttribute("data-raw-hint");
-          trainingPool.push({ q: qText, a: ansText, hint: hintText });
-        });
-        if (trainingPool.length === 0) {
-          alert("目前沒有錯題可以特訓喔！");
-          return;
-        }
-        const finalPool = trainingPool.slice(0, 10);
-        localStorage.setItem("mathGameReviewPool", JSON.stringify(finalPool));
-        window.location.href = "review.html";
+        document.getElementById("badge-info-modal").style.opacity = "0";
+        document.getElementById("badge-info-modal").style.pointerEvents =
+          "none";
       }
 
       function toggleRadarInfo() {
@@ -1083,51 +1170,67 @@
         }
       }
 
-      async function renameUser() {
-        const user = auth.currentUser;
-        if (!user) {
-          alert("無法取得登入狀態，請重新整理網頁！");
+      function startWeaknessTraining() {
+        let activeUnit = "all";
+        document.querySelectorAll(".wq-filter-btn").forEach((btn) => {
+          if (btn.classList.contains("active"))
+            activeUnit = btn.getAttribute("data-unit");
+        });
+
+        let filteredStats = window.currentWrongStats;
+        if (activeUnit !== "all") {
+          filteredStats = window.currentWrongStats.filter(
+            (item) => item.unit === activeUnit
+          );
+        }
+
+        if (!filteredStats || filteredStats.length === 0) {
+          alert("這個單元目前沒有錯題可以特訓喔！");
           return;
         }
-        const uid = user.uid;
 
+        let trainingPool = filteredStats
+          .map((info) => ({ q: info.qText, a: info.answer, hint: info.hint }))
+          .slice(0, 10);
+        localStorage.setItem(
+          "mathGameReviewPool",
+          JSON.stringify(trainingPool)
+        );
+        window.location.href = "review.html";
+      }
+
+      async function renameUser() {
+        const user = auth.currentUser;
+        if (!user) return alert("請重新整理網頁！");
         try {
-          const userRef = db.collection("users").doc(uid);
-          const userDoc = await userRef.get();
-
+          const userDoc = await db.collection("users").doc(user.uid).get();
           if (userDoc.exists && userDoc.data().lastRenameDate) {
-            const lastDate = userDoc.data().lastRenameDate.toMillis();
-            const now = Date.now();
-            const daysPassed = (now - lastDate) / (1000 * 60 * 60 * 24);
-
-            if (daysPassed < 30) {
-              const daysLeft = Math.ceil(30 - daysPassed);
-              alert(`⏳ 魔法冷卻中！距離下次可改名還有 ${daysLeft} 天。`);
-              return;
-            }
+            const daysPassed =
+              (Date.now() - userDoc.data().lastRenameDate.toMillis()) /
+              (1000 * 60 * 60 * 24);
+            if (daysPassed < 30)
+              return alert(
+                `⏳ 魔法冷卻中！距離下次可改名還有 ${Math.ceil(
+                  30 - daysPassed
+                )} 天。`
+              );
           }
-
           let newName = prompt(
-            "請輸入您的專屬遊戲暱稱 (最多 10 個字，30 天內無法再次修改，請謹慎輸入！)："
+            "請輸入您的專屬遊戲暱稱 (最多 10 個字，30 天內無法再次修改)："
           );
-          if (newName === null) return;
-          newName = newName.trim();
-          if (newName.length === 0 || newName.length > 10) {
-            alert("⚠️ 暱稱格式不符！請輸入 1~10 個字。");
-            return;
-          }
-
+          if (!newName || !(newName = newName.trim())) return;
+          if (newName.length > 10)
+            return alert("⚠️ 暱稱格式不符！請輸入 1~10 個字。");
           if (
             !confirm(
-              `確定要將暱稱改為「${newName}」嗎？\n⚠️ 注意：更改後 30 天內將無法再次修改！`
+              `確定要將暱稱改為「${newName}」嗎？\n⚠️ 30 天內將無法再次修改！`
             )
           )
             return;
 
-          document.getElementById("user-name").innerText = "🔄 雲端同步中...";
+          document.getElementById("user-name").innerText = "🔄 同步中...";
           document.getElementById("edit-name-btn").disabled = true;
-
-          await userRef.set(
+          await db.collection("users").doc(user.uid).set(
             {
               name: newName,
               lastRenameDate: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1135,33 +1238,22 @@
             { merge: true }
           );
 
+          const batch = db.batch();
           const recordsSnapshot = await db
             .collection("game_records")
-            .where("uid", "==", uid)
+            .where("uid", "==", user.uid)
             .get();
-          if (!recordsSnapshot.empty) {
-            const batch = db.batch();
-            recordsSnapshot.forEach((doc) => {
-              batch.update(doc.ref, { name: newName });
-            });
-            await batch.commit();
-          }
+          recordsSnapshot.forEach((doc) =>
+            batch.update(doc.ref, { name: newName })
+          );
+          await batch.commit();
 
           localStorage.setItem("mathGamePlayerName", newName);
-          document.getElementById("user-name").innerText = newName;
-          document.getElementById("edit-name-btn").disabled = false;
-          alert("✅ 暱稱更改成功！您的新名字已同步至所有伺服器排行榜！");
+          alert("✅ 暱稱更改成功！");
+          window.location.reload();
         } catch (error) {
-          console.error("改名詳細錯誤:", error);
-          let errorMsg = error.message;
-          if (error.message.includes("Missing or insufficient permissions")) {
-            errorMsg =
-              "Firebase 資料庫權限不足！請檢查 Rules 設定是否允許 update 與 write。";
-          }
-          alert(`❌ 改名失敗：\n${errorMsg}`);
-          document.getElementById("edit-name-btn").disabled = false;
-          document.getElementById("user-name").innerText =
-            localStorage.getItem("mathGamePlayerName") || user.displayName;
+          alert("❌ 改名失敗，可能因 Firebase 權限不足或額度限制。");
+          window.location.reload();
         }
       }
     </script>
