@@ -704,14 +704,22 @@
         combo = 0;
         consecutiveWrong++;
 
-        // 處理坐標題的括號顯示
+        // ✨ 空間坐標專屬：處理坐標題的括號顯示
         let rawAns = isCoordinateAns ? `(${targetAns})` : targetAns;
 
-        errorLogMap.set(currentQuestionStr, {
-          ans: rawAns, // 👈 存入純文字
-          hint: currentHint,
-        });
+        // ✨ 凡走過必留下痕跡：只要一答錯，立刻死死釘入結算錯題本！
+        // 並且精準記錄「到底錯了幾次」
+        if (!errorLogMap.has(currentQuestionStr)) {
+          errorLogMap.set(currentQuestionStr, {
+            ans: rawAns, // 👈 存入純文字(包含括號)
+            hint: currentHint,
+            count: 1,
+          });
+        } else {
+          errorLogMap.get(currentQuestionStr).count++;
+        }
 
+        // 把錯題丟進幽靈題庫 (這是為了給 PASS 跳過按鈕備用的突擊機制)
         if (!activeWrongPool.some((item) => item.q === currentQuestionStr)) {
           activeWrongPool.push({
             q: currentQuestionStr,
@@ -722,18 +730,24 @@
         }
 
         const area = document.getElementById("display-area");
-        area.classList.remove("shake-animation");
-        void area.offsetWidth;
-        area.classList.add("shake-animation");
+        if (area) {
+          area.classList.remove("shake-animation");
+          void area.offsetWidth;
+          area.classList.add("shake-animation");
+        }
+
         currentQuestionErrors++;
         score -= currentQuestionErrors * 5 * currentMultiplier;
-        document.getElementById("input-box").classList.add("error-text");
-        flashScoreRed();
+
+        const inputBox = document.getElementById("input-box");
+        if (inputBox) inputBox.classList.add("error-text");
+
+        if (typeof flashScoreRed === "function") flashScoreRed();
         updateUI();
 
-        // ✨ 這裡修復了！把報錯的 displayAns 改成正確的 rawAns
+        // 顯示正確答案
         if (isSkip) showToast(`⏭️ 跳過！正解為：${rawAns}`, 2500);
-        else showToast(`❌ 答錯囉！請再試一次！`, 1200);
+        else showToast(`❌ 答錯囉！再試一次！`, 1200);
 
         checkDeath();
       }
@@ -838,21 +852,25 @@
         if (userInput === "" || isProcessing) return;
         const box = document.getElementById("input-box");
         if (
-          box.classList.contains("correct-flash") ||
-          box.classList.contains("error-text")
+          box &&
+          (box.classList.contains("correct-flash") ||
+            box.classList.contains("error-text"))
         )
           return;
 
         isProcessing = true; // 上鎖
 
+        // ✨ 空間坐標專屬：智慧座標比對 vs 一般數值比對
         let isCorrect = false;
         if (isCoordinateAns) {
-          let cleanUser = userInput.replace(/[\s\(\)]/g, "");
-          let cleanTarget = targetAns.replace(/[\s\(\)]/g, "");
+          let cleanUser = userInput.replace(/[\s\(\)（）]/g, "");
+          let cleanTarget = targetAns.replace(/[\s\(\)（）]/g, "");
           isCorrect = cleanUser === cleanTarget;
         } else {
-          let userVal = evalMath(userInput);
-          let targetVal = evalMath(targetAns);
+          let userVal =
+            typeof evalMath === "function" ? evalMath(userInput) : NaN;
+          let targetVal =
+            typeof evalMath === "function" ? evalMath(targetAns) : NaN;
           isCorrect =
             !isNaN(userVal) &&
             !isNaN(targetVal) &&
@@ -860,50 +878,49 @@
         }
 
         if (isCorrect) {
-          correctCount++; // ✨ 動作 3：精準答對加 1！
+          correctCount++; // 精準計數
           correctQuestionsSet.add(currentQuestionStr);
+
+          // 既然最後答對了，就把這題從「幽靈突擊池」裡拿掉，免得後面又跑出來
           activeWrongPool = activeWrongPool.filter(
             (item) => item.q !== currentQuestionStr
           );
 
           if (typeof spawnComboParticle === "function") spawnComboParticle();
           consecutiveWrong = 0;
-          if (combo >= 9) {
-            if (typeof playFeverCorrect === "function") playFeverCorrect();
-          } else {
-            if (typeof playCorrect === "function") playCorrect();
-          }
-          box.classList.add("correct-flash");
+          if (combo >= 9 && typeof playFeverCorrect === "function")
+            playFeverCorrect();
+          else if (typeof playCorrect === "function") playCorrect();
+
+          if (box) box.classList.add("correct-flash");
           score += (10 + combo * 2) * currentMultiplier;
           combo++;
+
           if (combo > 5) {
             const body = document.body;
             body.classList.remove("strong-shake-effect");
             void body.offsetWidth;
             body.classList.add("strong-shake-effect");
           }
+
           updateUI();
+
+          // ✅ 答對了！准許換下一題！
           setTimeout(() => {
             getNewQuestion();
-            isProcessing = false; // 出完下一題解鎖
+            isProcessing = false;
           }, 150);
         } else {
           // ❌ 答錯了！
-          wrongCount++; 
-          
-          // 👈 這裡的 triggerErrorEffect 已經完美幫您把錯題記進 errorLogMap 和 activeWrongPool 了
-          triggerErrorEffect(); 
-          
+          wrongCount++; // 總答錯數 +1 (這樣戰績室才不會說全對)
+          triggerErrorEffect(); // 觸發錯題本記錄與畫面震動
+
+          // 🛑 殘酷守門員：清空輸入框，但「不准呼叫下一題 (沒有 getNewQuestion)」！
           setTimeout(() => {
             userInput = "";
             renderInput();
-            
-            // ✨ 關鍵神救援：強制換下一題！
-            // 搭配您原本的 getNewQuestion() 邏輯，這題絕對不會馬上連續出現，但會在後面 40% 高機率突擊補考！
-            getNewQuestion(); 
-            
-            isProcessing = false;
-          }, 400); // 稍微停留 0.4 秒，讓學生看清楚螢幕震動和紅字，再換下一題
+            isProcessing = false; // 解鎖鍵盤，讓學生繼續在這題掙扎
+          }, 400);
         }
       }
 
