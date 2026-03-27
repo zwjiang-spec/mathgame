@@ -7,21 +7,11 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>超級爆裂數學領域展開遊戲</title>
-    <meta
-      name="google-site-verification"
-      content="2HNqPr4ww0fFYXswBNxfz88fzcYRc_H6aegyCafNEf0"
-    />
     <meta name="description" content="史上最好玩的數學小遊戲" />
     <meta
       name="keywords"
       content="高中數學, 數學遊戲, 三角函數, 空間坐標, 江子緯老師, 數學練習, 學測數學"
     />
-    <meta property="og:title" content="超級爆裂數學領域展開遊戲" />
-    <meta
-      property="og:description"
-      content="超刺激的數學闖關遊戲，三角比、空間坐標、排列組合等你來挑戰！"
-    />
-    <meta property="og:type" content="website" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -42,6 +32,7 @@
         width: 100vw;
         color: #2c3e50;
         overflow: hidden;
+        transition: background-color 0.5s ease, background-image 0.5s ease;
       }
 
       .main-container {
@@ -54,6 +45,13 @@
         width: 400px;
         max-height: 90vh;
         overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        transition: all 0.5s ease;
+        position: relative;
+      }
+      .main-container::-webkit-scrollbar {
+        display: none;
       }
 
       h1 {
@@ -62,6 +60,7 @@
         margin-bottom: 20px;
         color: #1c2833;
         letter-spacing: 2px;
+        transition: 0.5s;
       }
       h1 .teacher {
         font-size: 0.55em;
@@ -70,32 +69,120 @@
         letter-spacing: normal;
       }
 
-      .tabs {
+      /* ✨ 視圖切換容器 */
+      #view-container {
         display: flex;
-        background: #e0e0e0;
-        border-radius: 12px;
-        margin-bottom: 25px;
-        overflow: hidden;
+        width: 200%;
+        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
       }
-      .tab-btn {
-        flex: 1;
-        padding: 10px 5px;
-        border: none;
-        background: none;
-        font-size: 14px;
-        font-weight: bold;
-        color: #7f8c8d;
+      .view-section {
+        width: 50%;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 10px;
+      }
+
+      /* ✨ 模式大卡片 */
+      .mode-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: white;
+        border: 2px solid #ecf0f1;
+        border-radius: 15px;
+        padding: 16px 20px;
+        margin-bottom: 15px;
         cursor: pointer;
-        transition: 0.3s;
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+        text-align: left;
       }
-      .tab-btn.active {
-        background: #2c3e50;
-        color: white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      .mode-card:active {
+        transform: scale(0.96);
       }
-      #btn-hell.active {
-        background: #c0392b;
+      .mode-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
+        border-color: #bdc3c7;
+      }
+
+      .mode-card.card-ranked {
+        border-left: 6px solid #f1c40f;
+      }
+      .mode-card.card-battle {
+        border-left: 6px solid #e74c3c;
+      }
+      .mode-card.card-hell {
+        border-left: 6px solid #8e44ad;
+        background: #1a1a1a;
         color: white;
+        border-color: #333;
+      }
+      .mode-card.card-practice {
+        border-left: 6px solid #e67e22;
+      }
+
+      .mode-icon {
+        font-size: 32px;
+        margin-right: 15px;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+      .mode-info {
+        flex: 1;
+      }
+      .mode-title {
+        font-size: 18px;
+        font-weight: 900;
+        margin-bottom: 4px;
+        color: #2c3e50;
+      }
+      .card-hell .mode-title {
+        color: #ff4d4d;
+      }
+      .mode-desc {
+        font-size: 12px;
+        color: #7f8c8d;
+        font-weight: bold;
+      }
+      .card-hell .mode-desc {
+        color: #95a5a6;
+      }
+      .mode-arrow {
+        font-size: 18px;
+        color: #bdc3c7;
+        font-weight: bold;
+        opacity: 0.7;
+      }
+
+      /* ✨ 子選單返回列 */
+      .back-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px dashed #ecf0f1;
+      }
+      .back-btn {
+        background: #f8f9fa;
+        border: 1px solid #bdc3c7;
+        color: #2c3e50;
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 13px;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        transition: 0.2s;
+      }
+      .back-btn:active {
+        transform: scale(0.9);
+      }
+      #current-mode-title {
+        font-size: 18px;
+        font-weight: 900;
+        color: #2c3e50;
       }
 
       .content-section {
@@ -107,10 +194,11 @@
       .content-section.active {
         display: flex;
       }
+
       @keyframes fadeIn {
         from {
           opacity: 0;
-          transform: translateY(5px);
+          transform: translateY(10px);
         }
         to {
           opacity: 1;
@@ -118,6 +206,7 @@
         }
       }
 
+      /* 進入遊戲的各單元按鈕 */
       .menu-btn {
         display: flex;
         justify-content: space-between;
@@ -137,36 +226,23 @@
       .menu-btn:active {
         transform: scale(0.96);
       }
-
       .btn-trig {
         background-color: #27ae60;
         box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
-      }
-      .btn-trig:hover {
-        background-color: #219150;
       }
       .btn-space {
         background-color: #9b59b6;
         box-shadow: 0 4px 10px rgba(155, 89, 182, 0.3);
       }
-      .btn-space:hover {
-        background-color: #8e44ad;
-      }
       .btn-perm {
         background-color: #16a085;
         box-shadow: 0 4px 10px rgba(22, 160, 133, 0.3);
-      }
-      .btn-perm:hover {
-        background-color: #117a65;
       }
       .btn-practice {
         background-color: #e67e22;
         box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
         justify-content: center;
         font-size: 18px;
-      }
-      .btn-practice:hover {
-        background-color: #d35400;
       }
       .btn-locked {
         background-color: #e0e0e0;
@@ -179,7 +255,6 @@
         filter: grayscale(1);
         opacity: 0.6;
       }
-
       .btn-text {
         display: flex;
         align-items: center;
@@ -201,10 +276,6 @@
       .btn-hell-theme .btn-text,
       .btn-hell-theme .btn-arrow {
         color: #ff4d4d;
-      }
-      .btn-hell-theme:hover {
-        background: #000000 !important;
-        box-shadow: 0 0 20px rgba(192, 57, 43, 0.8);
       }
 
       .checkbox-group {
@@ -233,13 +304,13 @@
         cursor: pointer;
         accent-color: #e67e22;
       }
-
       #credit {
         font-size: 12px;
         color: #bdc3c7;
         margin-top: 25px;
       }
 
+      /* UI與模態框 */
       #version-btn {
         position: fixed;
         bottom: 15px;
@@ -255,11 +326,25 @@
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         z-index: 50;
       }
-      #version-btn:hover {
-        background: rgba(44, 62, 80, 1);
-        transform: scale(1.05);
+      .feedback-btn {
+        position: fixed;
+        bottom: 15px;
+        right: 15px;
+        background: #f39c12;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: bold;
+        text-decoration: none;
+        box-shadow: 0 4px 10px rgba(243, 156, 18, 0.4);
+        z-index: 50;
       }
-      #update-modal {
+
+      #update-modal,
+      #legend-modal,
+      #boss-info-modal,
+      #boss-rank-modal {
         position: fixed;
         top: 0;
         left: 0;
@@ -274,7 +359,10 @@
         pointer-events: none;
         transition: opacity 0.3s;
       }
-      #update-modal.show {
+      #update-modal.show,
+      #legend-modal.show,
+      #boss-info-modal.show,
+      #boss-rank-modal.show {
         opacity: 1;
         pointer-events: auto;
       }
@@ -299,76 +387,8 @@
         color: #95a5a6;
         transition: 0.2s;
       }
-      .close-btn:hover {
-        color: #e74c3c;
-      }
-      .modal-content h2 {
-        margin-top: 0;
-        color: #2c3e50;
-        font-size: 22px;
-        border-bottom: 2px solid #f0f0f0;
-        padding-bottom: 10px;
-      }
-      .update-item {
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 1px dashed #eee;
-      }
-      .version-tag {
-        background: #3498db;
-        color: white;
-        padding: 3px 8px;
-        border-radius: 5px;
-        font-size: 14px;
-        font-weight: bold;
-        margin-right: 5px;
-      }
-      .date-tag {
-        color: #7f8c8d;
-        font-size: 13px;
-      }
-      .update-item ul {
-        margin: 10px 0 0 0;
-        padding-left: 20px;
-        font-size: 15px;
-        color: #444;
-        line-height: 1.6;
-      }
 
-      .feedback-btn {
-        position: fixed;
-        bottom: 15px;
-        right: 15px;
-        background: #f39c12;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: bold;
-        text-decoration: none;
-        box-shadow: 0 4px 10px rgba(243, 156, 18, 0.4);
-        transition: all 0.2s;
-        z-index: 50;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-      }
-      .feedback-btn:hover {
-        background: #e67e22;
-        transform: scale(1.05) translateY(-2px);
-        box-shadow: 0 6px 15px rgba(243, 156, 18, 0.6);
-      }
-
-      body {
-        transition: background-color 0.5s ease, background-image 0.5s ease;
-      }
-      .main-container,
-      h1,
-      .tabs,
-      .tab-btn {
-        transition: all 0.5s ease;
-      }
-
+      /* 地獄大廳變色 */
       body.hell-theme {
         background-color: #050000;
         background-image: linear-gradient(
@@ -386,16 +406,16 @@
         color: #ff4d4d;
         text-shadow: 0 0 15px rgba(255, 77, 77, 0.4);
       }
-      body.hell-theme .tabs {
-        background: #1a1a1a;
+      body.hell-theme .back-bar {
+        border-color: #444;
       }
-      body.hell-theme .tab-btn {
-        color: #7f8c8d;
+      body.hell-theme .back-btn {
+        background: #333;
+        color: #fff;
+        border-color: #555;
       }
-      body.hell-theme .tab-btn.active {
-        background: #c0392b;
-        color: white;
-        box-shadow: 0 4px 10px rgba(192, 57, 43, 0.5);
+      body.hell-theme #current-mode-title {
+        color: #ff4d4d;
       }
       body.hell-theme .checkbox-group {
         background: #111;
@@ -405,13 +425,15 @@
         color: #ccc;
       }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
     <script src="common.js"></script>
   </head>
   <body>
-    <div id="version-btn" onclick="toggleUpdateLog()">v3.0.0 更新日誌</div>
+    <div id="version-btn" onclick="toggleModal('update-modal')">
+      v3.0.0 更新日誌
+    </div>
     <a
       href="https://forms.gle/pDzjWcsPBi2pwJ869"
       target="_blank"
@@ -421,88 +443,74 @@
 
     <div id="update-modal">
       <div class="modal-content">
-        <span class="close-btn" onclick="toggleUpdateLog()">×</span>
-        <h2>🚀 版本更新日誌</h2>
-        <div class="update-item">
-          <span class="version-tag">v3.0.0</span>
-          <span class="date-tag">史詩級神仙大進化</span>
-          <ul>
+        <span class="close-btn" onclick="toggleModal('update-modal')">×</span>
+        <h2
+          style="
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 22px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+          "
+        >
+          🚀 版本更新日誌
+        </h2>
+        <div
+          style="
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #eee;
+          "
+        >
+          <span
+            style="
+              background: #3498db;
+              color: white;
+              padding: 3px 8px;
+              border-radius: 5px;
+              font-size: 14px;
+              font-weight: bold;
+              margin-right: 5px;
+            "
+            >v3.0.0</span
+          >
+          <span style="color: #7f8c8d; font-size: 13px">史詩級神仙大進化</span>
+          <ul
+            style="
+              margin: 10px 0 0 0;
+              padding-left: 20px;
+              font-size: 15px;
+              color: #444;
+              line-height: 1.6;
+            "
+          >
             <li>
-              <b style="color: #2980b9">個人戰績室：</b>Google
-              登入連動，完整記錄近 10 次挑戰與錯題本，並且給予弱點特訓。
+              <b style="color: #e74c3c">大廳重製：</b
+              >採用全新卡片式階層選單，操作更直覺。
             </li>
             <li>
-              <b style="color: #29b92e">自由選擇是否登入：</b>可自由選擇是否登入
-              Google 帳號進行遊戲，成績皆會進入排行榜中。
+              <b style="color: #2980b9">雙人對戰：</b>新增超燃拔河血條對戰模式。
             </li>
             <li>
-              <b style="color: #c08c2b">意見回饋：</b>遊戲中遇到任何 bug
-              或是有任何建議，都可以點選右下角的意見回饋表單！
+              <b style="color: #29b92e">個人戰績室：</b>完整記錄近 10
+              次挑戰與錯題本。
             </li>
             <li>
               <b style="color: #a020f0">平均成績：</b
-              >點入各單元會顯示你在這單元的平均分數以及所有玩家前三名的平均分數！
+              >單元內顯示你的平均與前三名平均！
             </li>
             <li>
-              <b style="color: #2023f0">遊戲稱號：</b
-              >依據你的最高分數，會獲得不同的稱號！
-            </li>
-            <li>
-              <b style="color: #380404">數學死神已降臨：</b
-              >數學死神已降臨至遊戲大廳，需要所有玩家共同的努力來將祂擊退！
-            </li>
-          </ul>
-        </div>
-        <hr style="border: 0; border-top: 1px dashed #eee; margin: 20px 0" />
-        <div class="update-item" style="opacity: 0.8">
-          <span class="version-tag" style="background: #95a5a6">v2.5.0</span>
-          <span class="date-tag">基礎功能優化</span>
-          <ul>
-            <li>
-              <b style="color: #2980b9">體驗升級：</b>新增右上角「🚪
-              退出」按鈕，過關後自動隱藏輸入框。
-            </li>
-            <li>
-              <b style="color: #ff0000">錯題本提示：</b
-              >結算畫面提供正解與提示，點擊即可學習。
+              <b style="color: #380404">數學死神：</b>世界 Boss
+              降臨大廳，全體玩家共同討伐！
             </li>
           </ul>
         </div>
       </div>
     </div>
 
-    <div
-      id="legend-modal"
-      style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 200;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s;
-      "
-    >
+    <div id="legend-modal">
       <div class="modal-content" style="text-align: center">
-        <span
-          class="close-btn"
-          onclick="toggleLegend()"
-          style="
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #95a5a6;
-          "
-          >×</span
-        >
+        <span class="close-btn" onclick="toggleModal('legend-modal')">×</span>
         <h2
           style="
             margin-top: 0;
@@ -602,44 +610,10 @@
             >
           </div>
         </div>
-        <button
-          onclick="toggleLegend()"
-          style="
-            margin-top: 30px;
-            background: #2c3e50;
-            color: white;
-            border: none;
-            padding: 10px 35px;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-          "
-        >
-          我知道了
-        </button>
       </div>
     </div>
 
-    <div
-      id="boss-info-modal"
-      style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 250;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s;
-      "
-    >
+    <div id="boss-info-modal">
       <div
         class="modal-content"
         style="
@@ -652,15 +626,8 @@
       >
         <span
           class="close-btn"
-          onclick="toggleBossInfo()"
-          style="
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #bdc3c7;
-          "
+          onclick="toggleModal('boss-info-modal')"
+          style="color: #bdc3c7"
           >×</span
         >
         <h2
@@ -696,10 +663,7 @@
         >
           <li>
             <b>📅 每日破綻加成：</b>每天會公告魔王的弱點單元，挑戰該單元將獲得
-            <b style="color: #f1c40f">1.25 倍</b> 真實傷害！<br /><span
-              style="font-size: 12px; color: #7f8c8d"
-              >(一四:三角 / 二五:空間 / 三六:排列 / 週日:全單元加成)</span
-            >
+            <b style="color: #f1c40f">1.25 倍</b> 真實傷害！
           </li>
           <li>
             <b>🔥 地獄重擊：</b>地獄模式的傷害將以
@@ -708,52 +672,17 @@
           <li>
             <b>🔄 輪迴重置：</b>每當擊敗一階魔王，<b style="color: #3498db"
               >貢獻排行榜將會重置</b
-            >，所有人重新競逐下一階的榮耀！
+            >，重新競逐！
           </li>
           <li>
-            <b>👑 永久殊榮：</b>成功給予該階級魔王最高總傷害的
-            MVP，將解鎖<b>對應該魔王的永久專屬動態稱號</b>！
+            <b>👑 永久殊榮：</b>最高總傷害的
+            MVP，將解鎖<b>永久專屬動態稱號</b>！
           </li>
         </ul>
-        <div style="text-align: center">
-          <button
-            onclick="toggleBossInfo()"
-            style="
-              background: linear-gradient(135deg, #c0392b, #e74c3c);
-              color: white;
-              border: none;
-              padding: 10px 40px;
-              border-radius: 25px;
-              font-size: 16px;
-              font-weight: bold;
-              cursor: pointer;
-              box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
-            "
-          >
-            ⚔️ 準備戰鬥
-          </button>
-        </div>
       </div>
     </div>
 
-    <div
-      id="boss-rank-modal"
-      style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 250;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s;
-      "
-    >
+    <div id="boss-rank-modal">
       <div
         class="modal-content"
         style="
@@ -768,15 +697,8 @@
       >
         <span
           class="close-btn"
-          onclick="toggleBossRank()"
-          style="
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #bdc3c7;
-          "
+          onclick="toggleModal('boss-rank-modal')"
+          style="color: #bdc3c7"
           >×</span
         >
         <h2
@@ -790,17 +712,6 @@
         >
           🏆 本輪討伐 Top 5
         </h2>
-        <p
-          style="
-            color: #ecf0f1;
-            font-size: 13px;
-            line-height: 1.5;
-            margin-bottom: 15px;
-          "
-        >
-          🔄 本排行榜為<b>「當前階級魔王」</b>專屬！<br />
-          👑 結算時第一名的玩家，將解鎖該階魔王的<b>永久專屬稱號</b>！
-        </p>
         <div
           id="boss-rank-list"
           style="
@@ -814,28 +725,11 @@
             資料飛速計算中...
           </div>
         </div>
-        <div style="text-align: center; margin-top: 20px">
-          <button
-            onclick="toggleBossRank()"
-            style="
-              background: #34495e;
-              color: white;
-              border: none;
-              padding: 8px 30px;
-              border-radius: 20px;
-              font-size: 14px;
-              font-weight: bold;
-              cursor: pointer;
-            "
-          >
-            關閉
-          </button>
-        </div>
       </div>
     </div>
 
     <div class="main-container">
-      <h1><span class="teacher"></span>數學領域展開</h1>
+      <h1 id="main-title"><span class="teacher"></span>數學領域展開</h1>
 
       <div
         style="
@@ -865,13 +759,11 @@
             box-shadow: 0 2px 6px rgba(243, 156, 18, 0.3);
             transition: 0.2s;
           "
-          onmouseover="this.style.background='#e67e22'"
-          onmouseout="this.style.background='#f39c12'"
         >
           ✏️ 更改暱稱
         </button>
         <button
-          onclick="toggleLegend()"
+          onclick="toggleModal('legend-modal')"
           style="
             background: #fff;
             color: #34495e;
@@ -884,8 +776,6 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
             transition: 0.2s;
           "
-          onmouseover="this.style.background='#f8f9fa'"
-          onmouseout="this.style.background='#fff'"
         >
           🎖️ 稱號說明
         </button>
@@ -950,7 +840,6 @@
               cursor: pointer;
               font-weight: bold;
               font-size: 13px;
-              white-space: nowrap;
             "
           >
             📊 我的戰績
@@ -967,7 +856,6 @@
               cursor: pointer;
               font-weight: bold;
               font-size: 13px;
-              white-space: nowrap;
             "
           >
             Google 登入
@@ -1005,375 +893,507 @@
           "
         ></div>
 
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-            position: relative;
-            z-index: 1;
-          "
-        >
+        <div id="boss-active-ui" style="display: none">
           <div
             style="
               display: flex;
-              flex-direction: column;
+              justify-content: space-between;
               align-items: flex-start;
-              gap: 6px;
-              text-align: left;
+              margin-bottom: 12px;
+              position: relative;
+              z-index: 1;
             "
           >
-            <h3
-              id="boss-title"
+            <div
               style="
-                margin: 0;
-                color: #e74c3c;
-                font-size: 18px;
-                text-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+                text-align: left;
               "
             >
-              世界 Boss Lv.1 : 數學死神
-            </h3>
-            <span
-              id="boss-bonus-badge"
+              <h3
+                id="boss-title"
+                style="
+                  margin: 0;
+                  color: #e74c3c;
+                  font-size: 18px;
+                  text-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+                "
+              >
+                世界 Boss Lv.1 : 數學死神
+              </h3>
+              <span
+                id="boss-bonus-badge"
+                style="
+                  font-size: 11.5px;
+                  color: #f1c40f;
+                  border: 1px solid #f1c40f;
+                  padding: 3px 8px;
+                  border-radius: 12px;
+                  background: rgba(241, 196, 15, 0.1);
+                "
+                >讀取中...</span
+              >
+            </div>
+            <button
+              onclick="toggleModal('boss-info-modal')"
               style="
-                font-size: 11.5px;
-                color: #f1c40f;
-                border: 1px solid #f1c40f;
-                padding: 3px 8px;
-                border-radius: 12px;
-                background: rgba(241, 196, 15, 0.1);
+                background: rgba(255, 255, 255, 0.2);
+                color: #fff;
+                border: 1px solid rgba(255, 255, 255, 0.4);
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                flex-shrink: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
               "
-              >讀取中...</span
             >
+              ?
+            </button>
           </div>
-          <button
-            onclick="toggleBossInfo()"
+          <div
             style="
-              background: rgba(255, 255, 255, 0.2);
-              color: #fff;
-              border: 1px solid rgba(255, 255, 255, 0.4);
-              width: 30px;
-              height: 30px;
-              border-radius: 50%;
-              font-size: 16px;
-              font-weight: bold;
-              cursor: pointer;
-              flex-shrink: 0;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-              transition: 0.2s;
+              background: #000;
+              width: 100%;
+              height: 24px;
+              border-radius: 12px;
+              border: 2px solid #555;
+              position: relative;
+              z-index: 1;
+              overflow: hidden;
             "
-            onmouseover="this.style.background='rgba(255,255,255,0.3)'"
-            onmouseout="this.style.background='rgba(255,255,255,0.2)'"
-            title="點擊查看討伐說明"
           >
-            ?
-          </button>
+            <div
+              id="boss-hp-bar"
+              style="
+                background: linear-gradient(90deg, #c0392b, #e74c3c);
+                width: 100%;
+                height: 100%;
+                transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+                box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.3);
+              "
+            ></div>
+            <div
+              id="boss-hp-text"
+              style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
+                text-shadow: 1px 1px 2px #000;
+              "
+            >
+              血量偵測中...
+            </div>
+          </div>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-top: 10px;
+              position: relative;
+              z-index: 1;
+            "
+          >
+            <div style="color: #95a5a6; font-size: 11.5px; text-align: left">
+              ⚔️ 累積傷害：<span
+                id="boss-damage-text"
+                style="color: #f39c12; font-weight: bold; font-size: 14px"
+                >0</span
+              >
+            </div>
+            <button
+              onclick="toggleModal('boss-rank-modal')"
+              style="
+                background: rgba(243, 156, 18, 0.15);
+                color: #f39c12;
+                border: 1px solid rgba(243, 156, 18, 0.5);
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 11.5px;
+                font-weight: bold;
+                cursor: pointer;
+              "
+            >
+              🏆 貢獻排行
+            </button>
+          </div>
         </div>
 
         <div
+          id="boss-defeated-ui"
           style="
-            background: #000;
-            width: 100%;
-            height: 24px;
-            border-radius: 12px;
-            border: 2px solid #555;
+            display: none;
+            text-align: center;
             position: relative;
             z-index: 1;
-            overflow: hidden;
+            animation: fadeIn 0.5s;
           "
         >
-          <div
-            id="boss-hp-bar"
+          <h3
             style="
-              background: linear-gradient(90deg, #c0392b, #e74c3c);
-              width: 100%;
-              height: 100%;
-              transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1);
-              box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.3);
+              color: #f1c40f;
+              margin: 0 0 10px 0;
+              font-size: 18px;
+              text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+            "
+          >
+            🎉 Lv.<span id="def-level"></span> 魔王已被討伐！
+          </h3>
+          <div style="font-size: 12px; color: #bdc3c7; margin-bottom: 8px">
+            🏆 討伐 MVP 英雄榜
+          </div>
+          <div
+            id="def-top3-list"
+            style="
+              display: flex;
+              justify-content: center;
+              flex-wrap: wrap;
+              gap: 8px;
+              margin-bottom: 12px;
             "
           ></div>
           <div
-            id="boss-hp-text"
             style="
-              position: absolute;
-              top: 0;
-              left: 0;
-              width: 100%;
-              height: 100%;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              color: white;
-              font-size: 12px;
-              font-weight: bold;
-              text-shadow: 1px 1px 2px #000;
-              letter-spacing: 1px;
+              background: rgba(52, 152, 219, 0.15);
+              border: 1px solid rgba(52, 152, 219, 0.4);
+              border-radius: 8px;
+              padding: 8px;
             "
           >
-            血量偵測中...
-          </div>
-        </div>
-
-        <div
-          style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-            position: relative;
-            z-index: 1;
-          "
-        >
-          <div style="color: #95a5a6; font-size: 11.5px; text-align: left">
-            ⚔️ 累積傷害：<span
-              id="boss-damage-text"
-              style="color: #f39c12; font-weight: bold; font-size: 14px"
-              >0</span
-            >
-          </div>
-          <button
-            onclick="toggleBossRank()"
-            style="
-              background: rgba(243, 156, 18, 0.15);
-              color: #f39c12;
-              border: 1px solid rgba(243, 156, 18, 0.5);
-              padding: 4px 12px;
-              border-radius: 12px;
-              font-size: 11.5px;
-              font-weight: bold;
-              cursor: pointer;
-              transition: 0.2s;
-            "
-            onmouseover="this.style.background='rgba(243, 156, 18, 0.3)'"
-            onmouseout="this.style.background='rgba(243, 156, 18, 0.15)'"
-          >
-            🏆 貢獻排行
-          </button>
-        </div>
-      </div>
-
-      <div class="tabs">
-        <button
-          class="tab-btn active"
-          onclick="switchTab('ranked')"
-          id="btn-ranked"
-        >
-          🏆 單元競賽
-        </button>
-        <button class="tab-btn" onclick="switchTab('hell')" id="btn-hell">
-          💀 地獄模式
-        </button>
-        <button
-          class="tab-btn"
-          onclick="switchTab('practice')"
-          id="btn-practice"
-        >
-          💪 綜合練習
-        </button>
-      </div>
-
-      <div id="content-ranked" class="content-section active">
-        <div
-          onclick="window.location.href='trig.html?mode=normal'"
-          class="menu-btn btn-trig"
-        >
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              text-align: left;
-              gap: 4px;
-              width: 100%;
-            "
-          >
-            <div class="btn-text">
-              <span class="level-icon"></span> 超好玩的三角比
+            <div style="color: #3498db; font-size: 12px; font-weight: bold">
+              ⏳ 下一階魔王降臨倒數
             </div>
             <div
-              id="top-trig"
+              id="def-countdown"
               style="
-                font-size: 13px;
-                font-weight: normal;
-                color: rgba(255, 255, 255, 0.9);
+                color: #e74c3c;
+                font-size: 18px;
+                font-weight: 900;
+                letter-spacing: 1px;
+                margin: 4px 0;
               "
             >
-              👑 最高紀錄：讀取中...
+              計算中...
+            </div>
+            <div style="color: #95a5a6; font-size: 10px">
+              (期間的戰鬥傷害仍會暗中削弱下一階魔王！)
             </div>
           </div>
-          <div class="btn-arrow">▶</div>
         </div>
-        <div
-          onclick="window.location.href='space.html?mode=normal'"
-          class="menu-btn btn-space"
-        >
+      </div>
+
+      <div id="view-container">
+        <div class="view-section" id="view-main">
           <div
-            style="
-              display: flex;
-              flex-direction: column;
-              text-align: left;
-              gap: 4px;
-              width: 100%;
-            "
+            class="mode-card card-ranked"
+            onclick="openMode('ranked', '🏆 單元競賽')"
           >
-            <div class="btn-text">
-              <span class="level-icon"></span> 有趣的空間坐標
+            <div class="mode-icon">🏆</div>
+            <div class="mode-info">
+              <div class="mode-title">單元競賽</div>
+              <div class="mode-desc">挑戰各單元排行榜與稱號</div>
+            </div>
+            <div class="mode-arrow">▶</div>
+          </div>
+
+          <div
+            class="mode-card card-battle"
+            onclick="openMode('battle', '⚔️ 雙人對戰')"
+          >
+            <div class="mode-icon">⚔️</div>
+            <div class="mode-info">
+              <div class="mode-title">雙人對戰</div>
+              <div class="mode-desc">即時連線，拔河血條大戰</div>
+            </div>
+            <div class="mode-arrow">▶</div>
+          </div>
+
+          <div
+            class="mode-card card-hell"
+            onclick="openMode('hell', '💀 地獄模式')"
+          >
+            <div class="mode-icon">💀</div>
+            <div class="mode-info">
+              <div class="mode-title">地獄模式</div>
+              <div class="mode-desc">如果你想死亡，請點擊進入</div>
+            </div>
+            <div class="mode-arrow">▶</div>
+          </div>
+
+          <div
+            class="mode-card card-practice"
+            onclick="openMode('practice', '💪 綜合練習')"
+          >
+            <div class="mode-icon">💪</div>
+            <div class="mode-info">
+              <div class="mode-title">綜合練習</div>
+              <div class="mode-desc">自由勾選單元混合出題</div>
+            </div>
+            <div class="mode-arrow">▶</div>
+          </div>
+          <div id="credit">Powered by 江子緯老師</div>
+        </div>
+
+        <div class="view-section" id="view-sub">
+          <div class="back-bar">
+            <button class="back-btn" onclick="backToMain()">🔙 返回大廳</button>
+            <div id="current-mode-title">載入中...</div>
+          </div>
+
+          <div id="content-ranked" class="content-section">
+            <div
+              onclick="window.location.href='trig.html?mode=normal'"
+              class="menu-btn btn-trig"
+            >
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  text-align: left;
+                  gap: 4px;
+                  width: 100%;
+                "
+              >
+                <div class="btn-text">
+                  <span class="level-icon"></span> 超好玩的三角比
+                </div>
+                <div
+                  id="top-trig"
+                  style="
+                    font-size: 13px;
+                    font-weight: normal;
+                    color: rgba(255, 255, 255, 0.9);
+                  "
+                >
+                  👑 最高紀錄：讀取中...
+                </div>
+              </div>
+              <div class="btn-arrow">▶</div>
             </div>
             <div
-              id="top-space"
+              onclick="window.location.href='space.html?mode=normal'"
+              class="menu-btn btn-space"
+            >
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  text-align: left;
+                  gap: 4px;
+                  width: 100%;
+                "
+              >
+                <div class="btn-text">
+                  <span class="level-icon"></span> 有趣的空間坐標
+                </div>
+                <div
+                  id="top-space"
+                  style="
+                    font-size: 13px;
+                    font-weight: normal;
+                    color: rgba(255, 255, 255, 0.9);
+                  "
+                >
+                  👑 最高紀錄：讀取中...
+                </div>
+              </div>
+              <div class="btn-arrow">▶</div>
+            </div>
+            <div
+              onclick="window.location.href='perm.html?mode=normal'"
+              class="menu-btn btn-perm"
+            >
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  text-align: left;
+                  gap: 4px;
+                  width: 100%;
+                "
+              >
+                <div class="btn-text">
+                  <span class="level-icon"></span> 神奇的排列組合
+                </div>
+                <div
+                  id="top-perm"
+                  style="
+                    font-size: 13px;
+                    font-weight: normal;
+                    color: rgba(255, 255, 255, 0.9);
+                  "
+                >
+                  👑 最高紀錄：讀取中...
+                </div>
+              </div>
+              <div class="btn-arrow">▶</div>
+            </div>
+            <div class="menu-btn btn-locked">
+              <div class="btn-text">
+                <span class="level-icon">🔒</span> 敬請期待...
+              </div>
+            </div>
+          </div>
+
+          <div id="content-battle" class="content-section">
+            <div
+              onclick="window.location.href='trig.html?mode=battle'"
+              class="menu-btn"
               style="
-                font-size: 13px;
-                font-weight: normal;
-                color: rgba(255, 255, 255, 0.9);
+                background: linear-gradient(135deg, #c0392b, #e74c3c);
+                box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
               "
             >
-              👑 最高紀錄：讀取中...
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  text-align: left;
+                  gap: 4px;
+                  width: 100%;
+                "
+              >
+                <div class="btn-text">
+                  <span class="level-icon">⚔️</span> 雙人拔河：三角比
+                </div>
+                <div
+                  style="
+                    font-size: 13px;
+                    font-weight: normal;
+                    color: rgba(255, 255, 255, 0.9);
+                  "
+                >
+                  🔥 隨機配對，極速開戰！
+                </div>
+              </div>
+              <div class="btn-arrow">▶</div>
+            </div>
+            <div class="menu-btn btn-locked">
+              <div class="btn-text">
+                <span class="level-icon">🔒</span> 空間坐標對戰 (開發中)
+              </div>
             </div>
           </div>
-          <div class="btn-arrow">▶</div>
-        </div>
-        <div
-          onclick="window.location.href='perm.html?mode=normal'"
-          class="menu-btn btn-perm"
-        >
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              text-align: left;
-              gap: 4px;
-              width: 100%;
-            "
-          >
-            <div class="btn-text">
-              <span class="level-icon"></span> 神奇的排列組合
+
+          <div id="content-hell" class="content-section">
+            <div
+              onclick="window.location.href='trig.html?mode=hell'"
+              class="menu-btn btn-hell-theme"
+            >
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  text-align: left;
+                  gap: 4px;
+                  width: 100%;
+                "
+              >
+                <div class="btn-text">
+                  <span class="level-icon">💀</span> 死亡廣義三角比
+                </div>
+                <div
+                  id="top-hell-trig"
+                  style="font-size: 13px; font-weight: normal; color: #e74c3c"
+                >
+                  👑 地獄霸主：讀取中...
+                </div>
+              </div>
+              <div class="btn-arrow">▶</div>
             </div>
             <div
-              id="top-perm"
-              style="
-                font-size: 13px;
-                font-weight: normal;
-                color: rgba(255, 255, 255, 0.9);
-              "
+              onclick="window.location.href='space.html?mode=hell'"
+              class="menu-btn btn-hell-theme"
             >
-              👑 最高紀錄：讀取中...
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  text-align: left;
+                  gap: 4px;
+                  width: 100%;
+                "
+              >
+                <div class="btn-text">
+                  <span class="level-icon">💀</span> 虛無的空間坐標(開發中)
+                </div>
+                <div
+                  id="top-hell-space"
+                  style="font-size: 13px; font-weight: normal; color: #e74c3c"
+                >
+                  👑 地獄霸主：讀取中...
+                </div>
+              </div>
+              <div class="btn-arrow">▶</div>
+            </div>
+            <div
+              onclick="window.location.href='perm.html?mode=hell'"
+              class="menu-btn btn-hell-theme"
+            >
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  text-align: left;
+                  gap: 4px;
+                  width: 100%;
+                "
+              >
+                <div class="btn-text">
+                  <span class="level-icon">💀</span> 混沌的排列組合(開發中)
+                </div>
+                <div
+                  id="top-hell-perm"
+                  style="font-size: 13px; font-weight: normal; color: #e74c3c"
+                >
+                  👑 地獄霸主：讀取中...
+                </div>
+              </div>
+              <div class="btn-arrow">▶</div>
             </div>
           </div>
-          <div class="btn-arrow">▶</div>
-        </div>
-        <div class="menu-btn btn-locked">
-          <div class="btn-text">
-            <span class="level-icon">🔒</span> 敬請期待...
+
+          <div id="content-practice" class="content-section">
+            <p style="margin-bottom: 10px; color: #e67e22; font-weight: bold">
+              自由勾選想混合練習的單元：
+            </p>
+            <div class="checkbox-group">
+              <label class="check-item"
+                ><input type="checkbox" id="chk-trig" checked />
+                超好玩的三角比</label
+              >
+              <label class="check-item"
+                ><input type="checkbox" id="chk-space" checked />
+                有趣的空間坐標</label
+              >
+              <label class="check-item"
+                ><input type="checkbox" id="chk-perm" checked />
+                神奇的排列組合</label
+              >
+            </div>
+            <button class="menu-btn btn-practice" onclick="startPractice()">
+              🔥 開始綜合練習
+            </button>
           </div>
         </div>
       </div>
-
-      <div id="content-hell" class="content-section">
-        <div
-          onclick="window.location.href='trig.html?mode=hell'"
-          class="menu-btn btn-hell-theme"
-        >
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              text-align: left;
-              gap: 4px;
-              width: 100%;
-            "
-          >
-            <div class="btn-text">
-              <span class="level-icon">💀</span> 死亡廣義三角比
-            </div>
-            <div
-              id="top-hell-trig"
-              style="font-size: 13px; font-weight: normal; color: #e74c3c"
-            >
-              👑 地獄霸主：讀取中...
-            </div>
-          </div>
-          <div class="btn-arrow">▶</div>
-        </div>
-        <div
-          onclick="window.location.href='space.html?mode=hell'"
-          class="menu-btn btn-hell-theme"
-        >
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              text-align: left;
-              gap: 4px;
-              width: 100%;
-            "
-          >
-            <div class="btn-text">
-              <span class="level-icon">💀</span> 虛無的空間坐標(開發中)
-            </div>
-            <div
-              id="top-hell-space"
-              style="font-size: 13px; font-weight: normal; color: #e74c3c"
-            >
-              👑 地獄霸主：讀取中...
-            </div>
-          </div>
-          <div class="btn-arrow">▶</div>
-        </div>
-        <div
-          onclick="window.location.href='perm.html?mode=hell'"
-          class="menu-btn btn-hell-theme"
-        >
-          <div
-            style="
-              display: flex;
-              flex-direction: column;
-              text-align: left;
-              gap: 4px;
-              width: 100%;
-            "
-          >
-            <div class="btn-text">
-              <span class="level-icon">💀</span> 混沌的排列組合(開發中)
-            </div>
-            <div
-              id="top-hell-perm"
-              style="font-size: 13px; font-weight: normal; color: #e74c3c"
-            >
-              👑 地獄霸主：讀取中...
-            </div>
-          </div>
-          <div class="btn-arrow">▶</div>
-        </div>
-      </div>
-
-      <div id="content-practice" class="content-section">
-        <p style="margin-bottom: 10px; color: #e67e22; font-weight: bold">
-          自由勾選想混合練習的單元：
-        </p>
-        <div class="checkbox-group">
-          <label class="check-item"
-            ><input type="checkbox" id="chk-trig" checked />
-            超好玩的三角比</label
-          >
-          <label class="check-item"
-            ><input type="checkbox" id="chk-space" checked />
-            有趣的空間坐標</label
-          >
-          <label class="check-item"
-            ><input type="checkbox" id="chk-perm" checked />
-            神奇的排列組合</label
-          >
-        </div>
-        <button class="menu-btn btn-practice" onclick="startPractice()">
-          🔥 開始綜合練習
-        </button>
-      </div>
-
-      <div id="credit">Powered by 江子緯老師</div>
     </div>
 
     <script>
@@ -1381,6 +1401,52 @@
       const provider = new firebase.auth.GoogleAuthProvider();
       const db = firebase.firestore();
 
+      // ✨ UI 控制邏輯
+      function openMode(modeId, title) {
+        document.getElementById("current-mode-title").innerText = title;
+        document
+          .querySelectorAll(".content-section")
+          .forEach((el) => el.classList.remove("active"));
+        document.getElementById("content-" + modeId).classList.add("active");
+        document.getElementById("view-container").style.transform =
+          "translateX(-50%)";
+        document.getElementById("main-title").style.transform = "scale(0.9)";
+        document.getElementById("main-title").style.opacity = "0.5";
+        if (modeId === "hell") document.body.classList.add("hell-theme");
+      }
+
+      function backToMain() {
+        document.getElementById("view-container").style.transform =
+          "translateX(0)";
+        document.getElementById("main-title").style.transform = "scale(1)";
+        document.getElementById("main-title").style.opacity = "1";
+        document.body.classList.remove("hell-theme");
+      }
+
+      function toggleModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.classList.contains("show")
+          ? modal.classList.remove("show")
+          : modal.classList.add("show");
+      }
+
+      function startPractice() {
+        let selectedModes = [];
+        if (document.getElementById("chk-trig").checked)
+          selectedModes.push("trig");
+        if (document.getElementById("chk-space").checked)
+          selectedModes.push("space");
+        if (document.getElementById("chk-perm").checked)
+          selectedModes.push("perm");
+        if (selectedModes.length === 0) {
+          alert("⚠️ 請至少勾選一個單元才能開始練習喔！");
+          return;
+        }
+        window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
+      }
+
+      // ✨ 原本的資料庫與認證邏輯
       async function loadTopScore(
         unit,
         mode,
@@ -1424,7 +1490,6 @@
             }
           }
 
-          // 1. 去除重複玩家，保留最高分
           let uniqueMap = new Map();
           allRecords.forEach((r) => {
             if (
@@ -1438,7 +1503,6 @@
             (a, b) => b.score - a.score
           );
 
-          // 2. 抓出玩家自己的最高紀錄與名次
           const myName = localStorage.getItem("mathGamePlayerName");
           let myBestScore = null;
           let myRank = null;
@@ -1453,7 +1517,6 @@
             }
           }
 
-          // 3. 畫出大廳專屬排行榜 UI
           let topList = sortedUniqueRanks.slice(0, limit);
           let html = "";
 
@@ -1471,16 +1534,12 @@
               { min: 2000, name: "至尊", color: "#c0392b" },
             ];
 
-            // 為了不卡頓，我們先印出基本名字，然後非同步去查真實稱號
             for (let index = 0; index < topList.length; index++) {
               let player = topList[index];
               let icon = limit === 1 ? "👑" : medals[index];
               let textColor = limit === 1 ? "#ff4d4d" : colors[index];
-
-              // 預設稱號 (用這局的分數當保底，照顧舊版 CSV 沒帳號的玩家)
               let globalMax = player.score;
 
-              // ✨ 帳號綁定制核心：如果有 uid，就去 users 表查他真正的歷史最高分！
               if (player.uid) {
                 try {
                   let userDoc = await db
@@ -1501,7 +1560,6 @@
                 }
               }
 
-              // 找尋對應稱號
               let pTitle = TITLES[0];
               for (let i = TITLES.length - 1; i >= 0; i--) {
                 if (globalMax >= TITLES[i].min) {
@@ -1513,8 +1571,7 @@
               let titleBadge = `<span style="background: ${pTitle.color}; color: white; font-size: 9px; padding: 2px 5px; border-radius: 6px; font-weight: bold; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,0.3); margin-right: 2px;">${pTitle.name}</span>`;
 
               html += `<div style="background: rgba(0, 0, 0, 0.15); padding: 3px 6px; border-radius: 6px; font-size: 11px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.1);">
-                         ${icon}
-                         ${titleBadge}
+                         ${icon} ${titleBadge}
                          <span style="max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: white;" title="${player.name}">${player.name}</span>
                          <span style="color: ${textColor}; font-weight: bold; margin-left: 2px;">${player.score}</span>
                        </div>`;
@@ -1524,12 +1581,10 @@
             html += `<div style="margin-top: 5px; font-size: 12px; color: rgba(255,255,255,0.6);">👑 尚無挑戰者</div>`;
           }
 
-          // 4. 將個人紀錄掛在排行榜下方
           if (myName && myName !== "Guest" && myName !== "---") {
             if (myRank !== null) {
               let myRankColor = myRank <= limit ? "#2ecc71" : "#f1c40f";
-              html += `
-                <div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.3); font-size: 11.5px; color: rgba(255,255,255,0.9);">
+              html += `<div style="margin-top: 6px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.3); font-size: 11.5px; color: rgba(255,255,255,0.9);">
                   🙋‍♂️ 我的最高: <span style="color: #f1c40f; font-weight: bold;">${myBestScore}</span> 
                   <span style="opacity:0.8;">(第 <span style="color: ${myRankColor}; font-weight: bold;">${myRank}</span> 名)</span>
                 </div>`;
@@ -1543,32 +1598,6 @@
         }
       }
 
-      function toggleUpdateLog() {
-        const modal = document.getElementById("update-modal");
-        modal.classList.contains("show")
-          ? modal.classList.remove("show")
-          : modal.classList.add("show");
-      }
-      function toggleLegend() {
-        const modal = document.getElementById("legend-modal");
-        modal.style.opacity === "1"
-          ? ((modal.style.opacity = "0"), (modal.style.pointerEvents = "none"))
-          : ((modal.style.opacity = "1"), (modal.style.pointerEvents = "auto"));
-      }
-      function toggleBossInfo() {
-        const modal = document.getElementById("boss-info-modal");
-        modal.style.opacity === "1"
-          ? ((modal.style.opacity = "0"), (modal.style.pointerEvents = "none"))
-          : ((modal.style.opacity = "1"), (modal.style.pointerEvents = "auto"));
-      }
-      function toggleBossRank() {
-        const modal = document.getElementById("boss-rank-modal");
-        modal.style.opacity === "1"
-          ? ((modal.style.opacity = "0"), (modal.style.pointerEvents = "none"))
-          : ((modal.style.opacity = "1"), (modal.style.pointerEvents = "auto"));
-      }
-
-      // ✨ 世界 Boss 2.0 終極省電引擎 (只讀取 1 次！)
       function loadBossData() {
         const hpText = document.getElementById("boss-hp-text");
         const hpBar = document.getElementById("boss-hp-bar");
@@ -1576,7 +1605,6 @@
         const bossTitle = document.getElementById("boss-title");
         const badgeEl = document.getElementById("boss-bonus-badge");
 
-        // 🚀 只讀取 1 份文件，省下幾萬次額度！
         db.collection("global")
           .doc("boss_state")
           .get()
@@ -1584,11 +1612,81 @@
             let bData = doc.exists
               ? doc.data()
               : { level: 1, totalDamage: 0, playerMap: {}, pastMVPs: {} };
+            let now = Date.now();
+            let isCooldown = bData.cooldownUntil && now < bData.cooldownUntil;
+
+            // ✨ 新增：判斷是否在 3 天慶祝期內！
+            if (isCooldown) {
+              document.getElementById("boss-active-ui").style.display = "none";
+              document.getElementById("boss-defeated-ui").style.display =
+                "block";
+
+              document.getElementById("def-level").innerText =
+                bData.level - 1 || 1;
+
+              // 畫出前三名英雄榜
+              let top3Html = "";
+              let top3 = bData.lastTop3 || [];
+              let medals = ["🥇", "🥈", "🥉"];
+              top3.forEach((p, i) => {
+                top3Html += `<div style="background: rgba(255,255,255,0.1); border: 1px solid #f1c40f; border-radius: 8px; padding: 4px 10px; color: white; font-weight: bold; font-size: 12px; display: flex; align-items: center; gap: 4px;">
+                      ${medals[i]} <span style="max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.name}</span>
+                    </div>`;
+              });
+              if (top3.length === 0)
+                top3Html = `<div style="color: #95a5a6; font-size: 12px;">無資料</div>`;
+              document.getElementById("def-top3-list").innerHTML = top3Html;
+
+              // 超炫倒數計時器
+              let cdEl = document.getElementById("def-countdown");
+              if (window.bossCdTimer) clearInterval(window.bossCdTimer);
+              window.bossCdTimer = setInterval(() => {
+                let remain = bData.cooldownUntil - Date.now();
+                if (remain <= 0) {
+                  clearInterval(window.bossCdTimer);
+                  loadBossData(); // 倒數結束，系統自動切換回新魔王！
+                } else {
+                  let days = Math.floor(remain / (1000 * 60 * 60 * 24));
+                  let hours = Math.floor(
+                    (remain % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+                  );
+                  let minutes = Math.floor(
+                    (remain % (1000 * 60 * 60)) / (1000 * 60)
+                  );
+                  let seconds = Math.floor((remain % (1000 * 60)) / 1000);
+                  cdEl.innerText = `${days}天 ${hours}時 ${minutes}分 ${seconds}秒`;
+                }
+              }, 1000);
+
+              // 發放 MVP 稱號
+              const currentUid = localStorage.getItem("mathGamePlayerUid");
+              let pastMVPs = bData.pastMVPs || {};
+              if (currentUid && pastMVPs[currentUid]) {
+                setTimeout(() => {
+                  const titleBadge =
+                    document.getElementById("user-title-badge");
+                  if (titleBadge) {
+                    titleBadge.innerText = pastMVPs[currentUid].title;
+                    titleBadge.style.background =
+                      "linear-gradient(135deg, #c0392b, #8e44ad)";
+                    titleBadge.style.boxShadow =
+                      "0 0 15px rgba(192, 57, 43, 0.8)";
+                    titleBadge.style.display = "inline-block";
+                  }
+                }, 800);
+              }
+              return; // 直接中斷，不顯示血條 UI
+            }
+
+            // --- 🔴 以下為正常的戰鬥血條渲染 (跟原本完全一樣) ---
+            document.getElementById("boss-active-ui").style.display = "block";
+            document.getElementById("boss-defeated-ui").style.display = "none";
+            if (window.bossCdTimer) clearInterval(window.bossCdTimer);
+
             let level = bData.level || 1;
             let totalDmg = bData.totalDamage || 0;
             let pMap = bData.playerMap || {};
             let pastMVPs = bData.pastMVPs || {};
-
             let levelMaxHp = 500000 + (level - 1) * 200000;
             let currentHP = levelMaxHp - totalDmg;
             if (currentHP < 0) currentHP = 0;
@@ -1620,7 +1718,6 @@
             badgeEl.innerText = bonusStr;
             hpText.innerText = `HP: ${currentHP.toLocaleString()} / ${levelMaxHp.toLocaleString()}`;
 
-            // 數字動畫
             let currentDmgDisplay = 0;
             let dmgInterval = setInterval(() => {
               currentDmgDisplay += Math.ceil(totalDmg / 20);
@@ -1633,7 +1730,6 @@
 
             setTimeout(() => (hpBar.style.width = hpPercent + "%"), 300);
 
-            // 🏆 排行榜渲染
             let currentTopPlayers = Object.keys(pMap)
               .map((k) => ({
                 uid: k,
@@ -1681,7 +1777,6 @@
             document.getElementById("boss-rank-list").innerHTML =
               rankHtml + myRankHtml;
 
-            // 👑 MVP 稱號派發
             if (currentUid && pastMVPs[currentUid]) {
               setTimeout(() => {
                 const titleBadge = document.getElementById("user-title-badge");
@@ -1702,33 +1797,6 @@
           });
       }
 
-      function switchTab(tabId) {
-        ["ranked", "hell", "practice"].forEach((id) => {
-          document.getElementById("btn-" + id).classList.remove("active");
-          document.getElementById("content-" + id).classList.remove("active");
-        });
-        document.getElementById("btn-" + tabId).classList.add("active");
-        document.getElementById("content-" + tabId).classList.add("active");
-        if (tabId === "hell") document.body.classList.add("hell-theme");
-        else document.body.classList.remove("hell-theme");
-      }
-
-      function startPractice() {
-        let selectedModes = [];
-        if (document.getElementById("chk-trig").checked)
-          selectedModes.push("trig");
-        if (document.getElementById("chk-space").checked)
-          selectedModes.push("space");
-        if (document.getElementById("chk-perm").checked)
-          selectedModes.push("perm");
-
-        if (selectedModes.length === 0) {
-          alert("⚠️ 請至少勾選一個單元才能開始練習喔！");
-          return;
-        }
-        window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
-      }
-
       auth.onAuthStateChanged(async (user) => {
         const nameDisplay = document.getElementById("user-name-display");
         const titleBadge = document.getElementById("user-title-badge");
@@ -1741,55 +1809,38 @@
           authBtn.style.background = "#e74c3c";
           renameBtn.style.display = "block";
 
-          // 1. 取得玩家暱稱 (這還是從 users 拿，因為改名資訊存在這)
           let finalName = user.displayName;
           const userDoc = await db.collection("users").doc(user.uid).get();
           if (userDoc.exists && userDoc.data().name) {
             finalName = userDoc.data().name;
           }
 
-          // 2. 🚀 從歷史紀錄計算：總經驗值、等級、最高分
           try {
             const snapshot = await db
               .collection("game_records")
               .where("uid", "==", user.uid)
               .get();
-
             let totalExp = 0;
             let maxScore = 0;
 
             snapshot.forEach((doc) => {
               const d = doc.data();
               const s = Number(d.score) || 0;
-              if (s > 0) totalExp += s; // 累加總經驗 (只算正分)
-              if (s > maxScore) maxScore = s; // 找出歷史最高分
+              if (s > 0) totalExp += s;
+              if (s > maxScore) maxScore = s;
             });
 
-            // ✨ 等級公式：Lv = 根號(總經驗 / 100) + 1
             let level = Math.floor(Math.sqrt(totalExp / 100)) + 1;
 
-            // ✨ 效能救星：把「全域最高分」和「等級」一起寫入使用者的身分證裡！
             db.collection("users")
               .doc(user.uid)
-              .set(
-                {
-                  globalMaxScore: maxScore,
-                  level: level, // 👈 把等級也存起來，以後排行榜就不用慢慢算了！
-                },
-                { merge: true }
-              )
+              .set({ globalMaxScore: maxScore, level: level }, { merge: true })
               .catch((e) => console.log("寫入資料失敗", e));
-            // 儲存到本地備份，方便上傳成績時標記
+
             localStorage.setItem("mathGamePlayerName", finalName);
             localStorage.setItem("mathGamePlayerUid", user.uid);
             localStorage.setItem("mathGamePlayerLevel", level);
 
-            // 3. 渲染 UI：名字 + 等級標籤 (防擠壓升級版)
-            nameDisplay.style.display = "inline-flex";
-            nameDisplay.style.alignItems = "center";
-            nameDisplay.style.maxWidth = "100%";
-
-            // 3. 渲染 UI：名字 + 等級標籤 (RPG 頭像風格)
             nameDisplay.style.display = "inline-flex";
             nameDisplay.style.alignItems = "center";
             nameDisplay.style.minWidth = "0";
@@ -1805,7 +1856,6 @@
                 ${finalName}
               </span>`;
 
-            // 4. 渲染稱號 (根據剛算出的 maxScore)
             const TITLES = [
               { min: 0, name: "初心者", color: "#95a5a6" },
               { min: 300, name: "狙擊手", color: "#3498db" },
@@ -1832,7 +1882,6 @@
             console.error("讀取歷史數據失敗", err);
           }
         } else {
-          // 登出狀態
           document.getElementById("profile-btn").style.display = "none";
           renameBtn.style.display = "none";
           nameDisplay.innerHTML = "👤 尚未登入";
@@ -1933,19 +1982,19 @@
           btn.innerText = "✏️ 更改暱稱";
         }
       }
+
       const TRIG_CSV =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
       const SPACE_CSV =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vQppbAjVhqnWfWyCpo8hHWhaMe5KhL3aQZIDFNL-Kkekub-Mn5gZmTbTa-1Tn0Qu3EsUs3oIUV0tXTw/pub?output=csv";
       const PERM_CSV =
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vTwQuA4SuPuNdHk6sUV9yyOU9g6z7uKNqIPsQw0Rj8u8g6-2WTLRMW-oeFhLRbiw2v7Oiz8v2g1XwNP/pub?output=csv";
+
       window.onload = () => {
-        // 在這裡把 CSV 變數傳進去，讓大廳大腦也能讀取舊紀錄！
         loadTopScore("trig", "normal", "top-trig", 3, TRIG_CSV);
         loadTopScore("space", "normal", "top-space", 3, SPACE_CSV);
         loadTopScore("perm", "normal", "top-perm", 3, PERM_CSV);
 
-        // 地獄模式沒有舊紀錄，所以不需要傳 CSV
         loadTopScore("trig", "hell", "top-hell-trig", 1);
         loadTopScore("space", "hell", "top-hell-space", 1);
         loadTopScore("perm", "hell", "top-hell-perm", 1);
