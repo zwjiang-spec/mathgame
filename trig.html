@@ -132,6 +132,20 @@
         class="hidden"
         style="color: var(--color-gold); margin-top: -10px; margin-bottom: 10px"
       ></h2>
+      <div id="battle-result-box" class="hidden" style="background: #1a1a2e; border: 2px solid #f1c40f; border-radius: 15px; padding: 20px; margin: 10px auto 20px auto; width: 90%; max-width: 350px; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+        <h2 id="battle-result-title" style="margin-top: 0; font-size: 28px; text-shadow: 0 0 15px #f1c40f; color: #f1c40f;">🏆 勝利！</h2>
+        <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 15px;">
+          <div style="text-align: center; flex: 1;">
+            <div style="color: #2ecc71; font-weight: bold; font-size: 14px; margin-bottom: 5px;">我方</div>
+            <div id="battle-result-my-score" style="color: #2ecc71; font-size: 28px; font-weight: 900;">0</div>
+          </div>
+          <div style="font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); padding: 0 15px;">VS</div>
+          <div style="text-align: center; flex: 1;">
+            <div id="battle-result-enemy-name" style="color: #e74c3c; font-weight: bold; font-size: 14px; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">敵方</div>
+            <div id="battle-result-enemy-score" style="color: #e74c3c; font-size: 28px; font-weight: 900;">0</div>
+          </div>
+        </div>
+      </div>
       <div
         id="end-error-log"
         class="hidden"
@@ -269,107 +283,32 @@
           <button class="action-btn" onclick="startGame()">START GAME</button>
         </div>
 
-          <div
-            id="battle-lobby-ui"
-            class="hidden"
-            style="width: 100%; text-align: center; max-width: 350px"
-          >
-            <h3 style="color: #e74c3c; margin-top: 0; margin-bottom: 15px">
-              ⚔️ 雙人連線對戰
-            </h3>
-
-            <div
-              style="
-                background: #fdf2f2;
-                border: 2px solid #e74c3c;
-                border-radius: 12px;
-                padding: 15px;
-                margin-bottom: 15px;
-              "
-            >
-              <p style="margin: 0 0 10px 0; color: #c0392b; font-weight: bold">
-                [ 創建新房間 ]
-              </p>
-              <button
-                class="action-btn"
-                onclick="hostRoom()"
-                style="
-                  background: #e74c3c;
-                  padding: 10px 20px;
-                  font-size: 16px;
-                  margin-bottom: 0;
-                "
-              >
-                建立房間
+        <div id="battle-lobby-ui" class="hidden" style="width: 100%; text-align: center; max-width: 350px">
+          <h3 style="color: #e74c3c; margin-top: 0; margin-bottom: 15px">⚔️ 雙人連線對戰</h3>
+          <div style="background: #fdf2f2; border: 2px solid #e74c3c; border-radius: 12px; padding: 25px 15px;">
+            <button id="find-match-btn" class="action-btn" onclick="startRandomMatch('trig')" style="background: #e74c3c; padding: 15px 30px; font-size: 18px; margin-bottom: 0;">
+              ⚔️ 尋找對手
+            </button>
+            
+            <div id="match-wait-msg" style="display: none; width: 100%; text-align: center; margin-top: 15px;">
+              <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #9b59b6; font-weight: bold; font-size: 16px;">
+                <svg style="width: 1.2em; height: 1.2em; animation: pulseBg 1.5s infinite;" viewBox="0 0 100 100">
+                  <path fill="#9b59b6" d="M83.4 83.4L64.8 64.8c-2.4-2.4-2.4-6.3 0-8.7c2.4-2.4 6.3-2.4 8.7 0l18.6 18.6c2.4 2.4 2.4 6.3 0 8.7c-2.4 2.4-6.3 2.4-8.7 0z"></path>
+                  <circle fill="#3498db" cx="45" cy="45" r="30" stroke="#fff" stroke-width="5"></circle>
+                </svg>
+                驗證與配對中...
+              </div>
+            
+              <div style="font-size: 13px; color: #e67e22; font-weight: bold; margin-bottom: 15px; line-height: 1.5;">
+                ⏳ 掃描戰場中...<br>正在尋找實力相近的勇者...
+              </div>
+              
+              <button onclick="cancelMatch()" style="background: #95a5a6; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: 0.2s;" onmouseover="this.style.background='#7f8c8d'" onmouseout="this.style.background='#95a5a6'">
+                ❌ 取消配對
               </button>
-              <div
-                id="room-code-display"
-                style="
-                  font-size: 32px;
-                  font-weight: 900;
-                  color: #2c3e50;
-                  margin-top: 10px;
-                  letter-spacing: 6px;
-                  display: none;
-                "
-              ></div>
-              <div
-                id="room-wait-msg"
-                style="
-                  font-size: 13px;
-                  color: #e67e22;
-                  margin-top: 5px;
-                  display: none;
-                  font-weight: bold;
-                "
-              >
-                ⏳ 等待對手加入中...
-              </div>
-            </div>
-
-            <div
-              style="
-                background: #eaf2f8;
-                border: 2px solid #3498db;
-                border-radius: 12px;
-                padding: 15px;
-              "
-            >
-              <p style="margin: 0 0 10px 0; color: #2980b9; font-weight: bold">
-                [ 加入好友房間 ]
-              </p>
-              <div style="display: flex; justify-content: center; gap: 10px">
-                <input
-                  type="text"
-                  id="join-room-code"
-                  placeholder="輸入 4 碼房號"
-                  maxlength="4"
-                  style="
-                    font-size: 18px;
-                    padding: 8px;
-                    width: 130px;
-                    text-align: center;
-                    text-transform: uppercase;
-                    border: 2px solid #bdc3c7;
-                    border-radius: 8px;
-                    font-weight: bold;
-                  "
-                />
-                <button
-                  class="action-btn"
-                  onclick="joinRoom()"
-                  style="
-                    background: #3498db;
-                    padding: 10px 20px;
-                    font-size: 16px;
-                    margin-bottom: 0;
-                  "
-                >
-                  加入
-                </button>
-              </div>
             </div>
           </div>
+        </div>
         </div>
 
         <div
@@ -425,6 +364,7 @@
         "
       >
         <button
+        id="abandon-btn"
           onclick="abandonGame()"
           style="
             background: #fae5e5;
@@ -448,7 +388,22 @@
         </div>
       </div>
     </div>
-
+    <div id="battle-hp-container" class="hidden" style="width: 100%; max-width: 350px; margin: 15px auto 15px auto; padding: 0 5px; display: flex; flex-direction: column; gap: 12px; z-index: 10;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 13px; font-weight: bold; color: #27ae60; width: 35px; text-align: right; text-shadow: 0 0 5px rgba(39, 174, 96, 0.3);">我方</span>
+        <div style="flex: 1; height: 16px; background: #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+           <div id="my-hp-bar" style="width: 50%; height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); box-shadow: 0 0 10px rgba(39, 174, 96, 0.8); transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);"></div>
+        </div>
+        <span id="my-score-display" style="font-size: 14px; font-weight: 900; color: #27ae60; width: 35px;">0</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 13px; font-weight: bold; color: #c0392b; width: 35px; text-align: right; text-shadow: 0 0 5px rgba(192, 57, 43, 0.3);">敵方</span>
+        <div style="flex: 1; height: 16px; background: #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+           <div id="enemy-hp-bar" style="width: 50%; height: 100%; background: linear-gradient(90deg, #c0392b, #e74c3c); box-shadow: 0 0 10px rgba(192, 57, 43, 0.8); transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);"></div>
+        </div>
+        <span id="enemy-score-display" style="font-size: 14px; font-weight: 900; color: #c0392b; width: 35px;">0</span>
+      </div>
+    </div>
     <div id="combo-gauge-wrapper">
       <div class="combo-label">COMBO</div>
       <div id="combo-gauge-bg"><div id="combo-gauge-fill"></div></div>
@@ -939,14 +894,27 @@
         }
       }
 
+      // ✨ 保險絲在這裡！防連點鎖：使用 isProcessing 變數，防禦手速過快的玩家
+      let isProcessing = false;
+
       function triggerErrorEffect(isSkip = false) {
-        playWrong();
+        if (typeof playWrong === "function") playWrong();
         combo = 0;
         consecutiveWrong++;
-        errorLogMap.set(currentQuestionStr, {
-          ans: targetAns,
-          hint: currentHint,
-        });
+        
+        // ✨ 凡走過必留下痕跡：只要一答錯，立刻死死釘入結算錯題本！
+        // 並且精準記錄「到底錯了幾次」
+        if (!errorLogMap.has(currentQuestionStr)) {
+          errorLogMap.set(currentQuestionStr, {
+            ans: targetAns,
+            hint: currentHint,
+            count: 1
+          });
+        } else {
+          errorLogMap.get(currentQuestionStr).count++;
+        }
+
+        // 把錯題丟進幽靈題庫 (這是為了給 PASS 跳過按鈕備用的突擊機制)
         if (!activeWrongPool.some((item) => item.q === currentQuestionStr)) {
           activeWrongPool.push({
             q: currentQuestionStr,
@@ -954,40 +922,41 @@
             hint: currentHint,
           });
         }
+
         const area = document.getElementById("display-area");
-        area.classList.remove("shake-animation");
-        void area.offsetWidth;
-        area.classList.add("shake-animation");
+        if (area) {
+            area.classList.remove("shake-animation");
+            void area.offsetWidth;
+            area.classList.add("shake-animation");
+        }
+        
         currentQuestionErrors++;
         score -= currentQuestionErrors * 5 * currentMultiplier;
-        document.getElementById("input-box").classList.add("error-text");
-        flashScoreRed();
+        
+        const inputBox = document.getElementById("input-box");
+        if (inputBox) inputBox.classList.add("error-text");
+        
+        if (typeof flashScoreRed === "function") flashScoreRed();
         updateUI();
-        if (isSkip)
-          showToast(`⏭️ 跳過！正解為：${formatMathHTML(targetAns)}`, 2500);
+        
+        if (isSkip) showToast(`⏭️ 跳過！正解為：${formatMathHTML(targetAns)}`, 2500);
         else showToast(`❌ 答錯囉！再試一次！`, 1200);
+        
         checkDeath();
       }
-
-      // ✨ 防連點鎖：使用 isProcessing 變數，防禦手速過快的玩家
-      let isProcessing = false;
 
       function submitAnswer() {
         if (userInput === "" || isProcessing) return;
         const box = document.getElementById("input-box");
         if (
-          box.classList.contains("correct-flash") ||
-          box.classList.contains("error-text")
-        )
-          return;
+          box && (box.classList.contains("correct-flash") || box.classList.contains("error-text"))
+        ) return;
 
         isProcessing = true; // 上鎖
 
         // ✨ 萬能數值判定 (解決 sin -600度 的冤案)
-        let userVal = evalMath(userInput);
-        let targetVal = evalMath(targetAns);
-
-        // 只要兩個數字算出來的差距極小，就判定正確
+        let userVal = typeof evalMath === "function" ? evalMath(userInput) : NaN;
+        let targetVal = typeof evalMath === "function" ? evalMath(targetAns) : NaN;
         let isCorrect =
           !isNaN(userVal) &&
           !isNaN(targetVal) &&
@@ -996,44 +965,46 @@
         if (isCorrect) {
           correctCount++; // 精準計數
           correctQuestionsSet.add(currentQuestionStr);
+          
+          // 既然最後答對了，就把這題從「幽靈突擊池」裡拿掉，免得後面又跑出來
           activeWrongPool = activeWrongPool.filter(
             (item) => item.q !== currentQuestionStr
           );
-          spawnComboParticle();
+          
+          if (typeof spawnComboParticle === "function") spawnComboParticle();
           consecutiveWrong = 0;
-          if (combo >= 9) playFeverCorrect();
-          else playCorrect();
-          box.classList.add("correct-flash");
+          if (combo >= 9 && typeof playFeverCorrect === "function") playFeverCorrect();
+          else if (typeof playCorrect === "function") playCorrect();
+          
+          if (box) box.classList.add("correct-flash");
           score += (10 + combo * 2) * currentMultiplier;
           combo++;
+          
           if (combo > 5) {
             const body = document.body;
             body.classList.remove("strong-shake-effect");
             void body.offsetWidth;
             body.classList.add("strong-shake-effect");
           }
+          
           updateUI();
+          
+          // ✅ 答對了！准許換下一題！
           setTimeout(() => {
             getNewQuestion();
             isProcessing = false;
           }, 150);
         } else {
           // ❌ 答錯了！
-          wrongCount++; 
+          wrongCount++; // 總答錯數 +1 (這樣戰績室才不會說您全對)
+          triggerErrorEffect(); // 觸發錯題本記錄與畫面震動
           
-          // 👈 這裡的 triggerErrorEffect 已經完美幫您把錯題記進 errorLogMap 和 activeWrongPool 了
-          triggerErrorEffect(); 
-          
+          // 🛑 殘酷守門員：清空輸入框，但「不准呼叫下一題 (沒有 getNewQuestion)」！
           setTimeout(() => {
             userInput = "";
             renderInput();
-            
-            // ✨ 關鍵神救援：強制換下一題！
-            // 搭配您原本的 getNewQuestion() 邏輯，這題絕對不會馬上連續出現，但會在後面 40% 高機率突擊補考！
-            getNewQuestion(); 
-            
-            isProcessing = false;
-          }, 400); // 稍微停留 0.4 秒，讓學生看清楚螢幕震動和紅字，再換下一題
+            isProcessing = false; // 解鎖鍵盤，讓學生繼續在這題掙扎
+          }, 400); 
         }
       }
 
@@ -1095,17 +1066,18 @@ function showExpAnimation(finalScore, containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        // 清除上一局留下的經驗條(如果有)
         const oldUi = document.getElementById("dynamic-exp-ui");
         if (oldUi) oldUi.remove();
 
-        let gainedExp = Math.max(0, finalScore); // 負分不扣經驗
+        // ✨ 動態偵測是否有 1.5 倍加成
+        let multiplier = 1;
+        if (typeof isBattleMode !== "undefined" && isBattleMode) multiplier = 1.5;
+        let gainedExp = Math.floor(Math.max(0, finalScore) * multiplier); 
+
         let oldExp = window.initialPlayerExp || 0;
         let newExp = oldExp + gainedExp;
-
         let oldLevel = Math.floor(Math.sqrt(oldExp / 100)) + 1;
         let newLevel = Math.floor(Math.sqrt(newExp / 100)) + 1;
-
         let oldTierBase = Math.pow(oldLevel - 1, 2) * 100;
         let oldNextTier = Math.pow(oldLevel, 2) * 100;
         let oldPercent = ((oldExp - oldTierBase) / (oldNextTier - oldTierBase)) * 100;
@@ -1114,9 +1086,12 @@ function showExpAnimation(finalScore, containerId) {
         uiDiv.id = "dynamic-exp-ui";
         uiDiv.style.cssText = "width: 100%; max-width: 320px; margin: 15px auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);";
         
+        // ✨ 在畫面上加入紅色的 (對戰加成 1.5x) 字樣！
+        let bonusText = multiplier > 1 ? `<span style="color: #e74c3c; font-size: 11px; margin-left: 5px;">(對戰加成 1.5x)</span>` : "";
+        
         uiDiv.innerHTML = `
           <div style="font-size: 15px; font-weight: bold; color: #f1c40f; margin-bottom: 8px;">
-            戰鬥結算 <span style="color: #2ecc71; margin-left: 10px;">+${gainedExp} EXP</span>
+            戰鬥結算 ${bonusText} <span style="color: #2ecc71; margin-left: 10px;">+${gainedExp} EXP</span>
           </div>
           <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: #bdc3c7; margin-bottom: 5px;">
             <span id="exp-lvl-current">Lv.${oldLevel}</span>
@@ -1173,11 +1148,42 @@ function showExpAnimation(finalScore, containerId) {
           }
         }, 500);
       }
-      function startGame() {
+      async function startGame() {
+        // 1. 抓取玩家想用的名字 (如果有輸入框就抓輸入框，沒有就抓本地記憶)
+        const nameInput = document.getElementById("player-name");
+        const desiredName = nameInput ? nameInput.value.trim() || "Guest" : (localStorage.getItem("mathGamePlayerName") || "Guest");
+
+        // 2. ✨ 啟動名稱查重閘門
+        const startBtn = document.querySelector("#start-ui-group button");
+        let originalText = startBtn ? startBtn.innerText : "START GAME";
+        
+        if (startBtn && desiredName.toUpperCase() !== "GUEST") {
+            startBtn.disabled = true;
+            startBtn.innerText = "🔍 驗證名稱中...";
+
+            const nameCheck = await validateAndClaimName(desiredName);
+            if (!nameCheck.valid) {
+                alert(nameCheck.msg); // 彈出警告！
+                startBtn.disabled = false;
+                startBtn.innerText = originalText;
+                return; // 🛑 名稱重複，直接擋下！不給開局！
+            }
+        }
+
+        // ✅ 驗證通過，按鈕恢復正常
+        if (startBtn) {
+            startBtn.disabled = false;
+            startBtn.innerText = originalText;
+        }
+
+        // ----------------------------------------
+        // 🚀 下面繼續執行原本的開局流程
+        // ----------------------------------------
         isGameOver = false; // 🔓 重新開始新局時，要把門鎖打開
-        document.getElementById("player-name").blur();
+        if (nameInput) nameInput.blur();
         window.scrollTo(0, 0);
-        initAudio();
+        if (typeof initAudio === "function") initAudio();
+        
         window.initialPlayerExp = 0;
         const pUid = localStorage.getItem("mathGamePlayerUid");
         if (pUid && pUid !== "guest") {
@@ -1185,15 +1191,14 @@ function showExpAnimation(finalScore, containerId) {
             window.initialPlayerExp = stats.totalExp;
           });
         }
-        const name =
-          document.getElementById("player-name").value.trim() || "Guest";
-        document.getElementById("ui-name").innerText = name;
+        
+        document.getElementById("ui-name").innerText = desiredName;
+        localStorage.setItem("mathGamePlayerName", desiredName);
+        
         document.getElementById("overlay").classList.add("hidden");
         document.getElementById("death-screen").classList.remove("show");
         document.getElementById("keypad-container").style.display = "block";
-        document
-          .getElementById("ui-time")
-          .classList.remove("timer-danger-extreme");
+        document.getElementById("ui-time").classList.remove("timer-danger-extreme");
         document.body.classList.remove("body-danger-flash");
 
         correctQuestionsSet.clear();
@@ -1206,6 +1211,7 @@ function showExpAnimation(finalScore, containerId) {
         // ✨ 新局開始，計數器歸零
         correctCount = 0;
         wrongCount = 0;
+        
         updateUI();
         startTime = Date.now();
         getNewQuestion();
@@ -1242,18 +1248,73 @@ function showExpAnimation(finalScore, containerId) {
         // ✨ 守門員檢查：如果已經結束過，就直接跳出，防止重複執行
         if (isGameOver) return;
         isGameOver = true;
+        
         // --- 0. 切換按鈕：隱藏開始按鈕，顯示重新開始 ---
         document.getElementById("start-ui-group").classList.add("hidden");
         document.getElementById("end-ui-group").classList.remove("hidden");
 
         // --- 1. 顯示結算 UI ---
         document.getElementById("overlay").classList.remove("hidden");
-        document.getElementById("final-score-text").classList.remove("hidden");
-        document.getElementById(
-          "final-score-text"
-        ).innerText = `最終得分: ${score}`;
         document.getElementById("rules-box").classList.add("hidden");
+
+        // ✨✨✨ 新增：雙人對戰 vs 單人模式 結算畫面切換 ✨✨✨
+        if (isBattleMode) {
+          // 隱藏單人的純文字分數，顯示超炫的對戰看板
+          document.getElementById("final-score-text").classList.add("hidden");
+          const battleBox = document.getElementById("battle-result-box");
+          const titleEl = document.getElementById("battle-result-title");
+          if (battleBox) battleBox.classList.remove("hidden");
+
+          // 填入雙方最終分數與名字
+          if (document.getElementById("battle-result-my-score")) {
+            document.getElementById("battle-result-my-score").innerText = score;
+          }
+          if (document.getElementById("battle-result-enemy-score")) {
+            document.getElementById("battle-result-enemy-score").innerText = enemyFinalScore;
+          }
+          if (document.getElementById("battle-result-enemy-name")) {
+            document.getElementById("battle-result-enemy-name").innerText = enemyFinalName;
+          }
+
+          // 判定勝負與變色
+          if (opponentFled) {
+            if (titleEl) {
+              titleEl.innerText = "🏃‍♂️ 對手逃跑 (不戰而勝)";
+              titleEl.style.color = "#f1c40f";
+              titleEl.style.textShadow = "0 0 15px #f1c40f";
+            }
+            if (battleBox) battleBox.style.borderColor = "#f1c40f";
+          } else if (score > enemyFinalScore) {
+            if (titleEl) {
+              titleEl.innerText = "🏆 壓倒性勝利！";
+              titleEl.style.color = "#f1c40f";
+              titleEl.style.textShadow = "0 0 15px #f1c40f";
+            }
+            if (battleBox) battleBox.style.borderColor = "#f1c40f";
+          } else if (score < enemyFinalScore) {
+            if (titleEl) {
+              titleEl.innerText = "💀 戰敗...";
+              titleEl.style.color = "#95a5a6";
+              titleEl.style.textShadow = "0 0 15px #7f8c8d";
+            }
+            if (battleBox) battleBox.style.borderColor = "#95a5a6";
+          } else {
+            if (titleEl) {
+              titleEl.innerText = "🤝 勢均力敵 (平手)";
+              titleEl.style.color = "#3498db";
+              titleEl.style.textShadow = "0 0 15px #3498db";
+            }
+            if (battleBox) battleBox.style.borderColor = "#3498db";
+          }
+        } else {
+          // 單人模式：維持原本的簡單顯示
+          document.getElementById("final-score-text").classList.remove("hidden");
+          document.getElementById("final-score-text").innerText = `最終得分: ${score}`;
+        }
+        // ✨✨✨ 判定結束 ✨✨✨
+
         showExpAnimation(score, "end-ui-group");
+        
         // --- 2. 顯示錯題本 (包含提示) ---
         const endLog = document.getElementById("end-error-log");
         endLog.innerHTML = generateErrorLogHTML();
@@ -1318,120 +1379,164 @@ function showExpAnimation(finalScore, containerId) {
       // ==========================================
       let isBattleMode = false;
       let hasBattleStarted = false;
-
+      let enemyFinalScore = 0;
+      let enemyFinalName = "敵方";
+      let opponentFled = false;
       // 1. 初始化檢查 (判斷網址有沒有帶 mode=battle)
       window.addEventListener("DOMContentLoaded", () => {
         const urlParams = new URLSearchParams(window.location.search);
         isBattleMode = urlParams.get("mode") === "battle";
 
         if (isBattleMode) {
-          document.getElementById("single-player-ui").style.display = "none";
-          document.getElementById("battle-lobby-ui").classList.remove("hidden");
-          document.getElementById("phase-indicator").innerText =
-            "⚔️ 準備進入對戰...";
-          document.getElementById("phase-indicator").style.color = "#e74c3c";
-          document.querySelector("#overlay h1").innerText =
-            "⚔️ 雙人對決：三角比";
-          document.getElementById("rules-box").style.display = "none"; // 隱藏一般規則節省版面
+          // ✨ 正確隱藏單人模式的專屬元素 (包含原本的輸入框、排行榜、平均榜)
+          if (document.getElementById("start-ui-group")) document.getElementById("start-ui-group").style.display = "none";
+          if (document.getElementById("unit-avg-board")) document.getElementById("unit-avg-board").style.display = "none";
+          if (document.getElementById("leaderboards")) document.getElementById("leaderboards").style.display = "none";
+          if (document.getElementById("rules-box")) document.getElementById("rules-box").style.display = "none";
+
+          // ✨ 顯示霸氣的對戰大廳
+          if (document.getElementById("battle-lobby-ui")) document.getElementById("battle-lobby-ui").classList.remove("hidden");
+          
+          if (document.getElementById("phase-indicator")) {
+            document.getElementById("phase-indicator").innerText = "⚔️ 準備進入對戰...";
+            document.getElementById("phase-indicator").style.color = "#e74c3c";
+          }
+          if (document.querySelector("#overlay h1")) {
+            document.querySelector("#overlay h1").innerText = "⚔️ 雙人對決：三角比";
+          }
+          const abandonBtn = document.getElementById("abandon-btn");
+          if (abandonBtn) abandonBtn.innerHTML = "🏳️ 投降";
         }
       });
 
-      // 2. 建立房間按鈕觸發
-      async function hostRoom() {
-        if (!localStorage.getItem("mathGamePlayerUid")) {
-          alert("⚠️ 請先在首頁進行 Google 登入才能開啟對戰喔！");
-          window.location.href = "index.html";
-          return;
-        }
-        const roomId = await createBattleRoom("trig");
-        if (roomId) {
-          document.getElementById("room-code-display").innerText = roomId;
-          document.getElementById("room-code-display").style.display = "block";
-          document.getElementById("room-wait-msg").style.display = "block";
-          document.querySelector("#battle-lobby-ui button").disabled = true;
-        }
-      }
+      
 
-      // 3. 加入房間按鈕觸發
-      async function joinRoom() {
-        if (!localStorage.getItem("mathGamePlayerUid")) {
-          alert("⚠️ 請先在首頁進行 Google 登入才能開啟對戰喔！");
-          window.location.href = "index.html";
-          return;
-        }
-        const code = document
-          .getElementById("join-room-code")
-          .value.trim()
-          .toUpperCase();
-        if (code.length !== 4) return alert("❌ 請輸入完整的 4 碼房號！");
+      
 
-        const btn = document.querySelector("#battle-lobby-ui input + button");
-        btn.disabled = true;
-        btn.innerText = "連線中...";
-
-        const res = await joinBattleRoom(code, "trig");
-        if (!res.success) {
-          alert(res.msg);
-          btn.disabled = false;
-          btn.innerText = "加入";
-        }
-      }
-
-      // 4. 即時接收 Firebase 資料並更新畫面 (被 common.js 呼叫)
+      // 4. 即時接收 Firebase 資料並更新血條 (被 common.js 呼叫)
       function syncBattleUI(roomData) {
-        // 當房間狀態變成 playing 且本地還沒開始遊戲，就立刻觸發 startGame
+        // ✨ 觸發開局 (加入 3 秒全螢幕倒數動畫)
         if (roomData.status === "playing" && !hasBattleStarted) {
           hasBattleStarted = true;
-          alert("🔥 對手已加入！對戰即將開始！");
+          
+          // 隱藏大廳，準備倒數
           document.getElementById("battle-lobby-ui").classList.add("hidden");
-
-          // 確保名字是抓登入的名字，不讓玩家在對戰亂改
-          const myName =
-            localStorage.getItem("mathGamePlayerName") || "神秘勇者";
+          const myName = localStorage.getItem("mathGamePlayerName") || "勇者";
           document.getElementById("player-name").value = myName;
 
-          startGame(); // 呼叫原本的 startGame 開始遊戲
+          // 抓取敵方名字
+          const enemyData = isPlayer1 ? roomData.player2 : roomData.player1;
+          const enemyName = enemyData ? enemyData.name : "未知對手";
+
+          // 🚀 動態產生全螢幕倒數 UI
+          let cdUI = document.createElement("div");
+          cdUI.id = "battle-countdown-ui";
+          cdUI.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.9); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;";
+          
+          cdUI.innerHTML = `
+            <div style="font-size: 24px; font-weight: bold; color: #3498db; margin-bottom: 20px; text-shadow: 0 0 10px #3498db; letter-spacing: 2px;">
+              ${myName} <span style="color: white; margin: 0 10px;">VS</span> <span style="color: #e74c3c;">${enemyName}</span>
+            </div>
+            <div id="cd-number" style="font-size: 130px; font-weight: 900; color: #e74c3c; text-shadow: 0 0 40px #e74c3c; transition: transform 0.2s;">3</div>
+            <div style="margin-top: 30px; font-size: 16px; color: #f1c40f; letter-spacing: 3px;">🔥 準備好你的計算紙...</div>
+          `;
+          document.body.appendChild(cdUI);
+
+          // 開始讀秒
+          let count = 3;
+          let cdTimer = setInterval(() => {
+            count--;
+            const numEl = document.getElementById("cd-number");
+            if (!numEl) { clearInterval(cdTimer); return; } // 防呆：如果UI被提早移除就中斷計時
+
+            if (count > 0) {
+              numEl.innerText = count;
+              numEl.style.transform = "scale(1.2)"; // 數字心跳放大效果
+              setTimeout(() => numEl.style.transform = "scale(1)", 150);
+            } else if (count === 0) {
+              numEl.innerText = "FIGHT!";
+              numEl.style.color = "#f1c40f";
+              numEl.style.textShadow = "0 0 50px #f1c40f";
+              numEl.style.transform = "scale(1.3)";
+            } else {
+              // 倒數結束，摧毀動畫並正式開始遊戲！
+              clearInterval(cdTimer);
+              cdUI.remove();
+              document.getElementById("battle-hp-container").classList.remove("hidden"); 
+              startGame(); 
+            }
+          }, 1000);
         }
 
-        // 遊戲進行中：把對手的分數即時顯示在畫面正上方
-        if (roomData.status === "playing" || roomData.status === "finished") {
-          const opponent = isPlayer1 ? roomData.player2 : roomData.player1;
+        // 遊戲中即時結算血條
+        if (hasBattleStarted && (roomData.status === "playing" || roomData.status === "finished")) {
+          const myData = isPlayer1 ? roomData.player1 : roomData.player2;
+          const enemyData = isPlayer1 ? roomData.player2 : roomData.player1;
 
-          if (opponent) {
-            let oppUI = document.getElementById("opponent-score-ui");
-            if (!oppUI) {
-              oppUI = document.createElement("div");
-              oppUI.id = "opponent-score-ui";
-              // 將對手分數霸氣地顯示在畫面中間上方
-              oppUI.style =
-                "position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: rgba(231,76,60,0.1); border: 2px solid #e74c3c; padding: 4px 15px; border-radius: 20px; color: #c0392b; font-weight: bold; font-size: 14px; z-index: 10; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap;";
-              document.getElementById("header").appendChild(oppUI);
-            }
-            oppUI.innerHTML = `⚔️ 敵方 <span>${opponent.name}</span> : <span style="font-size:20px; font-weight:900;">${opponent.score}</span> 分 <span style="font-size: 12px; color: #7f8c8d;">(🔥 ${opponent.combo})</span>`;
+          if (myData && enemyData) {
+            // ✨ 即時把對手的最後分數跟名字抄下來，給結算畫面用！
+            enemyFinalScore = enemyData.score || 0;
+            enemyFinalName = enemyData.name || "敵方";
+            document.getElementById("my-score-display").innerText = myData.score;
+            document.getElementById("enemy-score-display").innerText = enemyData.score;
+
+            // ✨ 拔河式血條計算 (這裡設定相差 150 分定生死，老師可自行調整)
+            let diff = myData.score - enemyData.score;
+            let myHp = 50 + (diff / 150) * 50; 
+            let enemyHp = 50 - (diff / 150) * 50;
+
+            // 限制血條不破表 (0% ~ 100%)
+            myHp = Math.max(0, Math.min(100, myHp));
+            enemyHp = Math.max(0, Math.min(100, enemyHp));
+
+            document.getElementById("my-hp-bar").style.width = myHp + "%";
+            document.getElementById("enemy-hp-bar").style.width = enemyHp + "%";
           }
         }
       }
+      // 5. 處理對手逃跑或中斷連線
+      function handleOpponentFlee() {
+        // ✨ 如果倒數動畫還在畫面上，馬上把它刪除解鎖！
+        let cdUI = document.getElementById("battle-countdown-ui");
+        if (cdUI) cdUI.remove();
+        if (hasBattleStarted && !isGameOver) {
+          opponentFled = true;
+          // 情況 A：已經在打遊戲了，對手受不了壓力關掉網頁逃跑
+          alert("🏃‍♂️ 敵方靈壓消失了！對手已中途逃跑，您贏得了這場對決！");
+          clearInterval(timer);
+          endGame(); // 直接幫留下來的玩家進入結算領獎
+        } else if (!hasBattleStarted) {
+          // 情況 B：還在配對大廳，對方就取消了
+          alert("⚠️ 對方已取消配對，請重新尋找對手。");
+          cancelMatch(); // 恢復按鈕狀態
+        }
+      }
       // ==========================================
-      // 🚫 防逃跑系統 (Anti-Rage-Quit)
+      // 🚫 防逃跑/投降系統 (Anti-Rage-Quit) - 完美引爆版 🚀
       // ==========================================
       function abandonGame() {
-        if (
-          confirm(
-            "確定要放棄這局遊戲嗎？\n⚠️ 警告：中途退出仍會將「目前的分數」送出並計入平均成績！"
-          )
-        ) {
+        // ✨ 智慧切換確認台詞
+        const confirmMsg = isBattleMode 
+          ? "🏳️ 確定要舉白旗投降嗎？\n⚠️ 投降後對手將直接獲得勝利，且您的分數會被結算！" 
+          : "🚪 確定要放棄這局遊戲嗎？\n⚠️ 警告：中途退出仍會將「目前的分數」送出並計入平均成績！";
+
+        if (confirm(confirmMsg)) {
+          // ✨ 在斷線跳轉前，第一時間先把對戰房間炸掉！
+          if (typeof currentBattleRoom !== "undefined" && currentBattleRoom) {
+             firebase.firestore().collection("battles").doc(currentBattleRoom).delete().catch(e=>console.log(e));
+          }
+
           if (!isGameOver && typeof startTime !== "undefined" && startTime) {
             isGameOver = true;
             if (typeof timer !== "undefined") clearInterval(timer);
 
-            // 標記畫面，讓玩家知道正在上傳 (保留 DOM 結構，確保能抓到名字！)
             if (document.getElementById("display-area")) {
               document.getElementById("display-area").innerHTML = "<h2 style='color:#c0392b; text-align:center;'>紀錄送出中...</h2>";
             }
             if (document.getElementById("keypad-container")) {
               document.getElementById("keypad-container").style.display = "none";
             }
-            // 上傳目前成績，狀態標記為 abandoned
+            
             uploadGameRecord(
               "abandoned",
               score,
@@ -1462,6 +1567,33 @@ function showExpAnimation(finalScore, containerId) {
             correctCount,
             wrongCount
           );
+        }
+      });
+      // ✨ AFK 殭屍殺手：當玩家切換 APP、跳回手機主畫面、或螢幕休眠時，立刻判定為逃跑！
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          // 情況 1：如果他還在大廳等待配對，直接默默幫他取消，不留幽靈房間
+          if (typeof currentBattleRoom !== "undefined" && currentBattleRoom && !hasBattleStarted) {
+            cancelMatch();
+          }
+          // 情況 2：如果已經在對戰中途，他卻切換 APP 去偷看賴，直接炸毀房間並判定他投降！
+          else if (typeof currentBattleRoom !== "undefined" && currentBattleRoom && hasBattleStarted && !isGameOver) {
+             firebase.firestore().collection("battles").doc(currentBattleRoom).delete();
+             isGameOver = true;
+             if (typeof timer !== "undefined") clearInterval(timer);
+             
+             // 把他的分數強制結算並丟回首頁
+             uploadGameRecord(
+               "abandoned",
+               score,
+               typeof errorLogMap !== "undefined" ? errorLogMap : null,
+               typeof isHellMode !== "undefined" ? isHellMode : false,
+               correctCount,
+               wrongCount
+             ).finally(() => {
+               location.href = "index.html";
+             });
+          }
         }
       });
     </script>
