@@ -69,6 +69,17 @@
         letter-spacing: normal;
       }
 
+      /* ✨ 新增的手機適應性優化 CSS */
+      @media (max-width: 480px) {
+        .main-container {
+          padding: 20px 15px;
+        }
+        h1 {
+          font-size: 24px;
+          margin-bottom: 15px;
+        }
+      }
+
       /* ✨ 視圖切換容器 */
       #view-container {
         display: flex;
@@ -341,10 +352,12 @@
         z-index: 50;
       }
 
+      /* ✨ 把 rank-modal 加進隱藏名單 */
       #update-modal,
       #legend-modal,
       #boss-info-modal,
-      #boss-rank-modal {
+      #boss-rank-modal,
+      #rank-modal {
         position: fixed;
         top: 0;
         left: 0;
@@ -362,10 +375,12 @@
       #update-modal.show,
       #legend-modal.show,
       #boss-info-modal.show,
-      #boss-rank-modal.show {
+      #boss-rank-modal.show,
+      #rank-modal.show {
         opacity: 1;
         pointer-events: auto;
       }
+
       .modal-content {
         background: white;
         width: 85%;
@@ -425,6 +440,7 @@
         color: #ccc;
       }
     </style>
+
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
@@ -432,7 +448,7 @@
   </head>
   <body>
     <div id="version-btn" onclick="toggleModal('update-modal')">
-      v3.0.0 更新日誌
+      v3.1.0 更新日誌
     </div>
     <a
       href="https://forms.gle/pDzjWcsPBi2pwJ869"
@@ -455,6 +471,7 @@
         >
           🚀 版本更新日誌
         </h2>
+
         <div
           style="
             margin-bottom: 20px;
@@ -464,7 +481,7 @@
         >
           <span
             style="
-              background: #3498db;
+              background: #e74c3c;
               color: white;
               padding: 3px 8px;
               border-radius: 5px;
@@ -472,37 +489,67 @@
               font-weight: bold;
               margin-right: 5px;
             "
-            >v3.0.0</span
+            >v3.1.0</span
           >
-          <span style="color: #7f8c8d; font-size: 13px">史詩級神仙大進化</span>
+          <span style="color: #2c3e50; font-size: 14px; font-weight: bold"
+            >競技場全面進化 & 體驗優化</span
+          >
           <ul
             style="
               margin: 10px 0 0 0;
               padding-left: 20px;
-              font-size: 15px;
+              font-size: 14px;
               color: #444;
               line-height: 1.6;
             "
           >
             <li>
-              <b style="color: #e74c3c">大廳重製：</b
-              >採用全新卡片式階層選單，操作更直覺。
+              <b style="color: #c0392b">雙人對戰系統：</b>
+              雙人對戰系統已上線，快與你的朋友進行一場對戰吧！
             </li>
             <li>
-              <b style="color: #2980b9">雙人對戰：</b>新增超燃拔河血條對戰模式。
+              <b style="color: #2980b9">天梯牌位制度：</b>
+              雙人對戰會有天梯牌位制度，請努力成為頂尖選手。
             </li>
             <li>
-              <b style="color: #29b92e">個人戰績室：</b>完整記錄近 10
-              次挑戰與錯題本。
+              <b style="color: #8e44ad">世界 Boss 貢獻度：</b> 擊敗世界 Boss
+              之後，會在大廳顯示貢獻度前3名的勇者，並且持續3天！
             </li>
             <li>
-              <b style="color: #a020f0">平均成績：</b
-              >單元內顯示你的平均與前三名平均！
+              <b style="color: #27ae60">大廳重製：</b>
+              全新卡片式階層選單，畫面更簡潔。
             </li>
-            <li>
-              <b style="color: #380404">數學死神：</b>世界 Boss
-              降臨大廳，全體玩家共同討伐！
-            </li>
+          </ul>
+        </div>
+
+        <div>
+          <span
+            style="
+              background: #95a5a6;
+              color: white;
+              padding: 3px 8px;
+              border-radius: 5px;
+              font-size: 12px;
+              font-weight: bold;
+              margin-right: 5px;
+            "
+            >v3.0.0</span
+          >
+          <span style="color: #95a5a6; font-size: 13px"
+            >史詩級神仙大進化 (回顧)</span
+          >
+          <ul
+            style="
+              margin: 8px 0 0 0;
+              padding-left: 20px;
+              font-size: 13px;
+              color: #7f8c8d;
+              line-height: 1.5;
+            "
+          >
+            <li>個人戰績室：完整記錄挑戰與錯題本。</li>
+            <li>平均成績：單元內顯示平均與 Top 3。</li>
+            <li>數學死神：世界 Boss 降臨，全服共同討伐！</li>
           </ul>
         </div>
       </div>
@@ -607,6 +654,121 @@
             🌌 領域展開：數學至尊
             <span style="float: right; color: #c0392b; font-size: 16px"
               >2000 分</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="rank-modal">
+      <div class="modal-content" style="text-align: center">
+        <span class="close-btn" onclick="toggleModal('rank-modal')">×</span>
+        <h2
+          style="
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 22px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+          "
+        >
+          📊 競技場牌位說明
+        </h2>
+        <p
+          style="
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+          "
+        >
+          勝敗加減盃數會依據雙方實力差距而定！<br />擊敗高盃數對手可獲大量獎盃，越級失敗僅扣微量獎盃。
+        </p>
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: left;
+            padding: 0 20px;
+          "
+        >
+          <div
+            style="
+              color: #cd7f32;
+              border-bottom: 1px dashed #eee;
+              padding-bottom: 6px;
+            "
+          >
+            🥉 青銅勇者
+            <span style="float: right; color: #7f8c8d; font-size: 14px"
+              >0 🏆</span
+            >
+          </div>
+          <div
+            style="
+              color: #bdc3c7;
+              border-bottom: 1px dashed #eee;
+              padding-bottom: 6px;
+            "
+          >
+            🥈 白銀戰士
+            <span style="float: right; color: #7f8c8d; font-size: 14px"
+              >400 🏆</span
+            >
+          </div>
+          <div
+            style="
+              color: #f1c40f;
+              border-bottom: 1px dashed #eee;
+              padding-bottom: 6px;
+              text-shadow: 0 0 5px rgba(241, 196, 15, 0.5);
+            "
+          >
+            🥇 黃金大師
+            <span style="float: right; color: #7f8c8d; font-size: 14px"
+              >800 🏆</span
+            >
+          </div>
+          <div
+            style="
+              color: #00ced1;
+              border-bottom: 1px dashed #eee;
+              padding-bottom: 6px;
+              text-shadow: 0 0 8px rgba(0, 206, 209, 0.6);
+            "
+          >
+            💎 鑽石菁英
+            <span style="float: right; color: #7f8c8d; font-size: 14px"
+              >1200 🏆</span
+            >
+          </div>
+          <div
+            style="
+              color: #9b59b6;
+              border-bottom: 1px dashed #eee;
+              padding-bottom: 6px;
+              text-shadow: 0 0 10px rgba(155, 89, 182, 0.8);
+            "
+          >
+            🌟 星耀王者
+            <span style="float: right; color: #7f8c8d; font-size: 14px"
+              >1600 🏆</span
+            >
+          </div>
+          <div
+            style="
+              color: #e74c3c;
+              font-size: 18px;
+              padding-bottom: 6px;
+              text-shadow: 0 0 15px #e74c3c;
+            "
+          >
+            👑 傳說戰神
+            <span style="float: right; color: #c0392b; font-size: 16px"
+              >2000 🏆</span
             >
           </div>
         </div>
@@ -741,6 +903,8 @@
           padding: 0 5px;
           position: relative;
           z-index: 5;
+          flex-wrap: wrap;
+          gap: 10px 0;
         "
       >
         <button
@@ -762,23 +926,43 @@
         >
           ✏️ 更改暱稱
         </button>
-        <button
-          onclick="toggleModal('legend-modal')"
-          style="
-            background: #fff;
-            color: #34495e;
-            border: 1px solid #bdc3c7;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-            transition: 0.2s;
-          "
+        <div
+          style="display: flex; align-items: center; gap: 8px; flex-shrink: 0"
         >
-          🎖️ 稱號說明
-        </button>
+          <button
+            onclick="toggleModal('legend-modal')"
+            style="
+              background: #fff;
+              color: #34495e;
+              border: 1px solid #bdc3c7;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 11px;
+              font-weight: bold;
+              cursor: pointer;
+              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+              transition: 0.2s;
+            "
+          >
+            🎖️ 稱號說明
+          </button>
+          <span
+            id="user-trophy-badge"
+            style="
+              display: none;
+              font-size: 11px;
+              color: #f39c12;
+              font-weight: bold;
+              background: rgba(241, 196, 15, 0.1);
+              padding: 2px 6px;
+              border-radius: 8px;
+              border: 1px solid #f1c40f;
+              flex-shrink: 0;
+              box-shadow: 0 1px 3px rgba(241, 196, 15, 0.2);
+            "
+            >🏆 0</span
+          >
+        </div>
       </div>
 
       <div
@@ -797,7 +981,15 @@
           flex-wrap: wrap;
         "
       >
-        <div style="display: flex; align-items: center; gap: 6px; min-width: 0">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            flex-wrap: wrap;
+          "
+        >
           <span
             id="user-name-display"
             style="
@@ -825,7 +1017,14 @@
           ></span>
         </div>
         <div
-          style="display: flex; gap: 6px; align-items: center; flex-shrink: 0"
+          style="
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+          "
         >
           <button
             id="profile-btn"
@@ -1099,298 +1298,479 @@
         </div>
       </div>
 
-      <div id="view-container">
-        <div class="view-section" id="view-main">
-          <div
-            class="mode-card card-ranked"
-            onclick="openMode('ranked', '🏆 單元競賽')"
-          >
-            <div class="mode-icon">🏆</div>
-            <div class="mode-info">
-              <div class="mode-title">單元競賽</div>
-              <div class="mode-desc">挑戰各單元排行榜與稱號</div>
-            </div>
-            <div class="mode-arrow">▶</div>
-          </div>
-
-          <div
-            class="mode-card card-battle"
-            onclick="openMode('battle', '⚔️ 雙人對戰')"
-          >
-            <div class="mode-icon">⚔️</div>
-            <div class="mode-info">
-              <div class="mode-title">雙人對戰</div>
-              <div class="mode-desc">即時連線，拔河血條大戰</div>
-            </div>
-            <div class="mode-arrow">▶</div>
-          </div>
-
-          <div
-            class="mode-card card-hell"
-            onclick="openMode('hell', '💀 地獄模式')"
-          >
-            <div class="mode-icon">💀</div>
-            <div class="mode-info">
-              <div class="mode-title">地獄模式</div>
-              <div class="mode-desc">如果你想死亡，請點擊進入</div>
-            </div>
-            <div class="mode-arrow">▶</div>
-          </div>
-
-          <div
-            class="mode-card card-practice"
-            onclick="openMode('practice', '💪 綜合練習')"
-          >
-            <div class="mode-icon">💪</div>
-            <div class="mode-info">
-              <div class="mode-title">綜合練習</div>
-              <div class="mode-desc">自由勾選單元混合出題</div>
-            </div>
-            <div class="mode-arrow">▶</div>
-          </div>
-          <div id="credit">Powered by 江子緯老師</div>
-        </div>
-
-        <div class="view-section" id="view-sub">
-          <div class="back-bar">
-            <button class="back-btn" onclick="backToMain()">🔙 返回大廳</button>
-            <div id="current-mode-title">載入中...</div>
-          </div>
-
-          <div id="content-ranked" class="content-section">
+      <div style="width: 100%; overflow: hidden; padding: 2px 0">
+        <div id="view-container">
+          <div class="view-section" id="view-main">
             <div
-              onclick="window.location.href='trig.html?mode=normal'"
-              class="menu-btn btn-trig"
+              class="mode-card card-ranked"
+              onclick="openMode('ranked', '🏆 單元競賽')"
             >
-              <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  text-align: left;
-                  gap: 4px;
-                  width: 100%;
-                "
-              >
-                <div class="btn-text">
-                  <span class="level-icon"></span> 超好玩的三角比
-                </div>
-                <div
-                  id="top-trig"
+              <div class="mode-icon">🏆</div>
+              <div class="mode-info">
+                <div class="mode-title">單元競賽</div>
+                <div class="mode-desc">挑戰各單元排行榜與稱號</div>
+              </div>
+              <div class="mode-arrow">▶</div>
+            </div>
+
+            <div
+              class="mode-card card-battle"
+              onclick="openMode('battle', '⚔️ 雙人對戰')"
+            >
+              <div class="mode-icon">⚔️</div>
+              <div class="mode-info">
+                <div class="mode-title">雙人對戰</div>
+                <div class="mode-desc">即時連線，拔河血條大戰</div>
+              </div>
+              <div class="mode-arrow">▶</div>
+            </div>
+
+            <div
+              class="mode-card card-hell"
+              onclick="openMode('hell', '💀 地獄模式')"
+            >
+              <div class="mode-icon">💀</div>
+              <div class="mode-info">
+                <div class="mode-title">地獄模式</div>
+                <div class="mode-desc">如果你想死亡，請點擊進入</div>
+              </div>
+              <div class="mode-arrow">▶</div>
+            </div>
+
+            <div
+              class="mode-card card-practice"
+              onclick="openMode('practice', '💪 綜合練習')"
+            >
+              <div class="mode-icon">💪</div>
+              <div class="mode-info">
+                <div class="mode-title">綜合練習</div>
+                <div class="mode-desc">自由勾選單元混合出題</div>
+              </div>
+              <div class="mode-arrow">▶</div>
+            </div>
+            <div id="credit">Powered by 江子緯老師</div>
+          </div>
+
+          <div class="view-section" id="view-sub">
+            <div class="back-bar">
+              <button class="back-btn" onclick="backToMain()">
+                🔙 返回大廳
+              </button>
+              <div style="display: flex; align-items: center; gap: 10px">
+                <button
+                  id="rank-info-btn"
+                  onclick="toggleModal('rank-modal')"
                   style="
-                    font-size: 13px;
-                    font-weight: normal;
-                    color: rgba(255, 255, 255, 0.9);
+                    display: none;
+                    background: #fff;
+                    color: #34495e;
+                    border: 1px solid #bdc3c7;
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+                    transition: 0.2s;
                   "
                 >
-                  👑 最高紀錄：讀取中...
-                </div>
-              </div>
-              <div class="btn-arrow">▶</div>
-            </div>
-            <div
-              onclick="window.location.href='space.html?mode=normal'"
-              class="menu-btn btn-space"
-            >
-              <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  text-align: left;
-                  gap: 4px;
-                  width: 100%;
-                "
-              >
-                <div class="btn-text">
-                  <span class="level-icon"></span> 有趣的空間坐標
-                </div>
-                <div
-                  id="top-space"
-                  style="
-                    font-size: 13px;
-                    font-weight: normal;
-                    color: rgba(255, 255, 255, 0.9);
-                  "
-                >
-                  👑 最高紀錄：讀取中...
-                </div>
-              </div>
-              <div class="btn-arrow">▶</div>
-            </div>
-            <div
-              onclick="window.location.href='perm.html?mode=normal'"
-              class="menu-btn btn-perm"
-            >
-              <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  text-align: left;
-                  gap: 4px;
-                  width: 100%;
-                "
-              >
-                <div class="btn-text">
-                  <span class="level-icon"></span> 神奇的排列組合
-                </div>
-                <div
-                  id="top-perm"
-                  style="
-                    font-size: 13px;
-                    font-weight: normal;
-                    color: rgba(255, 255, 255, 0.9);
-                  "
-                >
-                  👑 最高紀錄：讀取中...
-                </div>
-              </div>
-              <div class="btn-arrow">▶</div>
-            </div>
-            <div class="menu-btn btn-locked">
-              <div class="btn-text">
-                <span class="level-icon">🔒</span> 敬請期待...
+                  📊 牌位說明
+                </button>
+                <div id="current-mode-title">載入中...</div>
               </div>
             </div>
-          </div>
 
-          <div id="content-battle" class="content-section">
-            <div
-              onclick="window.location.href='trig.html?mode=battle'"
-              class="menu-btn"
-              style="
-                background: linear-gradient(135deg, #c0392b, #e74c3c);
-                box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
-              "
-            >
+            <div id="content-ranked" class="content-section">
               <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  text-align: left;
-                  gap: 4px;
-                  width: 100%;
-                "
+                onclick="window.location.href='trig.html?mode=normal'"
+                class="menu-btn btn-trig"
               >
-                <div class="btn-text">
-                  <span class="level-icon">⚔️</span> 雙人拔河：三角比
-                </div>
                 <div
                   style="
-                    font-size: 13px;
-                    font-weight: normal;
-                    color: rgba(255, 255, 255, 0.9);
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
                   "
                 >
-                  🔥 隨機配對，極速開戰！
+                  <div class="btn-text">
+                    <span class="level-icon"></span> 超好玩的三角比
+                  </div>
+                  <div
+                    id="top-trig"
+                    style="
+                      font-size: 13px;
+                      font-weight: normal;
+                      color: rgba(255, 255, 255, 0.9);
+                    "
+                  >
+                    👑 最高紀錄：讀取中...
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+              <div
+                onclick="window.location.href='space.html?mode=normal'"
+                class="menu-btn btn-space"
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon"></span> 有趣的空間坐標
+                  </div>
+                  <div
+                    id="top-space"
+                    style="
+                      font-size: 13px;
+                      font-weight: normal;
+                      color: rgba(255, 255, 255, 0.9);
+                    "
+                  >
+                    👑 最高紀錄：讀取中...
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+              <div
+                onclick="window.location.href='perm.html?mode=normal'"
+                class="menu-btn btn-perm"
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon"></span> 神奇的排列組合
+                  </div>
+                  <div
+                    id="top-perm"
+                    style="
+                      font-size: 13px;
+                      font-weight: normal;
+                      color: rgba(255, 255, 255, 0.9);
+                    "
+                  >
+                    👑 最高紀錄：讀取中...
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+              <div class="menu-btn btn-locked">
+                <div class="btn-text">
+                  <span class="level-icon">🔒</span> 敬請期待...
                 </div>
               </div>
-              <div class="btn-arrow">▶</div>
             </div>
-            <div class="menu-btn btn-locked">
-              <div class="btn-text">
-                <span class="level-icon">🔒</span> 空間坐標對戰 (開發中)
-              </div>
-            </div>
-          </div>
 
-          <div id="content-hell" class="content-section">
-            <div
-              onclick="window.location.href='trig.html?mode=hell'"
-              class="menu-btn btn-hell-theme"
-            >
+            <div id="content-battle" class="content-section">
               <div
+                onclick="window.location.href='trig.html?mode=battle'"
+                class="menu-btn"
                 style="
-                  display: flex;
-                  flex-direction: column;
-                  text-align: left;
-                  gap: 4px;
-                  width: 100%;
+                  background: linear-gradient(135deg, #c0392b, #e74c3c);
+                  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+                  margin-bottom: 10px;
                 "
               >
-                <div class="btn-text">
-                  <span class="level-icon">💀</span> 死亡廣義三角比
-                </div>
                 <div
-                  id="top-hell-trig"
-                  style="font-size: 13px; font-weight: normal; color: #e74c3c"
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
                 >
-                  👑 地獄霸主：讀取中...
+                  <div class="btn-text">
+                    <span class="level-icon">⚔️</span> 雙人拔河：三角比
+                  </div>
+                  <div
+                    style="
+                      font-size: 13px;
+                      font-weight: normal;
+                      color: rgba(255, 255, 255, 0.9);
+                    "
+                  >
+                    🔥 選擇指定單元開戰
+                  </div>
                 </div>
+                <div class="btn-arrow">▶</div>
               </div>
-              <div class="btn-arrow">▶</div>
-            </div>
-            <div
-              onclick="window.location.href='space.html?mode=hell'"
-              class="menu-btn btn-hell-theme"
-            >
-              <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  text-align: left;
-                  gap: 4px;
-                  width: 100%;
-                "
-              >
-                <div class="btn-text">
-                  <span class="level-icon">💀</span> 虛無的空間坐標(開發中)
-                </div>
-                <div
-                  id="top-hell-space"
-                  style="font-size: 13px; font-weight: normal; color: #e74c3c"
-                >
-                  👑 地獄霸主：讀取中...
-                </div>
-              </div>
-              <div class="btn-arrow">▶</div>
-            </div>
-            <div
-              onclick="window.location.href='perm.html?mode=hell'"
-              class="menu-btn btn-hell-theme"
-            >
-              <div
-                style="
-                  display: flex;
-                  flex-direction: column;
-                  text-align: left;
-                  gap: 4px;
-                  width: 100%;
-                "
-              >
-                <div class="btn-text">
-                  <span class="level-icon">💀</span> 混沌的排列組合(開發中)
-                </div>
-                <div
-                  id="top-hell-perm"
-                  style="font-size: 13px; font-weight: normal; color: #e74c3c"
-                >
-                  👑 地獄霸主：讀取中...
-                </div>
-              </div>
-              <div class="btn-arrow">▶</div>
-            </div>
-          </div>
 
-          <div id="content-practice" class="content-section">
-            <p style="margin-bottom: 10px; color: #e67e22; font-weight: bold">
-              自由勾選想混合練習的單元：
-            </p>
-            <div class="checkbox-group">
-              <label class="check-item"
-                ><input type="checkbox" id="chk-trig" checked />
-                超好玩的三角比</label
+              <div
+                onclick="window.location.href='space.html?mode=battle'"
+                class="menu-btn"
+                style="
+                  background: linear-gradient(135deg, #8e44ad, #9b59b6);
+                  box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
+                  margin-bottom: 10px;
+                "
               >
-              <label class="check-item"
-                ><input type="checkbox" id="chk-space" checked />
-                有趣的空間坐標</label
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon">🚀</span> 雙人拔河：空間坐標
+                  </div>
+                  <div
+                    style="
+                      font-size: 13px;
+                      font-weight: normal;
+                      color: rgba(255, 255, 255, 0.9);
+                    "
+                  >
+                    🔥 選擇指定單元開戰
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+
+              <div
+                onclick="window.location.href='perm.html?mode=battle'"
+                class="menu-btn"
+                style="
+                  background: linear-gradient(135deg, #16a085, #1abc9c);
+                  box-shadow: 0 4px 15px rgba(22, 160, 133, 0.4);
+                  margin-bottom: 10px;
+                "
               >
-              <label class="check-item"
-                ><input type="checkbox" id="chk-perm" checked />
-                神奇的排列組合</label
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon">🎲</span> 雙人拔河：排列組合
+                  </div>
+                  <div
+                    style="
+                      font-size: 13px;
+                      font-weight: normal;
+                      color: rgba(255, 255, 255, 0.9);
+                    "
+                  >
+                    🔥 選擇指定單元開戰
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+
+              <div
+                onclick="quickMatch()"
+                class="menu-btn"
+                style="
+                  background: linear-gradient(135deg, #2980b9, #3498db);
+                  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+                "
               >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon">🌍</span> 隨機戰場 (全服匹配)
+                  </div>
+                  <div
+                    style="
+                      font-size: 13px;
+                      font-weight: normal;
+                      color: rgba(255, 255, 255, 0.9);
+                    "
+                  >
+                    🔥 智慧掃描空缺，單元隨機分發！
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+
+              <div
+                style="
+                  background: linear-gradient(135deg, #1a252f, #2c3e50);
+                  border-radius: 12px;
+                  padding: 15px;
+                  margin-top: 10px;
+                  border: 1px solid #f39c12;
+                  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 1px dashed #7f8c8d;
+                    padding-bottom: 8px;
+                    margin-bottom: 10px;
+                  "
+                >
+                  <h3
+                    style="
+                      margin: 0;
+                      color: #f1c40f;
+                      font-size: 16px;
+                      text-shadow: 0 0 5px rgba(241, 196, 15, 0.4);
+                    "
+                  >
+                    🏆 競技場 天梯榜 Top 5
+                  </h3>
+                  <span style="font-size: 11px; color: #bdc3c7"
+                    >(獎盃數排序)</span
+                  >
+                </div>
+                <div
+                  id="battle-leaderboard-list"
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    text-align: left;
+                    font-size: 14px;
+                  "
+                >
+                  <div style="color: #95a5a6; text-align: center">
+                    📡 天梯數據讀取中...
+                  </div>
+                </div>
+              </div>
             </div>
-            <button class="menu-btn btn-practice" onclick="startPractice()">
-              🔥 開始綜合練習
-            </button>
+
+            <div id="content-hell" class="content-section">
+              <div
+                onclick="window.location.href='trig.html?mode=hell'"
+                class="menu-btn btn-hell-theme"
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon">💀</span> 死亡廣義三角比
+                  </div>
+                  <div
+                    id="top-hell-trig"
+                    style="font-size: 13px; font-weight: normal; color: #e74c3c"
+                  >
+                    👑 地獄霸主：讀取中...
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+              <div
+                onclick="window.location.href='space.html?mode=hell'"
+                class="menu-btn btn-hell-theme"
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon">💀</span> 虛無的空間坐標
+                  </div>
+                  <div
+                    id="top-hell-space"
+                    style="font-size: 13px; font-weight: normal; color: #e74c3c"
+                  >
+                    👑 地獄霸主：讀取中...
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+              <div
+                onclick="window.location.href='perm.html?mode=hell'"
+                class="menu-btn btn-hell-theme"
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon">💀</span> 混沌的排列組合
+                  </div>
+                  <div
+                    id="top-hell-perm"
+                    style="font-size: 13px; font-weight: normal; color: #e74c3c"
+                  >
+                    👑 地獄霸主：讀取中...
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+            </div>
+
+            <div id="content-practice" class="content-section">
+              <p style="margin-bottom: 10px; color: #e67e22; font-weight: bold">
+                自由勾選想混合練習的單元：
+              </p>
+              <div class="checkbox-group">
+                <label class="check-item"
+                  ><input
+                    type="checkbox"
+                    id="chk-trig"
+                    checked
+                  />超好玩的三角比</label
+                >
+                <label class="check-item"
+                  ><input
+                    type="checkbox"
+                    id="chk-space"
+                    checked
+                  />有趣的空間坐標</label
+                >
+                <label class="check-item"
+                  ><input
+                    type="checkbox"
+                    id="chk-perm"
+                    checked
+                  />神奇的排列組合</label
+                >
+              </div>
+              <button class="menu-btn btn-practice" onclick="startPractice()">
+                🔥 開始綜合練習
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1412,7 +1792,14 @@
           "translateX(-50%)";
         document.getElementById("main-title").style.transform = "scale(0.9)";
         document.getElementById("main-title").style.opacity = "0.5";
+
         if (modeId === "hell") document.body.classList.add("hell-theme");
+        else document.body.classList.remove("hell-theme");
+
+        const rankBtn = document.getElementById("rank-info-btn");
+        if (rankBtn) {
+          rankBtn.style.display = modeId === "battle" ? "block" : "none";
+        }
       }
 
       function backToMain() {
@@ -1421,6 +1808,9 @@
         document.getElementById("main-title").style.transform = "scale(1)";
         document.getElementById("main-title").style.opacity = "1";
         document.body.classList.remove("hell-theme");
+
+        const rankBtn = document.getElementById("rank-info-btn");
+        if (rankBtn) rankBtn.style.display = "none";
       }
 
       function toggleModal(modalId) {
@@ -1446,7 +1836,137 @@
         window.location.href = `practice.html?modes=${selectedModes.join(",")}`;
       }
 
-      // ✨ 原本的資料庫與認證邏輯
+      async function loadBattleLeaderboard() {
+        const listEl = document.getElementById("battle-leaderboard-list");
+        if (!listEl) return;
+
+        const subtitleEl = listEl.parentElement.querySelector("span");
+        if (subtitleEl) subtitleEl.innerText = "(獎盃數排序)";
+
+        try {
+          const db = firebase.firestore();
+          const snapshot = await db
+            .collection("users")
+            .orderBy("battle_mmr", "desc")
+            .limit(5)
+            .get();
+
+          let html = "";
+          let rank = 1;
+          const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
+
+          if (snapshot.empty) {
+            html = `<div style="color: #95a5a6; text-align: center;">尚無天梯戰神，快去搶首殺！</div>`;
+          } else {
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              const mmr = data.battle_mmr !== undefined ? data.battle_mmr : 0;
+              const name = data.name || "神秘勇者";
+
+              const wins = data.battle_wins || 0;
+              const plays = data.battle_plays || 0;
+              const winRate =
+                plays > 0 ? Math.round((wins / plays) * 100) + "%" : "0%";
+
+              const rankInfo =
+                typeof getBattleRank === "function"
+                  ? getBattleRank(mmr)
+                  : { name: "未知牌位", color: "#ccc" };
+
+              html += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 8px; border-left: 3px solid ${
+                  rankInfo.color
+                }; margin-bottom: 8px;">
+                  <div style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
+                    <span style="font-size: 16px; width: 22px; text-align: center;">${
+                      medals[rank - 1] || rank
+                    }</span>
+                    <div style="display: flex; flex-direction: column;">
+                      <span style="color: white; font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;">${name}</span>
+                      <span style="color: ${
+                        rankInfo.color
+                      }; font-size: 10px; font-weight: bold; text-shadow: ${
+                rankInfo.shadow || "none"
+              };">${rankInfo.name}</span>
+                    </div>
+                  </div>
+                  <div style="text-align: right; display: flex; flex-direction: column;">
+                    <span style="color: #f1c40f; font-weight: 900; font-size: 15px;"><span style="font-size:12px;">🏆</span> ${mmr}</span>
+                    <span style="color: #2ecc71; font-size: 10px; font-weight: bold;">勝 ${wins} <span style="color:#bdc3c7;">(${winRate})</span></span>
+                  </div>
+                </div>
+              `;
+              rank++;
+            });
+          }
+
+          const myUid = localStorage.getItem("mathGamePlayerUid");
+          if (myUid && myUid !== "guest") {
+            const myDoc = await db.collection("users").doc(myUid).get();
+            let myMmr = 0;
+            let myWins = 0;
+            let myPlays = 0;
+
+            if (myDoc.exists) {
+              myMmr =
+                myDoc.data().battle_mmr !== undefined
+                  ? myDoc.data().battle_mmr
+                  : 0;
+              myWins = myDoc.data().battle_wins || 0;
+              myPlays = myDoc.data().battle_plays || 0;
+            }
+
+            let myWinRate =
+              myPlays > 0 ? Math.round((myWins / myPlays) * 100) + "%" : "0%";
+
+            let myRankNum = "-";
+            try {
+              const higherMmrSnap = await db
+                .collection("users")
+                .where("battle_mmr", ">", myMmr)
+                .get();
+              myRankNum = higherMmrSnap.size + 1;
+            } catch (e) {
+              console.warn("計算名次受阻", e);
+            }
+
+            const myRankInfo =
+              typeof getBattleRank === "function"
+                ? getBattleRank(myMmr)
+                : { name: "未知牌位", color: "#ccc" };
+
+            html += `
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed #7f8c8d; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 16px;">🙋‍♂️</span>
+                  <div style="display: flex; flex-direction: column;">
+                    <div style="color: #ecf0f1; font-weight: bold; font-size: 13px;">
+                      我的戰績 <span style="color: #f39c12; font-size: 11px; margin-left: 2px;">(第 ${myRankNum} 名)</span>
+                    </div>
+                    <span style="color: ${
+                      myRankInfo.color
+                    }; font-size: 11px; font-weight: bold; text-shadow: ${
+              myRankInfo.shadow || "none"
+            };">${myRankInfo.name}</span>
+                  </div>
+                </div>
+                <div style="text-align: right; display: flex; flex-direction: column;">
+                  <span style="color: #f1c40f; font-weight: 900; font-size: 14px;"><span style="font-size:12px;">🏆</span> ${myMmr}</span>
+                  <span style="color: #2ecc71; font-size: 10px; font-weight: bold;">勝 ${myWins} <span style="color:#bdc3c7;">(${myWinRate})</span></span>
+                </div>
+              </div>
+            `;
+          } else {
+            html += `<div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed #7f8c8d; font-size: 12px; color: #95a5a6; text-align: center;">登入後可查看個人排位與名次</div>`;
+          }
+
+          listEl.innerHTML = html;
+        } catch (e) {
+          console.error("讀取天梯榜失敗", e);
+          listEl.innerHTML = `<div style="color: #e74c3c; text-align: center;">連線失敗，請稍後重試</div>`;
+        }
+      }
+
       async function loadTopScore(
         unit,
         mode,
@@ -1615,16 +2135,13 @@
             let now = Date.now();
             let isCooldown = bData.cooldownUntil && now < bData.cooldownUntil;
 
-            // ✨ 新增：判斷是否在 3 天慶祝期內！
             if (isCooldown) {
               document.getElementById("boss-active-ui").style.display = "none";
               document.getElementById("boss-defeated-ui").style.display =
                 "block";
-
               document.getElementById("def-level").innerText =
                 bData.level - 1 || 1;
 
-              // 畫出前三名英雄榜
               let top3Html = "";
               let top3 = bData.lastTop3 || [];
               let medals = ["🥇", "🥈", "🥉"];
@@ -1637,14 +2154,13 @@
                 top3Html = `<div style="color: #95a5a6; font-size: 12px;">無資料</div>`;
               document.getElementById("def-top3-list").innerHTML = top3Html;
 
-              // 超炫倒數計時器
               let cdEl = document.getElementById("def-countdown");
               if (window.bossCdTimer) clearInterval(window.bossCdTimer);
               window.bossCdTimer = setInterval(() => {
                 let remain = bData.cooldownUntil - Date.now();
                 if (remain <= 0) {
                   clearInterval(window.bossCdTimer);
-                  loadBossData(); // 倒數結束，系統自動切換回新魔王！
+                  loadBossData();
                 } else {
                   let days = Math.floor(remain / (1000 * 60 * 60 * 24));
                   let hours = Math.floor(
@@ -1658,7 +2174,6 @@
                 }
               }, 1000);
 
-              // 發放 MVP 稱號
               const currentUid = localStorage.getItem("mathGamePlayerUid");
               let pastMVPs = bData.pastMVPs || {};
               if (currentUid && pastMVPs[currentUid]) {
@@ -1675,10 +2190,9 @@
                   }
                 }, 800);
               }
-              return; // 直接中斷，不顯示血條 UI
+              return;
             }
 
-            // --- 🔴 以下為正常的戰鬥血條渲染 (跟原本完全一樣) ---
             document.getElementById("boss-active-ui").style.display = "block";
             document.getElementById("boss-defeated-ui").style.display = "none";
             if (window.bossCdTimer) clearInterval(window.bossCdTimer);
@@ -1800,6 +2314,7 @@
       auth.onAuthStateChanged(async (user) => {
         const nameDisplay = document.getElementById("user-name-display");
         const titleBadge = document.getElementById("user-title-badge");
+        const trophyBadge = document.getElementById("user-trophy-badge");
         const authBtn = document.getElementById("auth-btn");
         const renameBtn = document.getElementById("lobby-rename-btn");
 
@@ -1810,9 +2325,13 @@
           renameBtn.style.display = "block";
 
           let finalName = user.displayName;
+          let battleMMR = 0;
+
           const userDoc = await db.collection("users").doc(user.uid).get();
-          if (userDoc.exists && userDoc.data().name) {
-            finalName = userDoc.data().name;
+          if (userDoc.exists) {
+            if (userDoc.data().name) finalName = userDoc.data().name;
+            if (userDoc.data().battle_mmr !== undefined)
+              battleMMR = userDoc.data().battle_mmr;
           }
 
           try {
@@ -1878,6 +2397,11 @@
             titleBadge.style.background = myTitle.color;
             if (maxScore >= 2000)
               titleBadge.style.boxShadow = "0 0 10px " + myTitle.color;
+
+            if (trophyBadge) {
+              trophyBadge.style.display = "inline-block";
+              trophyBadge.innerText = `🏆 ${battleMMR}`;
+            }
           } catch (err) {
             console.error("讀取歷史數據失敗", err);
           }
@@ -1886,6 +2410,7 @@
           renameBtn.style.display = "none";
           nameDisplay.innerHTML = "👤 尚未登入";
           titleBadge.style.display = "none";
+          if (trophyBadge) trophyBadge.style.display = "none";
           authBtn.innerText = "Google 登入";
           authBtn.style.background = "#3498db";
           localStorage.removeItem("mathGamePlayerName");
@@ -2000,7 +2525,31 @@
         loadTopScore("perm", "hell", "top-hell-perm", 1);
 
         loadBossData();
+        loadBattleLeaderboard();
       };
+
+      // ✨ 全服隨機配對大腦 (在大廳呼叫 startRandomMatch("any"))
+      function quickMatch() {
+        // 叫出一個蓋住全螢幕的科技感等待畫面
+        const overlay = document.createElement("div");
+        overlay.id = "quick-match-overlay";
+        overlay.style.cssText =
+          "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; font-size:22px; font-weight:bold;";
+        overlay.innerHTML = `
+          <svg style="width: 60px; height: 60px; margin-bottom: 15px; animation: pulseBg 1.2s infinite;" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="40" stroke="#3498db" stroke-width="8" fill="none" stroke-dasharray="160" stroke-dashoffset="0">
+              <animate attributeName="stroke-dashoffset" values="160;0" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+          📡 尋找全服對手中...
+          <div style='font-size:14px; color:#bdc3c7; margin-top:10px; margin-bottom:25px;'>您即將前往任意單元支援前線</div>
+          <button onclick="cancelMatch()" style="background: #e74c3c; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.2);">❌ 取消配對</button>
+        `;
+        document.body.appendChild(overlay);
+
+        // 呼叫 common.js，告訴它「我什麼單元都玩 (any)」
+        startRandomMatch("any");
+      }
     </script>
   </body>
 </html>
