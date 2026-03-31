@@ -920,14 +920,15 @@
 
         isProcessing = true; // 上鎖
 
-        // ✨ 綜合判定大腦 (融合座標題脫衣法與算式判定)
+        // ✨ 綜合判定大腦 (自動切換：空間坐標判斷法 vs 一般算式判斷法)
         let isCorrect = false;
         if (isCoordinateAns) {
+          // 坐標題：脫去括號與空白比對
           let cleanUser = userInput.replace(/[\s\(\)（）]/g, "");
           let cleanTarget = targetAns.replace(/[\s\(\)（）]/g, "");
           isCorrect = cleanUser === cleanTarget;
         } else {
-          // 排列組合與三角比的算式判定
+          // 三角比與排列組合：分數、根號與算式比對
           isCorrect = isMathEqual(userInput, targetAns);
         }
 
@@ -936,7 +937,7 @@
           if (currentQuestionErrors === 0)
             correctQuestionsSet.add(currentQuestionStr);
 
-          // 既然最後答對了，就把這題從「幽靈突擊池」裡拿掉，免得後面又跑出來
+          // 既然最後答對了，就把這題從「幽靈突擊池」裡拿掉
           activeWrongPool = activeWrongPool.filter(
             (item) => item.q !== currentQuestionStr
           );
@@ -951,6 +952,7 @@
           score += (10 + combo * 2) * currentMultiplier;
           combo++;
 
+          // 連擊震動特效
           if (combo >= 5) {
             const body = document.body;
             let intensity = Math.min(2 + (combo - 5), 10);
@@ -962,21 +964,21 @@
 
           updateUI();
 
-          // ✅ 答對了！准許換下一題！
+          // ✅ 答對了！0.15秒後換下一題
           setTimeout(() => {
             getNewQuestion();
             isProcessing = false;
           }, 150);
         } else {
           // ❌ 答錯了！
-          wrongCount++; // 總答錯數 +1
+          wrongCount++;
           triggerErrorEffect(); // 觸發錯題本記錄與畫面震動
 
-          // 🛑 殘酷守門員：清空輸入框，但「不准呼叫下一題 (沒有 getNewQuestion)」！
+          // 🛑 殘酷守門員：清空輸入框，解鎖鍵盤讓學生重答！
           setTimeout(() => {
             userInput = "";
             renderInput();
-            isProcessing = false; // 解鎖鍵盤，讓學生繼續在這題掙扎
+            isProcessing = false;
           }, 400);
         }
       }
