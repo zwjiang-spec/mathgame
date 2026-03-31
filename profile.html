@@ -800,23 +800,20 @@
                     totalCount: 0,
                   });
                 } else {
-                  // 如果被未來的「消除紀錄」先佔了位子，要把題目和提示等資訊補回去
                   errorStatsMap.get(qText).unit = rec.unit;
                   errorStatsMap.get(qText).answer = qAns;
                   errorStatsMap.get(qText).hint = qHint;
                 }
-                errorStatsMap.get(qText).totalCount += qCount; // 錯題次數 +N
+                errorStatsMap.get(qText).totalCount += qCount;
               });
             }
 
-            // ✨ 2. 扣除特訓消滅的錯題 (無懼時空錯亂寫法)
+            // ✨ 2. 扣除特訓消滅的錯題
             if (rec.resolvedLog && Array.isArray(rec.resolvedLog)) {
               rec.resolvedLog.forEach((r) => {
                 let qText = r.question || r.q;
                 let rCount = r.count || 1;
-
                 if (!errorStatsMap.has(qText)) {
-                  // 如果未來的消除紀錄先被讀到，就先給它一個空殼，等讀到舊紀錄時加減就會完美抵銷！
                   errorStatsMap.set(qText, {
                     unit: "unknown",
                     qText: qText,
@@ -825,22 +822,22 @@
                     totalCount: 0,
                   });
                 }
-                errorStatsMap.get(qText).totalCount -= rCount; // 錯題次數 -N
+                errorStatsMap.get(qText).totalCount -= rCount;
               });
             }
 
             if (exactWrong === 0 && exactCorrect >= 10) hasNoMistake = true;
 
             let dateStr = rec.timestamp
-              ? rec.timestamp
-                  .toDate()
-                  .toLocaleString("zh-TW", {
-                    month: "numeric",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+              ? rec.timestamp.toDate().toLocaleString("zh-TW", {
+                  month: "numeric",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
               : "剛剛";
+
+            // --- ⚔️ 判斷單元與對戰模式 ---
             let unitLabel = "🎮 未知";
             if (rec.unit === "trig") unitLabel = "📐 三角";
             else if (rec.unit === "space") unitLabel = "🚀 空間";
@@ -848,17 +845,48 @@
             else if (rec.unit === "practice") unitLabel = "💪 練習";
             else if (rec.unit === "review") unitLabel = "🔥 特訓";
 
-            let modeIcon =
-              rec.mode === "hell"
-                ? "💀 地獄"
-                : rec.mode === "mixed"
-                ? "🔥 混合"
-                : "🌱 一般";
-            let scoreDisplay =
-              rec.status === "dead" ? `💀 失敗 (${s}分)` : `${s} 分`;
-            let deadClass = rec.status === "dead" ? "dead" : "";
+            // 判斷是否為隨機補位的玩家
+            if (rec.isRandom) unitLabel = "🌍 隨機 " + unitLabel;
 
-            if (historyHTML.split("</li>").length <= 10) {
+            let modeIcon = "🌱 一般";
+            let scoreDisplay = `${s} 分`;
+            let deadClass = "";
+
+            if (rec.mode === "hell") {
+              modeIcon = "💀 地獄";
+              if (rec.status === "dead") {
+                scoreDisplay = `💀 失敗 (${s}分)`;
+                deadClass = "dead";
+              }
+            } else if (rec.mode === "mixed" || rec.mode === "practice") {
+              modeIcon = "🔥 混合";
+            } else if (rec.mode === "battle") {
+              // ✨ 專屬戰鬥履歷 UI
+              modeIcon = "⚔️ 對戰";
+              let battleResultHtml = "";
+
+              if (rec.status === "dead" || rec.status === "abandoned") {
+                battleResultHtml = `<span style="color:#c0392b; font-size:12px; margin-right:5px; font-weight:bold;">中途逃跑</span>`;
+                deadClass = "dead";
+              } else if (rec.mmrChange !== undefined) {
+                // 有獎盃變化的正規賽
+                if (rec.mmrChange > 0) {
+                  battleResultHtml = `<span style="color:#f1c40f; font-size:12px; margin-right:5px; font-weight:bold;">🏆 勝利 (+${rec.mmrChange})</span>`;
+                } else if (rec.mmrChange < 0) {
+                  battleResultHtml = `<span style="color:#95a5a6; font-size:12px; margin-right:5px; font-weight:bold;">💀 戰敗 (${rec.mmrChange})</span>`;
+                  deadClass = "dead";
+                } else {
+                  battleResultHtml = `<span style="color:#3498db; font-size:12px; margin-right:5px; font-weight:bold;">🤝 平手</span>`;
+                }
+              } else {
+                // 沒有獎盃變化的休閒賽
+                battleResultHtml = `<span style="color:#bdc3c7; font-size:12px; margin-right:5px; font-weight:bold;">🤝 休閒對戰</span>`;
+              }
+
+              scoreDisplay = `${battleResultHtml} ${s} 分`;
+            }
+
+            if (historyHTML.split("</li>").length <= 15) {
               historyHTML += `
                 <li class="history-item ${deadClass}">
                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
