@@ -453,16 +453,16 @@
 
     <script src="common.js"></script>
     <script>
-      let isGameOver = false; // 🚩 這就是我們的守門員
-      const FORM_ID =
-        "1FAIpQLSeCrdzV9erg41HjfjB3oBDZTMosCJZBIahPX5fa2EQqF-9SQQ";
+      window.isGameOver = false; 
+      window.timer = null;
+      window.startTime = null;
+
+      const FORM_ID = "1FAIpQLSeCrdzV9erg41HjfjB3oBDZTMosCJZBIahPX5fa2EQqF-9SQQ";
       const ENTRY_NAME = "entry.1283303860";
       const ENTRY_SCORE = "entry.1797133454";
-      const CSV_URL =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
+      const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT9XgS9MSIF9LZNzTT0e7xJQnNwTsNmorofMhSKGAb_13mRfx_HN02TC2Uc9ohGCn_nkjLNTIFRRCBB/pub?output=csv";
 
       window.onload = () => {
-        // --- 1. 自動讀取 Google 登入的名字 ---
         const savedName = localStorage.getItem("mathGamePlayerName");
         const nameInput = document.getElementById("player-name");
         if (savedName && nameInput) {
@@ -472,18 +472,19 @@
           nameInput.style.color = "#2980b9";
         }
 
-        // --- 2. 召喚鍵盤 ---
         renderKeypad("keypad");
 
-        // --- 3. ✨ 聰明的排行榜與平均榜召喚邏輯 ---
         const urlParams = new URLSearchParams(window.location.search);
         const isHell = urlParams.get("mode") === "hell";
 
-        // 載入一般/地獄排行榜
         loadGlobalLeaderboard(isHell ? null : CSV_URL);
-
-        // ✨ 召喚單元專屬平均榜！
         loadUnitAverageLeaderboard();
+
+        // ✨ 啟動對戰引擎！
+        BattleEngine.init();
+        BattleEngine.setupAntiQuit(() => {
+          return { score: score, errorLogMap: errorLogMap, correctCount: correctCount, wrongCount: wrongCount };
+        });
       };
 
       const trigMap = {
@@ -506,20 +507,14 @@
       };
       const baseAngles = Object.keys(trigMap).map(Number);
 
-      // ✨ 判斷是否為地獄模式
       const urlParams = new URLSearchParams(window.location.search);
       const isHellMode = urlParams.get("mode") === "hell";
 
       if (isHellMode) {
         document.body.classList.add("hell-theme");
-
-        // 1. 更改大標題為「死亡廣義三角比」
         const overlayTitle = document.querySelector("#overlay h1");
-        if (overlayTitle) {
-          overlayTitle.innerHTML = `💀 死亡廣義三角比`;
-        }
+        if (overlayTitle) overlayTitle.innerHTML = `💀 死亡廣義三角比`;
 
-        // 2. 將規則區塊替換為地獄專屬宣告
         const rulesBox = document.getElementById("rules-box");
         if (rulesBox) {
           rulesBox.innerHTML = `
@@ -528,13 +523,11 @@
               歡迎來到地獄，所有規則都跟一般模式一樣，但題目會讓你想死。
             </p>
           `;
-          // 順便把規則框的背景變成暗紅色，增加壓迫感
           rulesBox.style.background = "rgba(40, 0, 0, 0.6)";
           rulesBox.style.border = "1px solid #c0392b";
         }
       }
 
-      // 💀 地獄 15度 家族題庫
       const hell15Map = {
         15: { sin: "(√6-√2)/4", cos: "(√6+√2)/4", tan: "2-√3" },
         75: { sin: "(√6+√2)/4", cos: "(√6-√2)/4", tan: "2+√3" },
@@ -547,169 +540,76 @@
       };
       const base15Angles = Object.keys(hell15Map).map(Number);
 
-      // 💀 地獄 18度 家族題庫
       const hell18List = [
         { f: "sin", a: 18, ans: "(√5-1)/4", h: "sin 18°" },
         { f: "cos", a: 36, ans: "(√5+1)/4", h: "cos 36°" },
         { f: "sin", a: 54, ans: "(√5+1)/4", h: "sin 54° = cos 36°" },
         { f: "cos", a: 72, ans: "(√5-1)/4", h: "cos 72° = sin 18°" },
-        {
-          f: "sin",
-          a: 162,
-          ans: "(√5-1)/4",
-          h: "第二象限 sin 為正，參考角 18°",
-        },
-        {
-          f: "cos",
-          a: 144,
-          ans: "-(√5+1)/4",
-          h: "第二象限 cos 為負，參考角 36°",
-        },
-        {
-          f: "sin",
-          a: 126,
-          ans: "(√5+1)/4",
-          h: "第二象限 sin 為正，參考角 54°",
-        },
-        {
-          f: "cos",
-          a: 108,
-          ans: "-(√5-1)/4",
-          h: "第二象限 cos 為負，參考角 72°",
-        },
-        {
-          f: "sin",
-          a: 198,
-          ans: "-(√5-1)/4",
-          h: "第三象限 sin 為負，參考角 18°",
-        },
-        {
-          f: "cos",
-          a: 216,
-          ans: "-(√5+1)/4",
-          h: "第三象限 cos 為負，參考角 36°",
-        },
-        {
-          f: "sin",
-          a: 234,
-          ans: "-(√5+1)/4",
-          h: "第三象限 sin 為負，參考角 54°",
-        },
-        {
-          f: "cos",
-          a: 252,
-          ans: "-(√5-1)/4",
-          h: "第三象限 cos 為負，參考角 72°",
-        },
-        {
-          f: "sin",
-          a: 342,
-          ans: "-(√5-1)/4",
-          h: "第四象限 sin 為負，參考角 18°",
-        },
-        {
-          f: "cos",
-          a: 324,
-          ans: "(√5+1)/4",
-          h: "第四象限 cos 為正，參考角 36°",
-        },
-        {
-          f: "sin",
-          a: 306,
-          ans: "-(√5+1)/4",
-          h: "第四象限 sin 為負，參考角 54°",
-        },
-        {
-          f: "cos",
-          a: 288,
-          ans: "(√5-1)/4",
-          h: "第四象限 cos 為正，參考角 72°",
-        },
+        { f: "sin", a: 162, ans: "(√5-1)/4", h: "第二象限 sin 為正，參考角 18°" },
+        { f: "cos", a: 144, ans: "-(√5+1)/4", h: "第二象限 cos 為負，參考角 36°" },
+        { f: "sin", a: 126, ans: "(√5+1)/4", h: "第二象限 sin 為正，參考角 54°" },
+        { f: "cos", a: 108, ans: "-(√5-1)/4", h: "第二象限 cos 為負，參考角 72°" },
+        { f: "sin", a: 198, ans: "-(√5-1)/4", h: "第三象限 sin 為負，參考角 18°" },
+        { f: "cos", a: 216, ans: "-(√5+1)/4", h: "第三象限 cos 為負，參考角 36°" },
+        { f: "sin", a: 234, ans: "-(√5+1)/4", h: "第三象限 sin 為負，參考角 54°" },
+        { f: "cos", a: 252, ans: "-(√5-1)/4", h: "第三象限 cos 為負，參考角 72°" },
+        { f: "sin", a: 342, ans: "-(√5-1)/4", h: "第四象限 sin 為負，參考角 18°" },
+        { f: "cos", a: 324, ans: "(√5+1)/4", h: "第四象限 cos 為正，參考角 36°" },
+        { f: "sin", a: 306, ans: "-(√5+1)/4", h: "第四象限 sin 為負，參考角 54°" },
+        { f: "cos", a: 288, ans: "(√5-1)/4", h: "第四象限 cos 為正，參考角 72°" },
       ];
       const funcs = ["sin", "cos", "tan"];
 
-      let score = 0,
-        combo = 0,
-        consecutiveWrong = 0,
-        targetAns = "",
-        userInput = "",
-        currentQuestionStr = "";
+      let score = 0, combo = 0, consecutiveWrong = 0, targetAns = "", userInput = "", currentQuestionStr = "";
       let currentHint = "";
-
-      let currentQuestionErrors = 0,
-        currentMultiplier = 1;
-      let timer,
-        startTime,
-        lastTickSec = -1;
+      let currentQuestionErrors = 0, currentMultiplier = 1;
+      let lastTickSec = -1;
       const TIME_LIMIT = 90;
-      // ✨ 新增這兩個變數，用來精準追蹤答對/答錯數
-      let correctCount = 0,
-        wrongCount = 0;
+      let correctCount = 0, wrongCount = 0;
 
       let correctQuestionsSet = new Set();
       let errorLogMap = new Map();
       let activeWrongPool = [];
 
       function getNewQuestion() {
-        let remain = startTime
-          ? TIME_LIMIT - (Date.now() - startTime) / 1000
-          : TIME_LIMIT;
-        let phaseStr = "",
-          loop = 0;
-        let valid = false,
-          attempts = 0;
+        let remain = window.startTime ? TIME_LIMIT - (Date.now() - window.startTime) / 1000 : TIME_LIMIT;
+        let phaseStr = "", loop = 0, valid = false, attempts = 0;
 
-        // --- 💀 模式分流：階段與難度判定 ---
         if (isHellMode) {
           if (remain <= 30) {
-            currentMultiplier = 3;
-            phaseStr = "🔥 領域展開 (15°/18° 極限同界角)";
-            loop = Math.floor(Math.random() * 5) - 2;
-            if (loop === 0) loop = 1;
+            currentMultiplier = 3; phaseStr = "🔥 領域展開 (15°/18° 極限同界角)";
+            loop = Math.floor(Math.random() * 5) - 2; if (loop === 0) loop = 1;
             document.getElementById("phase-indicator").style.color = "#c0392b";
           } else if (score >= 60 || remain <= 60) {
-            currentMultiplier = 2;
-            phaseStr = "💀 夢魘階段 (15°與18°換角)";
-            loop = 0;
+            currentMultiplier = 2; phaseStr = "💀 夢魘階段 (15°與18°換角)"; loop = 0;
             document.getElementById("phase-indicator").style.color = "#8e44ad";
           } else {
-            currentMultiplier = 1.5;
-            phaseStr = "🌪️ 暴風前夕 (進階廣義角)";
-            loop = Math.floor(Math.random() * 5) - 2;
-            if (loop === 0) loop = 1;
+            currentMultiplier = 1.5; phaseStr = "🌪️ 暴風前夕 (進階廣義角)";
+            loop = Math.floor(Math.random() * 5) - 2; if (loop === 0) loop = 1;
             document.getElementById("phase-indicator").style.color = "#d68910";
           }
         } else {
-          // 🟢 一般模式
           if (remain <= 30) {
-            currentMultiplier = 2;
-            phaseStr = "🔥 狂熱時間 (最後30秒: 分數 x2, 超廣義角)";
+            currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (最後30秒: 分數 x2, 超廣義角)";
             loop = Math.floor(Math.random() * 5) - 2;
             document.getElementById("phase-indicator").style.color = "#c0392b";
           } else if (consecutiveWrong >= 2) {
-            currentMultiplier = 1;
-            phaseStr = "🌱 基礎保底 (連續失誤，幫你找回手感)";
-            loop = 0;
+            currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，幫你找回手感)"; loop = 0;
             document.getElementById("phase-indicator").style.color = "#27ae60";
           } else if (combo >= 3) {
-            currentMultiplier = 1;
-            phaseStr = "⚡ 乘勝追擊 (挑戰負角與廣義角)";
+            currentMultiplier = 1; phaseStr = "⚡ 乘勝追擊 (挑戰負角與廣義角)";
             loop = Math.floor(Math.random() * 3) - 1;
             document.getElementById("phase-indicator").style.color = "#d68910";
           } else if (score >= 100) {
-            currentMultiplier = 1;
-            phaseStr = "⚡ 進階階段 (分數達標，解鎖負角)";
+            currentMultiplier = 1; phaseStr = "⚡ 進階階段 (分數達標，解鎖負角)";
             loop = Math.floor(Math.random() * 2) - 1;
             document.getElementById("phase-indicator").style.color = "#d68910";
           } else {
-            currentMultiplier = 1;
-            phaseStr = `🌱 基礎階段 (連對3題解鎖進階)`;
-            loop = 0;
+            currentMultiplier = 1; phaseStr = `🌱 基礎階段 (連對3題解鎖進階)`; loop = 0;
             document.getElementById("phase-indicator").style.color = "#27ae60";
           }
         }
 
-        // --- 錯題池出題邏輯 ---
         let lastQ = currentQuestionStr;
         let availableWrong = activeWrongPool.filter((item) => item.q !== lastQ);
         if (availableWrong.length > 0 && Math.random() < 0.4) {
@@ -718,107 +618,67 @@
           targetAns = availableWrong[idx].a;
           currentHint = availableWrong[idx].hint;
           document.getElementById("phase-indicator").innerText = phaseStr;
-          document.getElementById(
-            "question-text"
-          ).innerText = `${currentQuestionStr} =`;
+          document.getElementById("question-text").innerText = `${currentQuestionStr} =`;
           userInput = "";
           currentQuestionErrors = 0;
           renderInput();
           return;
         }
 
-        // --- 隨機生題邏輯 ---
         let func, baseAngle, realAngle;
         while (!valid && attempts < 100) {
           if (isHellMode && (score >= 60 || remain <= 60)) {
             if (Math.random() < 0.6) {
               func = funcs[Math.floor(Math.random() * 3)];
-              baseAngle =
-                base15Angles[Math.floor(Math.random() * base15Angles.length)];
+              baseAngle = base15Angles[Math.floor(Math.random() * base15Angles.length)];
               targetAns = hell15Map[baseAngle][func];
               currentHint = "利用和差角公式展開：15° = 60°-45° 或 45°-30°";
             } else {
-              let qObj =
-                hell18List[Math.floor(Math.random() * hell18List.length)];
-              func = qObj.f;
-              baseAngle = qObj.a;
-              targetAns = qObj.ans;
-              currentHint = qObj.h;
+              let qObj = hell18List[Math.floor(Math.random() * hell18List.length)];
+              func = qObj.f; baseAngle = qObj.a; targetAns = qObj.ans; currentHint = qObj.h;
             }
           } else {
             func = funcs[Math.floor(Math.random() * 3)];
-            baseAngle =
-              baseAngles[Math.floor(Math.random() * baseAngles.length)];
+            baseAngle = baseAngles[Math.floor(Math.random() * baseAngles.length)];
             if (trigMap[baseAngle][func] !== undefined) {
               targetAns = trigMap[baseAngle][func];
               realAngle = baseAngle + loop * 360;
               let modAngle = ((realAngle % 360) + 360) % 360;
               let h = "";
               if (realAngle !== modAngle) h += `同界角 ${modAngle}°。 `;
-              if (
-                modAngle === 0 ||
-                modAngle === 90 ||
-                modAngle === 180 ||
-                modAngle === 270
-              ) {
+              if (modAngle === 0 || modAngle === 90 || modAngle === 180 || modAngle === 270) {
                 h += `象限角，直接看單位圓坐標。`;
               } else {
                 let quad, ref, sign;
-                if (modAngle < 90) {
-                  quad = "一";
-                  ref = modAngle;
-                  sign = "正";
-                } else if (modAngle < 180) {
-                  quad = "二";
-                  ref = 180 - modAngle;
-                  sign = func === "sin" ? "正" : "負";
-                } else if (modAngle < 270) {
-                  quad = "三";
-                  ref = modAngle - 180;
-                  sign = func === "tan" ? "正" : "負";
-                } else {
-                  quad = "四";
-                  ref = 360 - modAngle;
-                  sign = func === "cos" ? "正" : "負";
-                }
+                if (modAngle < 90) { quad = "一"; ref = modAngle; sign = "正"; } 
+                else if (modAngle < 180) { quad = "二"; ref = 180 - modAngle; sign = func === "sin" ? "正" : "負"; } 
+                else if (modAngle < 270) { quad = "三"; ref = modAngle - 180; sign = func === "tan" ? "正" : "負"; } 
+                else { quad = "四"; ref = 360 - modAngle; sign = func === "cos" ? "正" : "負"; }
                 h += `第${quad}象限 (${func}為${sign})，參考角 ${ref}°。`;
               }
               currentHint = h;
-            } else {
-              attempts++;
-              continue;
-            }
+            } else { attempts++; continue; }
           }
 
           realAngle = baseAngle + loop * 360;
-          let displayAngleStr =
-            realAngle < 0 ? `(${realAngle}°)` : `${realAngle}°`;
+          let displayAngleStr = realAngle < 0 ? `(${realAngle}°)` : `${realAngle}°`;
           let tempQuestionStr = `${func}${displayAngleStr}`;
 
-          if (
-            !correctQuestionsSet.has(tempQuestionStr) &&
-            tempQuestionStr !== lastQ
-          ) {
-            valid = true;
-            currentQuestionStr = tempQuestionStr;
+          if (!correctQuestionsSet.has(tempQuestionStr) && tempQuestionStr !== lastQ) {
+            valid = true; currentQuestionStr = tempQuestionStr;
           }
           attempts++;
         }
 
         if (!valid) {
           realAngle = baseAngle + loop * 360;
-          let displayAngleStr =
-            realAngle < 0 ? `(${realAngle}°)` : `${realAngle}°`;
+          let displayAngleStr = realAngle < 0 ? `(${realAngle}°)` : `${realAngle}°`;
           currentQuestionStr = `${func}${displayAngleStr}`;
         }
 
         document.getElementById("phase-indicator").innerText = phaseStr;
-        document.getElementById(
-          "question-text"
-        ).innerText = `${currentQuestionStr} =`;
-        userInput = "";
-        currentQuestionErrors = 0;
-        renderInput();
+        document.getElementById("question-text").innerText = `${currentQuestionStr} =`;
+        userInput = ""; currentQuestionErrors = 0; renderInput();
       }
 
       function renderInput() {
@@ -833,10 +693,8 @@
       }
 
       function generateErrorLogHTML() {
-        if (errorLogMap.size === 0)
-          return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
-        let html =
-          "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:15px; color:#444; margin:0; padding-left:20px;'>";
+        if (errorLogMap.size === 0) return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
+        let html = "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:15px; color:#444; margin:0; padding-left:20px;'>";
         errorLogMap.forEach((data, qStr) => {
           html += `<li style="margin-bottom:10px; line-height:1.4;">${qStr} <span style="color:#e67e22; font-weight:bold; margin-left:5px;">➡ 正解: ${data.ans}</span><br><span style="color:#7f8c8d; font-size:13px;">💡 提示: ${data.hint}</span></li>`;
         });
@@ -844,83 +702,37 @@
       }
 
       function checkDeath() {
+        if (BattleEngine.isBattleMode) return;
         if (score < -20) {
-          // ✨ 死亡也要鎖門！防止重複死兩次，或跟 endGame 撞在一起
-          if (isGameOver) return;
-          isGameOver = true;
-          clearInterval(timer);
+          if (window.isGameOver) return;
+          window.isGameOver = true;
+          clearInterval(window.timer);
 
-          if (
-            typeof generateErrorLogHTML === "function" &&
-            document.getElementById("death-error-log")
-          ) {
-            document.getElementById("death-error-log").innerHTML =
-              generateErrorLogHTML();
-          }
-          if (document.getElementById("death-screen"))
-            document.getElementById("death-screen").classList.add("show");
-            showExpAnimation(score, "death-screen");
-          if (document.getElementById("keypad-container"))
-            document.getElementById("keypad-container").style.display = "none";
+          if (document.getElementById("death-error-log")) document.getElementById("death-error-log").innerHTML = generateErrorLogHTML();
+          if (document.getElementById("death-screen")) document.getElementById("death-screen").classList.add("show");
+          showExpAnimation(score, "death-screen");
+          if (document.getElementById("keypad-container")) document.getElementById("keypad-container").style.display = "none";
 
           const deathBtn = document.querySelector("#death-screen button");
-          if (deathBtn) {
-            deathBtn.disabled = true;
-            deathBtn.innerText = "💀 遺言傳送中...";
-          }
+          if (deathBtn) { deathBtn.disabled = true; deathBtn.innerText = "💀 遺言傳送中..."; }
 
-          // ✨ 一行指令，直接呼叫 common.js 的萬能上傳函數！
-          uploadGameRecord(
-            "dead",
-            score,
-            typeof errorLogMap !== "undefined" ? errorLogMap : null,
-            typeof isHellMode !== "undefined" ? isHellMode : false,
-            correctCount, // 👈 傳遞精準答對數
-            wrongCount // 👈 傳遞精準答錯數
-          )
-            .then(() => {
-              if (deathBtn) {
-                deathBtn.disabled = false;
-                deathBtn.innerText = "重新開始 (投胎)";
-              }
-            })
-            .catch((err) => {
-              console.error("存檔失敗:", err);
-              if (deathBtn) {
-                deathBtn.disabled = false;
-                deathBtn.innerText = "上傳失敗，點此重試";
-              }
-            });
+          uploadGameRecord("dead", score, errorLogMap, isHellMode, correctCount, wrongCount)
+            .then(() => { if (deathBtn) { deathBtn.disabled = false; deathBtn.innerText = "重新開始 (投胎)"; } })
+            .catch((err) => { if (deathBtn) { deathBtn.disabled = false; deathBtn.innerText = "上傳失敗，點此重試"; } });
         }
       }
 
-      // ✨ 保險絲在這裡！防連點鎖：使用 isProcessing 變數，防禦手速過快的玩家
       let isProcessing = false;
-
       function triggerErrorEffect(isSkip = false) {
         if (typeof playWrong === "function") playWrong();
-        combo = 0;
-        consecutiveWrong++;
+        combo = 0; consecutiveWrong++;
         
-        // ✨ 凡走過必留下痕跡：只要一答錯，立刻死死釘入結算錯題本！
-        // 並且精準記錄「到底錯了幾次」
         if (!errorLogMap.has(currentQuestionStr)) {
-          errorLogMap.set(currentQuestionStr, {
-            ans: targetAns,
-            hint: currentHint,
-            count: 1
-          });
-        } else {
-          errorLogMap.get(currentQuestionStr).count++;
-        }
+          errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: currentHint, count: 1 });
+        } else { errorLogMap.get(currentQuestionStr).count++; }
 
-        // 把錯題丟進幽靈題庫 (這是為了給 PASS 跳過按鈕備用的突擊機制)
         if (!activeWrongPool.some((item) => item.q === currentQuestionStr)) {
-          activeWrongPool.push({
-            q: currentQuestionStr,
-            a: targetAns,
-            hint: currentHint,
-          });
+          activeWrongPool.push({ q: currentQuestionStr, a: targetAns, hint: currentHint });
         }
 
         const area = document.getElementById("display-area");
@@ -941,35 +753,23 @@
         
         if (isSkip) showToast(`⏭️ 跳過！正解為：${formatMathHTML(targetAns)}`, 2500);
         else showToast(`❌ 答錯囉！再試一次！`, 1200);
-        
         checkDeath();
       }
 
-      function submitAnswer() {
+      window.submitAnswer = function() {
         if (userInput === "" || isProcessing) return;
         const box = document.getElementById("input-box");
-        if (
-          box && (box.classList.contains("correct-flash") || box.classList.contains("error-text"))
-        ) return;
+        if (box && (box.classList.contains("correct-flash") || box.classList.contains("error-text"))) return;
 
-        isProcessing = true; // 上鎖
-
-        // ✨ 萬能數值判定 (解決 sin -600度 的冤案)
+        isProcessing = true;
         let userVal = typeof evalMath === "function" ? evalMath(userInput) : NaN;
         let targetVal = typeof evalMath === "function" ? evalMath(targetAns) : NaN;
-        let isCorrect =
-          !isNaN(userVal) &&
-          !isNaN(targetVal) &&
-          Math.abs(userVal - targetVal) < 1e-5;
+        let isCorrect = !isNaN(userVal) && !isNaN(targetVal) && Math.abs(userVal - targetVal) < 1e-5;
 
         if (isCorrect) {
-          correctCount++; // 精準計數
+          correctCount++;
           correctQuestionsSet.add(currentQuestionStr);
-          
-          // 既然最後答對了，就把這題從「幽靈突擊池」裡拿掉，免得後面又跑出來
-          activeWrongPool = activeWrongPool.filter(
-            (item) => item.q !== currentQuestionStr
-          );
+          activeWrongPool = activeWrongPool.filter((item) => item.q !== currentQuestionStr);
           
           if (typeof spawnComboParticle === "function") spawnComboParticle();
           consecutiveWrong = 0;
@@ -986,46 +786,23 @@
             void body.offsetWidth;
             body.classList.add("strong-shake-effect");
           }
-          
           updateUI();
-          
-          // ✅ 答對了！准許換下一題！
-          setTimeout(() => {
-            getNewQuestion();
-            isProcessing = false;
-          }, 150);
+          setTimeout(() => { getNewQuestion(); isProcessing = false; }, 150);
         } else {
-          // ❌ 答錯了！
-          wrongCount++; // 總答錯數 +1 (這樣戰績室才不會說您全對)
-          triggerErrorEffect(); // 觸發錯題本記錄與畫面震動
-          
-          // 🛑 殘酷守門員：清空輸入框，但「不准呼叫下一題 (沒有 getNewQuestion)」！
-          setTimeout(() => {
-            userInput = "";
-            renderInput();
-            isProcessing = false; // 解鎖鍵盤，讓學生繼續在這題掙扎
-          }, 400); 
+          wrongCount++;
+          triggerErrorEffect();
+          setTimeout(() => { userInput = ""; renderInput(); isProcessing = false; }, 400); 
         }
       }
 
-      function skipQuestion() {
-        if (
-          !document.getElementById("overlay").classList.contains("hidden") ||
-          isProcessing
-        )
-          return;
-        isProcessing = true; // 上鎖
-        wrongCount++; // ✨ 跳過(PASS)也算答錯一題！
+      window.skipQuestion = function() {
+        if (!document.getElementById("overlay").classList.contains("hidden") || isProcessing) return;
+        isProcessing = true;
+        wrongCount++;
         triggerErrorEffect(true);
-        score -=
-          20 * currentMultiplier -
-          currentQuestionErrors * 5 * currentMultiplier;
-        updateUI();
-        checkDeath();
-        setTimeout(() => {
-          getNewQuestion();
-          isProcessing = false; // 出完下一題解鎖
-        }, 450);
+        score -= 20 * currentMultiplier - currentQuestionErrors * 5 * currentMultiplier;
+        updateUI(); checkDeath();
+        setTimeout(() => { getNewQuestion(); isProcessing = false; }, 450);
       }
 
       function updateUI() {
@@ -1039,29 +816,26 @@
         void comboText.offsetWidth;
         if (combo > 0) comboText.classList.add("bump-anim");
         if (combo === 0) {
-          comboText.innerHTML = "0";
-          comboText.style.color = "var(--text-gray)";
-          comboFill.classList.remove("fever-fill");
-          inputBox.classList.remove("fever-box");
+          comboText.innerHTML = "0"; comboText.style.color = "var(--text-gray)";
+          comboFill.classList.remove("fever-fill"); inputBox.classList.remove("fever-box");
         } else if (combo < 10) {
           comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`;
           comboText.style.color = "#e67e22";
-          comboFill.classList.remove("fever-fill");
-          inputBox.classList.remove("fever-box");
+          comboFill.classList.remove("fever-fill"); inputBox.classList.remove("fever-box");
         } else {
           comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`;
-          comboFill.classList.add("fever-fill");
-          inputBox.classList.add("fever-box");
+          comboFill.classList.add("fever-fill"); inputBox.classList.add("fever-box");
         }
-        // ✨ 雙人對戰核心：只要 UI 更新，就把分數同步給對手！
-        if (typeof updateBattleScore === "function" && isBattleMode) {
+        
+        // ✨ 把分數送到對戰引擎
+        if (typeof updateBattleScore === "function" && BattleEngine.isBattleMode) {
           updateBattleScore(score, combo);
         }
       }
-// ✨ 動態生成結算經驗條動畫
-function showExpAnimation(finalScore, containerId) {
+
+      function showExpAnimation(finalScore, containerId) {
         const uid = localStorage.getItem("mathGamePlayerUid");
-        if (!uid || uid === "guest") return; // 訪客不顯示
+        if (!uid || uid === "guest") return; 
 
         const container = document.getElementById(containerId);
         if (!container) return;
@@ -1069,9 +843,7 @@ function showExpAnimation(finalScore, containerId) {
         const oldUi = document.getElementById("dynamic-exp-ui");
         if (oldUi) oldUi.remove();
 
-        // ✨ 動態偵測是否有 1.5 倍加成
-        let multiplier = 1;
-        if (typeof isBattleMode !== "undefined" && isBattleMode) multiplier = 1.5;
+        let multiplier = BattleEngine.isBattleMode ? 1.5 : 1;
         let gainedExp = Math.floor(Math.max(0, finalScore) * multiplier); 
 
         let oldExp = window.initialPlayerExp || 0;
@@ -1086,7 +858,6 @@ function showExpAnimation(finalScore, containerId) {
         uiDiv.id = "dynamic-exp-ui";
         uiDiv.style.cssText = "width: 100%; max-width: 320px; margin: 15px auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);";
         
-        // ✨ 在畫面上加入紅色的 (對戰加成 1.5x) 字樣！
         let bonusText = multiplier > 1 ? `<span style="color: #e74c3c; font-size: 11px; margin-left: 5px;">(對戰加成 1.5x)</span>` : "";
         
         uiDiv.innerHTML = `
@@ -1105,19 +876,16 @@ function showExpAnimation(finalScore, containerId) {
           <div id="exp-levelup-toast" style="display:none; color: #f1c40f; font-weight: 900; font-size: 16px; margin-top: 8px; text-shadow: 0 0 10px rgba(241,196,15,0.5); transform: scale(0.5); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">🎉 LEVEL UP! 🎉</div>
         `;
 
-        // 插入到按鈕前面
         const firstBtn = container.querySelector("button");
         if (firstBtn) container.insertBefore(uiDiv, firstBtn);
         else container.appendChild(uiDiv);
 
-        // 觸發進度條生長動畫
         setTimeout(() => {
           const barGained = uiDiv.querySelector("#exp-bar-gained");
           const txtDetails = uiDiv.querySelector("#exp-text-details");
           const toast = uiDiv.querySelector("#exp-levelup-toast");
 
           if (newLevel > oldLevel) {
-            // 升級邏輯：先長滿
             barGained.style.width = "100%";
             setTimeout(() => {
               toast.style.display = "block";
@@ -1137,49 +905,35 @@ function showExpAnimation(finalScore, containerId) {
               setTimeout(() => {
                 barGained.style.transition = "width 1s cubic-bezier(0.25, 1, 0.5, 1)";
                 barGained.style.width = newPercent + "%";
-                localStorage.setItem("mathGamePlayerLevel", newLevel); // 本地升級
+                localStorage.setItem("mathGamePlayerLevel", newLevel); 
               }, 50);
-            }, 1500); // 等待跑滿的時間
+            }, 1500); 
           } else {
-            // 沒升級：直接長到新趴數
             let newPercent = ((newExp - oldTierBase) / (oldNextTier - oldTierBase)) * 100;
             barGained.style.width = newPercent + "%";
             txtDetails.innerText = `${newExp} / ${oldNextTier}`;
           }
         }, 500);
       }
-      async function startGame() {
-        // 1. 抓取玩家想用的名字 (如果有輸入框就抓輸入框，沒有就抓本地記憶)
+
+      window.startGame = async function() {
         const nameInput = document.getElementById("player-name");
         const desiredName = nameInput ? nameInput.value.trim() || "Guest" : (localStorage.getItem("mathGamePlayerName") || "Guest");
-
-        // 2. ✨ 啟動名稱查重閘門
         const startBtn = document.querySelector("#start-ui-group button");
         let originalText = startBtn ? startBtn.innerText : "START GAME";
         
         if (startBtn && desiredName.toUpperCase() !== "GUEST") {
-            startBtn.disabled = true;
-            startBtn.innerText = "🔍 驗證名稱中...";
-
+            startBtn.disabled = true; startBtn.innerText = "🔍 驗證名稱中...";
             const nameCheck = await validateAndClaimName(desiredName);
             if (!nameCheck.valid) {
-                alert(nameCheck.msg); // 彈出警告！
-                startBtn.disabled = false;
-                startBtn.innerText = originalText;
-                return; // 🛑 名稱重複，直接擋下！不給開局！
+                alert(nameCheck.msg); 
+                startBtn.disabled = false; startBtn.innerText = originalText;
+                return; 
             }
         }
+        if (startBtn) { startBtn.disabled = false; startBtn.innerText = originalText; }
 
-        // ✅ 驗證通過，按鈕恢復正常
-        if (startBtn) {
-            startBtn.disabled = false;
-            startBtn.innerText = originalText;
-        }
-
-        // ----------------------------------------
-        // 🚀 下面繼續執行原本的開局流程
-        // ----------------------------------------
-        isGameOver = false; // 🔓 重新開始新局時，要把門鎖打開
+        window.isGameOver = false; 
         if (nameInput) nameInput.blur();
         window.scrollTo(0, 0);
         if (typeof initAudio === "function") initAudio();
@@ -1187,9 +941,7 @@ function showExpAnimation(finalScore, containerId) {
         window.initialPlayerExp = 0;
         const pUid = localStorage.getItem("mathGamePlayerUid");
         if (pUid && pUid !== "guest") {
-          fetchPlayerStatsFromHistory(pUid).then(stats => {
-            window.initialPlayerExp = stats.totalExp;
-          });
+          fetchPlayerStatsFromHistory(pUid).then(stats => { window.initialPlayerExp = stats.totalExp; });
         }
         
         document.getElementById("ui-name").innerText = desiredName;
@@ -1201,401 +953,87 @@ function showExpAnimation(finalScore, containerId) {
         document.getElementById("ui-time").classList.remove("timer-danger-extreme");
         document.body.classList.remove("body-danger-flash");
 
-        correctQuestionsSet.clear();
-        errorLogMap.clear();
-        activeWrongPool = [];
-        score = 0;
-        combo = 0;
-        consecutiveWrong = 0;
-        currentQuestionErrors = 0;
-        // ✨ 新局開始，計數器歸零
-        correctCount = 0;
-        wrongCount = 0;
+        correctQuestionsSet.clear(); errorLogMap.clear(); activeWrongPool = [];
+        score = 0; combo = 0; consecutiveWrong = 0; currentQuestionErrors = 0; correctCount = 0; wrongCount = 0;
         
         updateUI();
-        startTime = Date.now();
+        window.startTime = Date.now();
         getNewQuestion();
 
-        timer = setInterval(() => {
-          let passed = (Date.now() - startTime) / 1000;
+        window.timer = setInterval(() => {
+          let passed = (Date.now() - window.startTime) / 1000;
           let remain = TIME_LIMIT - passed;
-          document.getElementById("progress-bar").style.width =
-            (remain / TIME_LIMIT) * 100 + "%";
+          document.getElementById("progress-bar").style.width = (remain / TIME_LIMIT) * 100 + "%";
           let sec = Math.ceil(Math.max(0, remain));
           const timeEl = document.getElementById("ui-time");
           timeEl.innerText = sec;
+          
           if (sec <= 10 && sec > 0) {
-            timeEl.classList.add("timer-danger-extreme");
-            document.body.classList.add("body-danger-flash");
+            timeEl.classList.add("timer-danger-extreme"); document.body.classList.add("body-danger-flash");
           } else {
-            timeEl.classList.remove("timer-danger-extreme");
-            document.body.classList.remove("body-danger-flash");
+            timeEl.classList.remove("timer-danger-extreme"); document.body.classList.remove("body-danger-flash");
           }
-          if (sec <= 10 && sec > 0 && sec !== lastTickSec) {
-            playTick();
-            lastTickSec = sec;
-          }
+          if (sec <= 10 && sec > 0 && sec !== lastTickSec) { playTick(); lastTickSec = sec; }
+          
           if (remain <= 0) {
-            timeEl.classList.remove("timer-danger-extreme");
-            document.body.classList.remove("body-danger-flash");
-            clearInterval(timer);
-            endGame();
+            timeEl.classList.remove("timer-danger-extreme"); document.body.classList.remove("body-danger-flash");
+            clearInterval(window.timer);
+            window.endGame();
           }
         }, 50);
       }
 
-      function endGame() {
-        // ✨ 守門員檢查：如果已經結束過，就直接跳出，防止重複執行
-        if (isGameOver) return;
-        isGameOver = true;
+      window.endGame = async function() {
+        if (window.isGameOver) return;
+        window.isGameOver = true;
         
-        // --- 0. 切換按鈕：隱藏開始按鈕，顯示重新開始 ---
         document.getElementById("start-ui-group").classList.add("hidden");
         document.getElementById("end-ui-group").classList.remove("hidden");
-
-        // --- 1. 顯示結算 UI ---
         document.getElementById("overlay").classList.remove("hidden");
         document.getElementById("rules-box").classList.add("hidden");
 
-        // ✨✨✨ 新增：雙人對戰 vs 單人模式 結算畫面切換 ✨✨✨
-        if (isBattleMode) {
-          // 隱藏單人的純文字分數，顯示超炫的對戰看板
-          document.getElementById("final-score-text").classList.add("hidden");
-          const battleBox = document.getElementById("battle-result-box");
-          const titleEl = document.getElementById("battle-result-title");
-          if (battleBox) battleBox.classList.remove("hidden");
+        let finalMmrChange = 0; 
 
-          // 填入雙方最終分數與名字
-          if (document.getElementById("battle-result-my-score")) {
-            document.getElementById("battle-result-my-score").innerText = score;
-          }
-          if (document.getElementById("battle-result-enemy-score")) {
-            document.getElementById("battle-result-enemy-score").innerText = enemyFinalScore;
-          }
-          if (document.getElementById("battle-result-enemy-name")) {
-            document.getElementById("battle-result-enemy-name").innerText = enemyFinalName;
-          }
-
-          // 判定勝負與變色
-          if (opponentFled) {
-            if (titleEl) {
-              titleEl.innerText = "🏃‍♂️ 對手逃跑 (不戰而勝)";
-              titleEl.style.color = "#f1c40f";
-              titleEl.style.textShadow = "0 0 15px #f1c40f";
-            }
-            if (battleBox) battleBox.style.borderColor = "#f1c40f";
-          } else if (score > enemyFinalScore) {
-            if (titleEl) {
-              titleEl.innerText = "🏆 壓倒性勝利！";
-              titleEl.style.color = "#f1c40f";
-              titleEl.style.textShadow = "0 0 15px #f1c40f";
-            }
-            if (battleBox) battleBox.style.borderColor = "#f1c40f";
-          } else if (score < enemyFinalScore) {
-            if (titleEl) {
-              titleEl.innerText = "💀 戰敗...";
-              titleEl.style.color = "#95a5a6";
-              titleEl.style.textShadow = "0 0 15px #7f8c8d";
-            }
-            if (battleBox) battleBox.style.borderColor = "#95a5a6";
-          } else {
-            if (titleEl) {
-              titleEl.innerText = "🤝 勢均力敵 (平手)";
-              titleEl.style.color = "#3498db";
-              titleEl.style.textShadow = "0 0 15px #3498db";
-            }
-            if (battleBox) battleBox.style.borderColor = "#3498db";
-          }
+        // ✨ 呼叫對戰引擎進行結算
+        if (BattleEngine.isBattleMode) {
+          finalMmrChange = await BattleEngine.calculateEloAndRender(score);
         } else {
-          // 單人模式：維持原本的簡單顯示
           document.getElementById("final-score-text").classList.remove("hidden");
           document.getElementById("final-score-text").innerText = `最終得分: ${score}`;
         }
-        // ✨✨✨ 判定結束 ✨✨✨
 
         showExpAnimation(score, "end-ui-group");
         
-        // --- 2. 顯示錯題本 (包含提示) ---
         const endLog = document.getElementById("end-error-log");
         endLog.innerHTML = generateErrorLogHTML();
         endLog.classList.remove("hidden");
         window.scrollTo(0, 0);
 
-        // --- 3. 準備上傳資料到 Firebase ---
         document.getElementById("player-name").value = "成績光速傳送中...";
-
-        // ✨ 補上這一行：宣告 restartBtn 是誰！
         const restartBtn = document.querySelector("#end-ui-group button");
-        if (restartBtn) {
-          restartBtn.disabled = true;
-          restartBtn.innerText = "⏳ 成績上傳中...";
-        }
+        if (restartBtn) { restartBtn.disabled = true; restartBtn.innerText = "⏳ 成績上傳中..."; }
 
-        // ✨ 呼叫 common.js 的萬能上傳！
         uploadGameRecord(
-          "clear",
-          score,
-          typeof errorLogMap !== "undefined" ? errorLogMap : null,
-          typeof isHellMode !== "undefined" ? isHellMode : false,
-          correctCount, // 👈 傳遞精準答對數
-          wrongCount // 👈 傳遞精準答錯數
+          "clear", score, errorLogMap, isHellMode, correctCount, wrongCount, null, 
+          BattleEngine.isBattleMode ? finalMmrChange : 0 
         )
           .then(() => {
-            document.getElementById("player-name").value =
-              "成績已存入雲端戰績室！";
+            document.getElementById("player-name").value = "成績已存入雲端戰績室！";
             if (restartBtn) {
-              restartBtn.disabled = false;
-              restartBtn.innerText = "再玩一局 (重新開始)";
-              restartBtn.style.opacity = "1";
-              restartBtn.style.cursor = "pointer";
+              restartBtn.disabled = false; restartBtn.innerText = "再玩一局 (重新開始)";
+              restartBtn.style.opacity = "1"; restartBtn.style.cursor = "pointer";
             }
-            // 抓取玩家名字，把這局成績當作 newRecord 傳進去，讓畫面秒速顯示！
             let finalName = document.getElementById("ui-name").innerText;
             if (finalName === "---" || !finalName) finalName = "Guest";
-
-            loadGlobalLeaderboard(
-              typeof isHellMode !== "undefined" && isHellMode ? null : CSV_URL,
-              { n: finalName, s: score }
-            );
-
-            setTimeout(
-              () => (document.getElementById("player-name").value = ""),
-              2000
-            );
+            loadGlobalLeaderboard(isHellMode ? null : CSV_URL, { n: finalName, s: score });
+            setTimeout(() => (document.getElementById("player-name").value = ""), 2000);
           })
           .catch((err) => {
             console.error("雲端存檔失敗:", err);
             document.getElementById("player-name").value = "雲端存檔失敗";
-            if (restartBtn) {
-              restartBtn.disabled = false;
-              restartBtn.innerText = "上傳失敗，點此重試";
-              restartBtn.style.opacity = "1";
-              restartBtn.style.cursor = "pointer";
-            }
+            if (restartBtn) { restartBtn.disabled = false; restartBtn.innerText = "上傳失敗，點此重試"; restartBtn.style.opacity = "1"; restartBtn.style.cursor = "pointer"; }
           });
       }
-      // ==========================================
-      // ⚔️ 雙人對戰模式專屬邏輯
-      // ==========================================
-      let isBattleMode = false;
-      let hasBattleStarted = false;
-      let enemyFinalScore = 0;
-      let enemyFinalName = "敵方";
-      let opponentFled = false;
-      // 1. 初始化檢查 (判斷網址有沒有帶 mode=battle)
-      window.addEventListener("DOMContentLoaded", () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        isBattleMode = urlParams.get("mode") === "battle";
-
-        if (isBattleMode) {
-          // ✨ 正確隱藏單人模式的專屬元素 (包含原本的輸入框、排行榜、平均榜)
-          if (document.getElementById("start-ui-group")) document.getElementById("start-ui-group").style.display = "none";
-          if (document.getElementById("unit-avg-board")) document.getElementById("unit-avg-board").style.display = "none";
-          if (document.getElementById("leaderboards")) document.getElementById("leaderboards").style.display = "none";
-          if (document.getElementById("rules-box")) document.getElementById("rules-box").style.display = "none";
-
-          // ✨ 顯示霸氣的對戰大廳
-          if (document.getElementById("battle-lobby-ui")) document.getElementById("battle-lobby-ui").classList.remove("hidden");
-          
-          if (document.getElementById("phase-indicator")) {
-            document.getElementById("phase-indicator").innerText = "⚔️ 準備進入對戰...";
-            document.getElementById("phase-indicator").style.color = "#e74c3c";
-          }
-          if (document.querySelector("#overlay h1")) {
-            document.querySelector("#overlay h1").innerText = "⚔️ 雙人對決：三角比";
-          }
-          const abandonBtn = document.getElementById("abandon-btn");
-          if (abandonBtn) abandonBtn.innerHTML = "🏳️ 投降";
-        }
-      });
-
-      
-
-      
-
-      // 4. 即時接收 Firebase 資料並更新血條 (被 common.js 呼叫)
-      function syncBattleUI(roomData) {
-        // ✨ 觸發開局 (加入 3 秒全螢幕倒數動畫)
-        if (roomData.status === "playing" && !hasBattleStarted) {
-          hasBattleStarted = true;
-          
-          // 隱藏大廳，準備倒數
-          document.getElementById("battle-lobby-ui").classList.add("hidden");
-          const myName = localStorage.getItem("mathGamePlayerName") || "勇者";
-          document.getElementById("player-name").value = myName;
-
-          // 抓取敵方名字
-          const enemyData = isPlayer1 ? roomData.player2 : roomData.player1;
-          const enemyName = enemyData ? enemyData.name : "未知對手";
-
-          // 🚀 動態產生全螢幕倒數 UI
-          let cdUI = document.createElement("div");
-          cdUI.id = "battle-countdown-ui";
-          cdUI.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.9); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;";
-          
-          cdUI.innerHTML = `
-            <div style="font-size: 24px; font-weight: bold; color: #3498db; margin-bottom: 20px; text-shadow: 0 0 10px #3498db; letter-spacing: 2px;">
-              ${myName} <span style="color: white; margin: 0 10px;">VS</span> <span style="color: #e74c3c;">${enemyName}</span>
-            </div>
-            <div id="cd-number" style="font-size: 130px; font-weight: 900; color: #e74c3c; text-shadow: 0 0 40px #e74c3c; transition: transform 0.2s;">3</div>
-            <div style="margin-top: 30px; font-size: 16px; color: #f1c40f; letter-spacing: 3px;">🔥 準備好你的計算紙...</div>
-          `;
-          document.body.appendChild(cdUI);
-
-          // 開始讀秒
-          let count = 3;
-          let cdTimer = setInterval(() => {
-            count--;
-            const numEl = document.getElementById("cd-number");
-            if (!numEl) { clearInterval(cdTimer); return; } // 防呆：如果UI被提早移除就中斷計時
-
-            if (count > 0) {
-              numEl.innerText = count;
-              numEl.style.transform = "scale(1.2)"; // 數字心跳放大效果
-              setTimeout(() => numEl.style.transform = "scale(1)", 150);
-            } else if (count === 0) {
-              numEl.innerText = "FIGHT!";
-              numEl.style.color = "#f1c40f";
-              numEl.style.textShadow = "0 0 50px #f1c40f";
-              numEl.style.transform = "scale(1.3)";
-            } else {
-              // 倒數結束，摧毀動畫並正式開始遊戲！
-              clearInterval(cdTimer);
-              cdUI.remove();
-              document.getElementById("battle-hp-container").classList.remove("hidden"); 
-              startGame(); 
-            }
-          }, 1000);
-        }
-
-        // 遊戲中即時結算血條
-        if (hasBattleStarted && (roomData.status === "playing" || roomData.status === "finished")) {
-          const myData = isPlayer1 ? roomData.player1 : roomData.player2;
-          const enemyData = isPlayer1 ? roomData.player2 : roomData.player1;
-
-          if (myData && enemyData) {
-            // ✨ 即時把對手的最後分數跟名字抄下來，給結算畫面用！
-            enemyFinalScore = enemyData.score || 0;
-            enemyFinalName = enemyData.name || "敵方";
-            document.getElementById("my-score-display").innerText = myData.score;
-            document.getElementById("enemy-score-display").innerText = enemyData.score;
-
-            // ✨ 拔河式血條計算 (這裡設定相差 150 分定生死，老師可自行調整)
-            let diff = myData.score - enemyData.score;
-            let myHp = 50 + (diff / 150) * 50; 
-            let enemyHp = 50 - (diff / 150) * 50;
-
-            // 限制血條不破表 (0% ~ 100%)
-            myHp = Math.max(0, Math.min(100, myHp));
-            enemyHp = Math.max(0, Math.min(100, enemyHp));
-
-            document.getElementById("my-hp-bar").style.width = myHp + "%";
-            document.getElementById("enemy-hp-bar").style.width = enemyHp + "%";
-          }
-        }
-      }
-      // 5. 處理對手逃跑或中斷連線
-      function handleOpponentFlee() {
-        // ✨ 如果倒數動畫還在畫面上，馬上把它刪除解鎖！
-        let cdUI = document.getElementById("battle-countdown-ui");
-        if (cdUI) cdUI.remove();
-        if (hasBattleStarted && !isGameOver) {
-          opponentFled = true;
-          // 情況 A：已經在打遊戲了，對手受不了壓力關掉網頁逃跑
-          alert("🏃‍♂️ 敵方靈壓消失了！對手已中途逃跑，您贏得了這場對決！");
-          clearInterval(timer);
-          endGame(); // 直接幫留下來的玩家進入結算領獎
-        } else if (!hasBattleStarted) {
-          // 情況 B：還在配對大廳，對方就取消了
-          alert("⚠️ 對方已取消配對，請重新尋找對手。");
-          cancelMatch(); // 恢復按鈕狀態
-        }
-      }
-      // ==========================================
-      // 🚫 防逃跑/投降系統 (Anti-Rage-Quit) - 完美引爆版 🚀
-      // ==========================================
-      function abandonGame() {
-        // ✨ 智慧切換確認台詞
-        const confirmMsg = isBattleMode 
-          ? "🏳️ 確定要舉白旗投降嗎？\n⚠️ 投降後對手將直接獲得勝利，且您的分數會被結算！" 
-          : "🚪 確定要放棄這局遊戲嗎？\n⚠️ 警告：中途退出仍會將「目前的分數」送出並計入平均成績！";
-
-        if (confirm(confirmMsg)) {
-          // ✨ 在斷線跳轉前，第一時間先把對戰房間炸掉！
-          if (typeof currentBattleRoom !== "undefined" && currentBattleRoom) {
-             firebase.firestore().collection("battles").doc(currentBattleRoom).delete().catch(e=>console.log(e));
-          }
-
-          if (!isGameOver && typeof startTime !== "undefined" && startTime) {
-            isGameOver = true;
-            if (typeof timer !== "undefined") clearInterval(timer);
-
-            if (document.getElementById("display-area")) {
-              document.getElementById("display-area").innerHTML = "<h2 style='color:#c0392b; text-align:center;'>紀錄送出中...</h2>";
-            }
-            if (document.getElementById("keypad-container")) {
-              document.getElementById("keypad-container").style.display = "none";
-            }
-            
-            uploadGameRecord(
-              "abandoned",
-              score,
-              typeof errorLogMap !== "undefined" ? errorLogMap : null,
-              typeof isHellMode !== "undefined" ? isHellMode : false,
-              correctCount,
-              wrongCount
-            ).finally(() => {
-              location.href = "index.html";
-            });
-          } else {
-            location.href = "index.html";
-          }
-        }
-      }
-
-      // 監聽玩家直接「滑掉網頁」、「關閉分頁」或「按上一頁」
-      window.addEventListener("pagehide", () => {
-        // 如果遊戲已經開始，且還沒結算
-        if (!isGameOver && typeof startTime !== "undefined" && startTime) {
-          isGameOver = true;
-          // 直接將當下的殘酷分數送上雲端！
-          uploadGameRecord(
-            "abandoned",
-            score,
-            typeof errorLogMap !== "undefined" ? errorLogMap : null,
-            typeof isHellMode !== "undefined" ? isHellMode : false,
-            correctCount,
-            wrongCount
-          );
-        }
-      });
-      // ✨ AFK 殭屍殺手：當玩家切換 APP、跳回手機主畫面、或螢幕休眠時，立刻判定為逃跑！
-      document.addEventListener("visibilitychange", () => {
-        if (document.hidden) {
-          // 情況 1：如果他還在大廳等待配對，直接默默幫他取消，不留幽靈房間
-          if (typeof currentBattleRoom !== "undefined" && currentBattleRoom && !hasBattleStarted) {
-            cancelMatch();
-          }
-          // 情況 2：如果已經在對戰中途，他卻切換 APP 去偷看賴，直接炸毀房間並判定他投降！
-          else if (typeof currentBattleRoom !== "undefined" && currentBattleRoom && hasBattleStarted && !isGameOver) {
-             firebase.firestore().collection("battles").doc(currentBattleRoom).delete();
-             isGameOver = true;
-             if (typeof timer !== "undefined") clearInterval(timer);
-             
-             // 把他的分數強制結算並丟回首頁
-             uploadGameRecord(
-               "abandoned",
-               score,
-               typeof errorLogMap !== "undefined" ? errorLogMap : null,
-               typeof isHellMode !== "undefined" ? isHellMode : false,
-               correctCount,
-               wrongCount
-             ).finally(() => {
-               location.href = "index.html";
-             });
-          }
-        }
-      });
     </script>
   </body>
 </html>
