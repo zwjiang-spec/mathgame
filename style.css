@@ -584,3 +584,123 @@ body.hell-theme .normal-key {
   box-shadow: none !important;
   pointer-events: none;
 }
+
+/* ==========================================
+   ✨ 終極無滾動防擠壓魔法 (修復重疊安全置中版)
+   ========================================== */
+
+/* 1. 鎖死 Body，絕對禁止任何方向的滾動 */
+html,
+body {
+  height: 100% !important;
+  height: 100dvh !important;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box;
+  overscroll-behavior: none;
+}
+
+/* 2. 上方所有狀態列極限壓緊 */
+#header {
+  padding: max(env(safe-area-inset-top), 5px) 10px 5px !important;
+  flex: 0 0 auto !important;
+}
+#battle-hp-container,
+#combo-gauge-wrapper,
+#phase-indicator {
+  flex: 0 0 auto !important;
+}
+#battle-hp-container {
+  margin: 2px auto !important;
+  gap: 4px !important;
+}
+#combo-gauge-wrapper {
+  margin: 2px auto !important;
+}
+#phase-indicator {
+  margin: 2px auto 0 !important;
+  font-size: clamp(12px, 2vh, 14px) !important;
+  height: auto !important;
+  padding-bottom: 2px;
+}
+
+/* 3. 題目與輸入區：✨ 改用 flex-start 防止向上重疊 */
+#display-area {
+  flex: 1 1 auto !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start !important; /* 🚨 關鍵：改由上往下排，絕對不把東西往上頂 */
+  align-items: center;
+  min-height: 0;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  overflow: hidden !important;
+}
+
+/* 4. 題目字體與圖片：✨ 安全置中魔法 */
+#question-text {
+  width: 100%;
+  flex: 1 1 auto !important;
+  margin: auto 0 !important; /* 🚨 關鍵：利用 auto margin 達到安全置中，空間不夠時會靠上對齊而不重疊 */
+  font-size: clamp(16px, 2.5vh, 22px) !important;
+  line-height: 1.2 !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+#question-text img {
+  max-height: 12vh !important; /* 圖片再縮小一點點，保障文字空間 */
+  width: auto !important;
+  object-fit: contain;
+  margin: 4px 0 !important;
+}
+
+/* 5. 答案輸入格與 PASS 按鈕 */
+#display-area > div:not(#question-text) {
+  flex: 0 0 auto !important;
+  margin-bottom: 5px !important;
+}
+#input-box {
+  height: clamp(35px, 5.5vh, 45px) !important;
+  font-size: clamp(20px, 3.5vh, 32px) !important;
+  margin: 0 !important;
+}
+.slot-wrapper {
+  font-size: clamp(16px, 3vh, 20px) !important;
+}
+.input-slot {
+  height: clamp(30px, 5vh, 40px) !important;
+  line-height: clamp(30px, 5vh, 40px) !important;
+  min-width: clamp(30px, 5vh, 40px) !important;
+  font-size: clamp(14px, 2.5vh, 18px) !important;
+}
+#display-area button {
+  padding: 4px 12px !important;
+  font-size: 12px !important;
+  margin-top: 0 !important;
+}
+
+/* 6. 鍵盤區動態縮放：✨ 稍微壓扁，把黃金空間還給題目 */
+#keypad-container {
+  flex: 0 0 auto !important;
+  width: 100%;
+  padding: 0 10px max(5px, env(safe-area-inset-bottom)) !important;
+  box-sizing: border-box;
+}
+#keypad {
+  grid-template-rows: repeat(
+    5,
+    min(7.5dvh, 50px)
+  ) !important; /* 鍵盤按鈕高度微調 */
+  gap: 5px !important;
+}
+.key,
+.prob-key {
+  font-size: clamp(18px, 3vh, 24px) !important;
+  padding: 0 !important;
+}
