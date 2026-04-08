@@ -464,6 +464,20 @@
         >
           🎲 排列
         </button>
+        <button
+          class="wq-filter-btn"
+          onclick="filterWrongQ('prob')"
+          data-unit="prob"
+        >
+          🎰 機率
+        </button>
+        <button
+          class="wq-filter-btn"
+          onclick="filterWrongQ('plane')"
+          data-unit="plane"
+        >
+          🧩 平面
+        </button>
       </div>
       <ul class="wrong-q-list" id="wrong-q-container">
         <li style="color: #7f8c8d; font-size: 14px">資料載入中...</li>
@@ -842,6 +856,8 @@
             if (rec.unit === "trig") unitLabel = "📐 三角";
             else if (rec.unit === "space") unitLabel = "🚀 空間";
             else if (rec.unit === "perm") unitLabel = "🎲 排列";
+            else if (rec.unit === "prob") unitLabel = "🎰 機率";
+            else if (rec.unit === "plane") unitLabel = "🧩 平面";
             else if (rec.unit === "practice") unitLabel = "💪 練習";
             else if (rec.unit === "review") unitLabel = "🔥 特訓";
 
@@ -1007,6 +1023,8 @@
                     if (info.unit === "trig") uLabel = "📐";
                     if (info.unit === "space") uLabel = "🚀";
                     if (info.unit === "perm") uLabel = "🎲";
+                    if (info.unit === "prob") uLabel = "🎰";
+                    if (info.unit === "plane") uLabel = "🧩";
                     unitTag = `<span style="font-size:10px; background:#ecf0f1; color:#7f8c8d; padding:2px 5px; border-radius:4px; margin-right:6px;">${uLabel}</span>`;
                   }
 
@@ -1051,6 +1069,8 @@
             trig: { correct: 0, err: 0, games: 0 },
             space: { correct: 0, err: 0, games: 0 },
             perm: { correct: 0, err: 0, games: 0 },
+            prob: { correct: 0, err: 0, games: 0 },
+            plane: { correct: 0, err: 0, games: 0 }, // ✨ 這裡加了平面
             practice: { correct: 0, err: 0, games: 0 },
           };
           records.forEach((rec) => {
@@ -1084,7 +1104,9 @@
 
           let accTrig = getAccuracy(stats.trig),
             accSpace = getAccuracy(stats.space),
-            accPerm = getAccuracy(stats.perm);
+            accPerm = getAccuracy(stats.perm),
+            accProb = getAccuracy(stats.prob); // ✨ 這裡加了計算機率準確率
+
           let effortScore = Math.min(
             100,
             Math.round((totalGamesPlayed / 30) * 100)
@@ -1107,6 +1129,7 @@
                   "📐 三角準確率",
                   "🚀 空間準確率",
                   "🎲 排列準確率",
+                  "🎰 機率準確率", // ✨ 圖表文字加上機率
                   "🛡️ 生存防禦力",
                   "💪 勤奮鍛鍊度",
                 ],
@@ -1117,6 +1140,7 @@
                       accTrig,
                       accSpace,
                       accPerm,
+                      accProb, // ✨ 圖表數值加上機率
                       survivalRate,
                       effortScore,
                     ],
