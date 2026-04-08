@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>好玩的數學 - 空間平面與直線</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      :root {
+        --bg-main: #f0f4f8;
+        --text-dark: #2c3e50;
+        --text-gray: #7f8c8d;
+        --color-gold: #9b59b6;
+        --btn-white: #ffffff;
+        --btn-blue-bg: #eaf2f8;
+        --btn-blue-text: #2980b9;
+        --btn-del-bg: #fae5e5;
+        --btn-del-text: #c0392b;
+        --btn-sqrt-bg: #f4ecf7;
+        --btn-sqrt-text: #8e44ad;
+        --btn-enter-bg: #8e44ad;
+        --btn-enter-text: #ffffff;
+      }
+
+      /* ✨ 終極手機版防裁切與高度鎖死魔法 */
+      html,
+      body {
+        height: 100% !important;
+        height: 100dvh !important;
+        margin: 0;
+        padding: 0;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box;
+        overscroll-behavior: none;
+      }
+      #display-area {
+        flex: 1 1 auto !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 0;
+        margin-bottom: 0 !important;
+      }
+      #keypad-container {
+        flex: 0 0 auto !important;
+        width: 100%;
+        padding-bottom: env(safe-area-inset-bottom, 15px) !important;
+        box-sizing: border-box;
+      }
+      @media (max-height: 680px) {
+        #header {
+          margin-bottom: 5px !important;
+        }
+        #phase-indicator {
+          margin-top: 5px !important;
+          margin-bottom: 5px !important;
+        }
+        #question-text {
+          font-size: 16px !important;
+        }
+        .key {
+          padding: 10px !important;
+        }
+      }
+
+      /* ✨ 多格輸入 UI 專屬樣式 */
+      .input-slot {
+        display: inline-block;
+        min-width: 45px;
+        height: 45px;
+        border: 2px solid #bdc3c7;
+        border-radius: 8px;
+        text-align: center;
+        line-height: 45px;
+        font-weight: bold;
+        font-size: 18px;
+        color: #2c3e50;
+        background: white;
+        cursor: pointer;
+        margin: 0 4px;
+        vertical-align: middle;
+        transition: 0.2s;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      .input-slot.active {
+        border-color: #f39c12;
+        box-shadow: 0 0 12px rgba(243, 156, 18, 0.5);
+        background: #fffdf5;
+        transform: scale(1.05);
+        color: #d35400;
+      }
+      .slot-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 5px;
+        font-size: 20px;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+
+      /* 地獄模式專屬變色 */
+      body.hell-theme {
+        background-color: #050000;
+        background-image: linear-gradient(
+            rgba(192, 57, 43, 0.08) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(192, 57, 43, 0.08) 1px, transparent 1px);
+        color: #e0e0e0;
+      }
+      body.hell-theme #overlay {
+        background: rgba(10, 2, 2, 0.95);
+        border: 1px solid #c0392b;
+        box-shadow: 0 0 30px rgba(192, 57, 43, 0.3);
+      }
+      body.hell-theme h1 {
+        color: #ff4d4d;
+        text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+      }
+      body.hell-theme #question-text,
+      body.hell-theme .slot-wrapper {
+        color: #ff6b6b !important;
+      }
+      body.hell-theme .key {
+        background: #1a1a1a;
+        color: #ddd;
+        border: 1px solid #444;
+      }
+      body.hell-theme .key-blue {
+        background: #4a0000;
+        color: #ffcccc;
+      }
+      body.hell-theme .key-sqrt {
+        background: #3a1a00;
+        color: #ffb07c;
+      }
+      body.hell-theme .key-enter {
+        background: #800000;
+        color: white;
+      }
+
+      body.hell-theme .input-slot {
+        background: #111;
+        color: #e0e0e0;
+        border-color: #444;
+      }
+      body.hell-theme .input-slot.active {
+        border-color: #e74c3c;
+        box-shadow: 0 0 12px rgba(231, 76, 60, 0.6);
+        background: #2a0000;
+        color: #ff9999;
+      }
+
+      /* 強制叫回逗號，隱藏用不到的括號與加號 */
+      body.hell-theme .normal-key {
+        display: flex !important;
+      }
+      body.hell-theme .hell-key {
+        display: none !important;
+      }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore-compat.js"></script>
+    <script src="common.js"></script>
+  </head>
+  <body>
+    <div id="toast">答案提示區</div>
+    <div id="death-screen">
+      <h1>💀 你已經死了</h1>
+      <p>分數過低 (-20分)，失去挑戰資格</p>
+      <div
+        id="death-error-log"
+        style="
+          background: rgba(255, 255, 255, 0.9);
+          padding: 15px;
+          border-radius: 10px;
+          color: black;
+          max-width: 90%;
+          margin-top: 15px;
+        "
+      ></div>
+      <button
+        class="action-btn"
+        onclick="location.reload()"
+        style="margin-top: 20px; background: #555"
+      >
+        重新開始
+      </button>
+      <a href="index.html" style="color: #ccc; margin-top: 15px"
+        >🏠 回到數學天地主選單</a
+      >
+    </div>
+
+    <div id="overlay">
+      <a
+        href="index.html"
+        class="home-btn"
+        style="position: absolute; top: 15px; left: 15px"
+        >🏠 回主選單</a
+      >
+      <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 40px">
+        超級美妙的平面與直線
+      </h1>
+      <h2
+        id="final-score-text"
+        class="hidden"
+        style="color: #9b59b6; margin-top: -10px; margin-bottom: 10px"
+      ></h2>
+
+      <div
+        id="battle-result-box"
+        class="hidden"
+        style="
+          background: #1a1a2e;
+          border: 2px solid #f1c40f;
+          border-radius: 15px;
+          padding: 20px;
+          margin: 10px auto 20px auto;
+          width: 90%;
+          max-width: 350px;
+          color: white;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        "
+      >
+        <h2
+          id="battle-result-title"
+          style="
+            margin-top: 0;
+            font-size: 28px;
+            text-shadow: 0 0 15px #f1c40f;
+            color: #f1c40f;
+          "
+        >
+          🏆 勝利！
+        </h2>
+        <div
+          style="
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 15px;
+          "
+        >
+          <div style="text-align: center; flex: 1">
+            <div
+              style="
+                color: #2ecc71;
+                font-weight: bold;
+                font-size: 14px;
+                margin-bottom: 5px;
+              "
+            >
+              我方
+            </div>
+            <div
+              id="battle-result-my-score"
+              style="color: #2ecc71; font-size: 28px; font-weight: 900"
+            >
+              0
+            </div>
+          </div>
+          <div
+            style="
+              font-size: 24px;
+              font-weight: 900;
+              color: #fff;
+              text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+              padding: 0 15px;
+            "
+          >
+            VS
+          </div>
+          <div style="text-align: center; flex: 1">
+            <div
+              id="battle-result-enemy-name"
+              style="
+                color: #e74c3c;
+                font-weight: bold;
+                font-size: 14px;
+                margin-bottom: 5px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              "
+            >
+              敵方
+            </div>
+            <div
+              id="battle-result-enemy-score"
+              style="color: #e74c3c; font-size: 28px; font-weight: 900"
+            >
+              0
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="end-error-log"
+        class="hidden"
+        style="
+          background: #fffdf5;
+          border: 2px dashed #e74c3c;
+          padding: 15px;
+          border-radius: 10px;
+          max-width: 90%;
+          margin: 0 auto 20px;
+        "
+      ></div>
+
+      <div id="rules-box">
+        <h3>📜 遊戲規則與計分方式</h3>
+        <ul>
+          <li>
+            <b>直覺輸入：</b>直接點擊畫面上的
+            <b style="color: #d68910">[框框]</b> 輸入數字！
+          </li>
+          <li>
+            <b>快捷切換：</b>打完一格後，輸入
+            <b style="color: #2980b9">「 , 」(逗號)</b>
+            會自動跳到下一格，飆手速必備！
+          </li>
+          <li>
+            <b style="color: #27ae60">智慧驗證：</b
+            >平面與法向量只要<b>「等比例」</b>皆判定完全正確，無須約分！
+          </li>
+          <li>
+            <b style="color: #c0392b">倒扣懲罰：</b
+            >按錯或跳過會<b>漸進式扣分</b>，低於 <b>-20分</b> 出局！
+          </li>
+        </ul>
+      </div>
+
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+        "
+      >
+        <div
+          id="start-ui-group"
+          style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+          "
+        >
+          <input
+            type="text"
+            id="player-name"
+            class="name-input"
+            placeholder="請輸入姓名或學號"
+            maxlength="10"
+            style="text-align: center; margin-bottom: 15px"
+          />
+          <button class="action-btn" onclick="startGame()">START GAME</button>
+        </div>
+
+        <div
+          id="battle-lobby-ui"
+          class="hidden"
+          style="
+            width: 100%;
+            text-align: center;
+            max-width: 350px;
+            margin: 0 auto;
+          "
+        >
+          <h3 style="color: #9b59b6; margin-top: 0; margin-bottom: 15px">
+            ⚔️ 雙人連線對戰
+          </h3>
+          <div
+            style="
+              background: #f4ecf7;
+              border: 2px solid #8e44ad;
+              border-radius: 12px;
+              padding: 25px 15px;
+            "
+          >
+            <button
+              id="find-match-btn"
+              class="action-btn"
+              onclick="startRandomMatch('plane')"
+              style="
+                background: #8e44ad;
+                padding: 15px 30px;
+                font-size: 18px;
+                margin-bottom: 0;
+              "
+            >
+              ⚔️ 尋找對手
+            </button>
+            <div
+              id="match-wait-msg"
+              style="
+                display: none;
+                width: 100%;
+                text-align: center;
+                margin-top: 15px;
+              "
+            >
+              <div
+                style="
+                  margin-bottom: 15px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 8px;
+                  color: #9b59b6;
+                  font-weight: bold;
+                  font-size: 16px;
+                "
+              >
+                <svg
+                  style="
+                    width: 1.2em;
+                    height: 1.2em;
+                    animation: pulseBg 1.5s infinite;
+                  "
+                  viewBox="0 0 100 100"
+                >
+                  <path
+                    fill="#9b59b6"
+                    d="M83.4 83.4L64.8 64.8c-2.4-2.4-2.4-6.3 0-8.7c2.4-2.4 6.3-2.4 8.7 0l18.6 18.6c2.4 2.4 2.4 6.3 0 8.7c-2.4 2.4-6.3 2.4-8.7 0z"
+                  ></path>
+                  <circle
+                    fill="#3498db"
+                    cx="45"
+                    cy="45"
+                    r="30"
+                    stroke="#fff"
+                    stroke-width="5"
+                  ></circle>
+                </svg>
+                驗證與配對中...
+              </div>
+              <div
+                style="
+                  font-size: 13px;
+                  color: #e67e22;
+                  font-weight: bold;
+                  margin-bottom: 15px;
+                  line-height: 1.5;
+                "
+              >
+                ⏳ 掃描戰場中...<br />正在尋找實力相近的勇者...
+              </div>
+              <button
+                onclick="cancelMatch()"
+                style="
+                  background: #95a5a6;
+                  color: white;
+                  border: none;
+                  padding: 8px 20px;
+                  border-radius: 20px;
+                  cursor: pointer;
+                  font-size: 14px;
+                  font-weight: bold;
+                  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+                  transition: 0.2s;
+                "
+                onmouseover="this.style.background='#7f8c8d'"
+                onmouseout="this.style.background='#95a5a6'"
+              >
+                ❌ 取消配對
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="end-ui-group"
+          class="hidden"
+          style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-top: 10px;
+          "
+        >
+          <button
+            class="action-btn"
+            onclick="location.reload()"
+            style="background: #555; margin-bottom: 15px"
+          >
+            再玩一局 (重新開始)
+          </button>
+          <a
+            href="index.html"
+            style="
+              color: #666;
+              text-decoration: none;
+              font-weight: bold;
+              margin-top: 5px;
+            "
+            >🏠 回到數學天地主選單</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <div id="progress-container"><div id="progress-bar"></div></div>
+
+    <div id="header">
+      <div class="stat-group">
+        <div class="stat-label">STUDENT</div>
+        <div id="ui-name" class="stat-value">---</div>
+      </div>
+      <div class="stat-group">
+        <div class="stat-label">TIME</div>
+        <div id="ui-time" class="stat-value" style="color: #e74c3c">90</div>
+      </div>
+      <div
+        class="stat-group"
+        style="
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+        "
+      >
+        <button
+          id="abandon-btn"
+          onclick="abandonGame()"
+          style="
+            background: #fae5e5;
+            color: #c0392b;
+            border: 1px solid #e74c3c;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
+            white-space: nowrap;
+          "
+        >
+          🚪 退出
+        </button>
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <div class="stat-label">SCORE</div>
+          <div id="ui-score" class="stat-value">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="battle-hp-container"
+      class="hidden"
+      style="
+        width: 100%;
+        max-width: 350px;
+        margin: 15px auto 15px auto;
+        padding: 0 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 10;
+      "
+    >
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span
+          style="
+            font-size: 13px;
+            font-weight: bold;
+            color: #27ae60;
+            width: 35px;
+            text-align: right;
+            text-shadow: 0 0 5px rgba(39, 174, 96, 0.3);
+          "
+          >我方</span
+        >
+        <div
+          style="
+            flex: 1;
+            height: 16px;
+            background: #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+          "
+        >
+          <div
+            id="my-hp-bar"
+            style="
+              width: 50%;
+              height: 100%;
+              background: linear-gradient(90deg, #27ae60, #2ecc71);
+              box-shadow: 0 0 10px rgba(39, 174, 96, 0.8);
+              transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            "
+          ></div>
+        </div>
+        <span
+          id="my-score-display"
+          style="font-size: 14px; font-weight: 900; color: #27ae60; width: 35px"
+          >0</span
+        >
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span
+          style="
+            font-size: 13px;
+            font-weight: bold;
+            color: #c0392b;
+            width: 35px;
+            text-align: right;
+            text-shadow: 0 0 5px rgba(192, 57, 43, 0.3);
+          "
+          >敵方</span
+        >
+        <div
+          style="
+            flex: 1;
+            height: 16px;
+            background: #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+          "
+        >
+          <div
+            id="enemy-hp-bar"
+            style="
+              width: 50%;
+              height: 100%;
+              background: linear-gradient(90deg, #c0392b, #e74c3c);
+              box-shadow: 0 0 10px rgba(192, 57, 43, 0.8);
+              transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            "
+          ></div>
+        </div>
+        <span
+          id="enemy-score-display"
+          style="font-size: 14px; font-weight: 900; color: #c0392b; width: 35px"
+          >0</span
+        >
+      </div>
+    </div>
+
+    <div id="combo-gauge-wrapper">
+      <div class="combo-label">COMBO</div>
+      <div id="combo-gauge-bg"><div id="combo-gauge-fill"></div></div>
+      <div id="combo-gauge-text">0</div>
+    </div>
+
+    <div id="phase-indicator">🌱 基礎階段 (平面的構成)</div>
+
+    <div id="display-area">
+      <div
+        id="question-text"
+        style="
+          font-size: 18px;
+          color: var(--text-gray);
+          line-height: 1.4;
+          padding: 0 15px;
+        "
+      >
+        題目讀取中...
+      </div>
+      <div
+        style="
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 12px;
+          margin-top: 15px;
+          margin-bottom: 5px;
+        "
+      >
+        <div id="input-box" style="margin-top: 0"></div>
+      </div>
+      <div style="text-align: center; margin-top: 10px">
+        <button
+          onclick="window.skipQuestion()"
+          style="
+            background: #ffefd5;
+            color: #d35400;
+            border: 2px solid #f39c12;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 6px 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2);
+            transition: 0.1s;
+          "
+        >
+          PASS <span style="font-size: 11px">(-20分)</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="keypad-container">
+      <div id="keypad"></div>
+    </div>
+
+    <script>
+      window.isGameOver = false;
+      window.timer = null;
+      window.startTime = null;
+
+      const CSV_URL = null; // 空間平面與直線是新單元，不需要讀取舊表單
+      const urlParams = new URLSearchParams(window.location.search);
+      const isHellMode = urlParams.get("mode") === "hell";
+
+      window.onload = () => {
+        const savedName = localStorage.getItem("mathGamePlayerName");
+        const nameInput = document.getElementById("player-name");
+        if (savedName && nameInput) {
+          nameInput.value = savedName;
+          nameInput.readOnly = true;
+          nameInput.style.backgroundColor = "#eaf2f8";
+          nameInput.style.color = "#2980b9";
+        }
+
+        renderKeypad("keypad");
+
+        if (isHellMode) {
+          document.body.classList.add("hell-theme");
+          const overlayTitle = document.querySelector("#overlay h1");
+          if (overlayTitle) overlayTitle.innerHTML = `💀 死亡平面與空間直線`;
+          const rulesBox = document.getElementById("rules-box");
+          if (rulesBox) {
+            rulesBox.innerHTML = `
+              <h3 style="color: #ff4d4d; border-bottom: 1px solid #ff4d4d; padding-bottom: 5px;">💀 遊戲規則與計分方式</h3>
+              <p style="color: #e0e0e0; font-size: 15px; line-height: 1.6; font-weight: bold; margin-top: 15px;">
+                地獄難度的外積與空間距離，算錯一次時間照扣，請保住性命！
+              </p>
+            `;
+            rulesBox.style.background = "rgba(40, 0, 0, 0.6)";
+            rulesBox.style.border = "1px solid #c0392b";
+          }
+        }
+
+        BattleEngine.init();
+        BattleEngine.setupAntiQuit(() => {
+          return { score, errorLogMap, correctCount, wrongCount };
+        });
+      };
+
+      function formatRoot(d2) {
+        let root = Math.sqrt(d2);
+        if (Number.isInteger(root)) return root.toString();
+        return `√${d2}`;
+      }
+
+      function rand(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      // 向量外積
+      function crossProduct(u, v) {
+        return [
+          u[1] * v[2] - u[2] * v[1],
+          u[2] * v[0] - u[0] * v[2],
+          u[0] * v[1] - u[1] * v[0],
+        ];
+      }
+
+      let score = 0,
+        combo = 0,
+        consecutiveWrong = 0;
+      let correctCount = 0,
+        wrongCount = 0;
+      let currentQuestionErrors = 0,
+        currentMultiplier = 1;
+      let lastTickSec = -1;
+      const TIME_LIMIT = 90;
+
+      let correctQuestionsSet = new Set();
+      let errorLogMap = new Map();
+      let activeWrongPool = [];
+
+      // ✨ 多格輸入系統核心變數
+      let currentQType = "single"; // 'single', 'coord', 'plane', 'vector'
+      let targetAnsObj = { type: "single", data: [] };
+      let userInputs = [""]; // 負責裝格子的陣列
+      let currentFocusIndex = 0;
+      let currentQuestionStr = "",
+        currentHint = "",
+        currentDisplayTarget = "";
+
+      // 產生題目
+      function generatePlaneLineQuestion(phaseLevel, isHell) {
+        let q = "",
+          type = "single",
+          target = [],
+          hint = "",
+          displayAns = "";
+
+        // 💀 地獄專屬題庫
+        if (isHell) {
+          phaseLevel = Math.max(2, phaseLevel);
+          let hellProb =
+            phaseLevel === 3
+              ? 0.8
+              : window.startTime && (Date.now() - window.startTime) / 1000 >= 30
+              ? 0.6
+              : 0.4;
+          if (Math.random() < hellProb) {
+            let p = rand(0, 1);
+            if (p === 0) {
+              // 對稱點
+              let mx = rand(-2, 2),
+                my = rand(-2, 2),
+                mz = rand(-2, 2); // 投影點
+              let px = mx + rand(-3, 3),
+                py = my + rand(-3, 3),
+                pz = mz + rand(-3, 3); // 原始點
+              // 確保不在面上
+              if (px === mx && py === my && pz === mz) px += 1;
+              let nx = mx - px,
+                ny = my - py,
+                nz = mz - pz;
+              let d = nx * mx + ny * my + nz * mz;
+              q = `點 P(${px},${py},${pz}) 對於平面 ${nx}x + ${ny}y + ${nz}z = ${d} 的對稱點坐標？`;
+              let sx = 2 * mx - px,
+                sy = 2 * my - py,
+                sz = 2 * mz - pz;
+              type = "coord";
+              target = [sx, sy, sz];
+              hint = `先找出投影點(${mx},${my},${mz})，再用中點公式反推`;
+              displayAns = `(${sx}, ${sy}, ${sz})`;
+            } else {
+              // 找平面 (包含直線與一點)
+              let px = rand(-2, 2),
+                py = rand(-2, 2),
+                pz = rand(-2, 2); // 線上一點 P1
+              let vx = rand(-2, 2),
+                vy = rand(-2, 2),
+                vz = rand(-2, 2); // 線方向 v
+              if (vx === 0 && vy === 0 && vz === 0) vx = 1;
+              let ox = rand(-2, 2),
+                oy = rand(-2, 2),
+                oz = rand(-2, 2); // 點 P2
+              // 確保不共線
+              let p1p2 = [ox - px, oy - py, oz - pz];
+              let n = crossProduct([vx, vy, vz], p1p2);
+              if (n[0] === 0 && n[1] === 0 && n[2] === 0) {
+                n = [1, 0, 0];
+                ox += 1;
+              }
+              let d = -1 * (n[0] * ox + n[1] * oy + n[2] * oz);
+              q = `平面 E 包含直線 L: x=${px}+${vx}t, y=${py}+${vy}t, z=${pz}+${vz}t 且過點(${ox},${oy},${oz})，求 E 方程式？`;
+              type = "plane";
+              target = [n[0], n[1], n[2], d];
+              hint = `利用方向向量與外點向量作外積求法向量`;
+              displayAns = `${n[0]}x + ${n[1]}y + ${n[2]}z + ${d} = 0`;
+            }
+            return { q, type, target, hint, displayAns };
+          }
+        }
+
+        let pool = [];
+        if (phaseLevel === 0) pool = [1, 2];
+        else if (phaseLevel === 1) pool = [3, 4];
+        else pool = [5, 6];
+
+        let pick = pool[Math.floor(Math.random() * pool.length)];
+
+        if (pick === 1) {
+          // 點法式
+          let nx = rand(-3, 3),
+            ny = rand(-3, 3),
+            nz = rand(-3, 3);
+          if (nx === 0 && ny === 0 && nz === 0) nx = 1;
+          q = `平面 E 的法向量為 (${nx}, ${ny}, ${nz}) 且通過原點 (0,0,0)，求 E 方程式？`;
+          type = "plane";
+          target = [nx, ny, nz, 0];
+          hint = "通過原點，常數項為 0";
+          displayAns = `${nx}x + ${ny}y + ${nz}z + 0 = 0`;
+        } else if (pick === 2) {
+          // 線面交點
+          let tx = rand(-2, 2),
+            ty = rand(-2, 2),
+            tz = rand(-2, 2);
+          if (tx === 0 && ty === 0 && tz === 0) tx = 1;
+          let t_ans = rand(-3, 3);
+          let px = tx * t_ans,
+            py = ty * t_ans,
+            pz = tz * t_ans;
+          let nx = rand(1, 2),
+            ny = rand(1, 2),
+            nz = rand(1, 2);
+          let sum = nx * tx + ny * ty + nz * tz;
+          if (sum === 0) sum = 1; // 防除以0
+          let d = sum * t_ans;
+          q = `直線 L: x=${tx}t, y=${ty}t, z=${tz}t 與平面 ${nx}x+${ny}y+${nz}z = ${d} 的交點坐標？`;
+          type = "coord";
+          target = [px, py, pz];
+          hint = `代入平面得 t = ${t_ans}，再代回求坐標`;
+          displayAns = `(${px}, ${py}, ${pz})`;
+        } else if (pick === 3) {
+          // 點到平面距離
+          let triples = [
+            [2, 2, 1, 3],
+            [3, 4, 0, 5],
+          ];
+          let tr = triples[rand(0, 1)];
+          // 隨機排列法向量
+          let nArr = [tr[0], tr[1], tr[2]].sort(() => Math.random() - 0.5);
+          let px = 0,
+            py = 0,
+            pz = 0; // 原點
+          let dist = rand(1, 4);
+          let d = dist * tr[3];
+          q = `原點 (0,0,0) 到平面 ${nArr[0]}x + ${nArr[1]}y + ${nArr[2]}z = ${d} 的距離為？`;
+          type = "single";
+          target = [dist];
+          hint = `常數項絕對值 ÷ 法向量長度 (${tr[3]})`;
+          displayAns = dist.toString();
+        } else if (pick === 4) {
+          // 已知法向量與一點
+          let nx = rand(-3, 3),
+            ny = rand(-3, 3),
+            nz = rand(-3, 3);
+          if (nx === 0 && ny === 0 && nz === 0) nx = 1;
+          let px = rand(-3, 3),
+            py = rand(-3, 3),
+            pz = rand(-3, 3);
+          let d = -1 * (nx * px + ny * py + nz * pz);
+          q = `平面 E 垂直於向量 (${nx}, ${ny}, ${nz})，且過點 (${px}, ${py}, ${pz})，求 E 方程式？`;
+          type = "plane";
+          target = [nx, ny, nz, d];
+          hint = `代入點法式求出常數項`;
+          displayAns = `${nx}x + ${ny}y + ${nz}z + ${d} = 0`;
+        } else if (pick === 5) {
+          // 找平面法向量 (外積)
+          let u = [rand(-2, 2), rand(-2, 2), rand(-2, 2)];
+          let v = [rand(-2, 2), rand(-2, 2), rand(-2, 2)];
+          let n = crossProduct(u, v);
+          if (n[0] === 0 && n[1] === 0 && n[2] === 0) {
+            n = [1, 1, 1];
+          }
+          q = `平面 E 包含兩向量 u=(${u[0]},${u[1]},${u[2]}) 與 v=(${v[0]},${v[1]},${v[2]})，求 E 的法向量？`;
+          type = "vector";
+          target = [n[0], n[1], n[2]];
+          hint = "利用兩向量外積求法向量 (比例對皆可)";
+          displayAns = `(${n[0]}, ${n[1]}, ${n[2]})`;
+        } else if (pick === 6) {
+          // 投影點坐標
+          let mx = rand(-2, 2),
+            my = rand(-2, 2),
+            mz = rand(-2, 2); // 投影點
+          let nx = rand(1, 2),
+            ny = rand(1, 2),
+            nz = rand(1, 2); // 法向量
+          let t = rand(1, 3); // 距離平面的參數
+          let px = mx + nx * t,
+            py = my + ny * t,
+            pz = mz + nz * t; // 原始點
+          let d = nx * mx + ny * my + nz * mz;
+          q = `點 P(${px}, ${py}, ${pz}) 在平面 ${nx}x + ${ny}y + ${nz}z = ${d} 上的投影點坐標？`;
+          type = "coord";
+          target = [mx, my, mz];
+          hint = `設投影點為 P - t(法向量)，代入平面解 t=${t}`;
+          displayAns = `(${mx}, ${my}, ${mz})`;
+        }
+        return { q, type, target, hint, displayAns };
+      }
+
+      function getNewQuestion() {
+        let remain = window.startTime
+          ? TIME_LIMIT - (Date.now() - window.startTime) / 1000
+          : TIME_LIMIT;
+        let phaseStr = "",
+          phaseLevel = 0;
+
+        if (isHellMode) {
+          if (remain <= 30) {
+            currentMultiplier = 3;
+            phaseStr = "🔥 領域展開 (極致錯排與外積, 分數 x3)";
+            phaseLevel = 3;
+            document.getElementById("phase-indicator").style.color = "#c0392b";
+          } else if (score >= 60 || remain <= 60) {
+            currentMultiplier = 2;
+            phaseStr = "💀 夢魘階段 (空間平面推演)";
+            phaseLevel = 2;
+            document.getElementById("phase-indicator").style.color = "#8e44ad";
+          } else {
+            currentMultiplier = 1.5;
+            phaseStr = "🌪️ 暴風前夕 (進階投影點)";
+            phaseLevel = 2;
+            document.getElementById("phase-indicator").style.color = "#d68910";
+          }
+        } else {
+          if (remain <= 30) {
+            currentMultiplier = 2;
+            phaseStr = "🔥 狂熱時間 (進階空間題型, 分數 x2)";
+            phaseLevel = 2;
+            document.getElementById("phase-indicator").style.color = "#c0392b";
+          } else if (consecutiveWrong >= 2) {
+            currentMultiplier = 1;
+            phaseStr = "🌱 基礎保底 (連續失誤，回歸暖身)";
+            phaseLevel = 0;
+            document.getElementById("phase-indicator").style.color = "#27ae60";
+          } else if (combo >= 3) {
+            currentMultiplier = 1;
+            phaseStr = "⚡ 乘勝追擊 (挑戰輕度代數)";
+            phaseLevel = 1;
+            document.getElementById("phase-indicator").style.color = "#d68910";
+          } else if (score >= 100) {
+            currentMultiplier = 1;
+            phaseStr = "⚡ 進階階段 (分數達標，鎖定代數)";
+            phaseLevel = 1;
+            document.getElementById("phase-indicator").style.color = "#d68910";
+          } else {
+            currentMultiplier = 1;
+            phaseStr = `🌱 基礎階段 (點法式與代入)`;
+            phaseLevel = 0;
+            document.getElementById("phase-indicator").style.color = "#27ae60";
+          }
+        }
+
+        let lastQ = currentQuestionStr;
+        let availableWrong = activeWrongPool.filter((item) => item.q !== lastQ);
+        if (availableWrong.length > 0 && Math.random() < 0.4) {
+          let idx = Math.floor(Math.random() * availableWrong.length);
+          let item = availableWrong[idx];
+          currentQuestionStr = item.q;
+          targetAnsObj = { type: item.type, data: item.target };
+          currentHint = item.hint;
+          currentDisplayTarget = item.displayAns;
+
+          document.getElementById("phase-indicator").innerText = phaseStr;
+          document.getElementById("question-text").innerText =
+            currentQuestionStr;
+          setupInputUI(item.type);
+          return;
+        }
+
+        let valid = false,
+          attempts = 0,
+          qObj = null;
+        while (!valid && attempts < 100) {
+          qObj = generatePlaneLineQuestion(phaseLevel, isHellMode);
+          if (!correctQuestionsSet.has(qObj.q) && qObj.q !== lastQ) {
+            valid = true;
+          }
+          attempts++;
+        }
+
+        currentQuestionStr = qObj.q;
+        targetAnsObj = { type: qObj.type, data: qObj.target };
+        currentHint = qObj.hint;
+        currentDisplayTarget = qObj.displayAns;
+        document.getElementById("phase-indicator").innerText = phaseStr;
+        document.getElementById("question-text").innerText = currentQuestionStr;
+        setupInputUI(qObj.type);
+      }
+
+      // ✨ 多格 UI 初始設定
+      function setupInputUI(type) {
+        currentQType = type;
+        if (type === "single") {
+          userInputs = [""];
+        } else if (type === "coord" || type === "vector") {
+          userInputs = ["", "", ""];
+        } else if (type === "plane") {
+          userInputs = ["", "", "", ""];
+        }
+        currentFocusIndex = 0;
+        currentQuestionErrors = 0;
+        renderInput();
+      }
+
+      // ✨ 多格 UI 渲染
+      function renderInput() {
+        const box = document.getElementById("input-box");
+        let html = `<div class="slot-wrapper">`;
+
+        let mapVal = (val) => (val === "" ? "&nbsp;" : val);
+
+        if (currentQType === "single") {
+          html += `<span class="input-slot active" onclick="setFocus(0)">${mapVal(
+            userInputs[0]
+          )}</span>`;
+        } else if (currentQType === "coord" || currentQType === "vector") {
+          html += `( `;
+          for (let i = 0; i < 3; i++) {
+            let activeClass = i === currentFocusIndex ? "active" : "";
+            html += `<span class="input-slot ${activeClass}" onclick="setFocus(${i})">${mapVal(
+              userInputs[i]
+            )}</span>`;
+            if (i < 2) html += ` , `;
+          }
+          html += ` )`;
+        } else if (currentQType === "plane") {
+          let vars = ["x", "y", "z", ""];
+          for (let i = 0; i < 4; i++) {
+            let activeClass = i === currentFocusIndex ? "active" : "";
+            html += `<span class="input-slot ${activeClass}" onclick="setFocus(${i})">${mapVal(
+              userInputs[i]
+            )}</span>${vars[i]}`;
+            if (i < 3) html += ` + `;
+            else html += ` = 0`;
+          }
+        }
+        html += `</div>`;
+        box.innerHTML = html;
+        box.classList.remove("error-text", "correct-flash");
+      }
+
+      window.setFocus = function (index) {
+        currentFocusIndex = index;
+        renderInput();
+      };
+
+      // ✨ 統一鍵盤的輸入邏輯 (支援逗號跳下一格)
+      function input(val) {
+        if (val === "DEL") {
+          userInputs[currentFocusIndex] = userInputs[currentFocusIndex].slice(
+            0,
+            -1
+          );
+        } else if (val === ",") {
+          // 逗號快捷鍵：跳下一格
+          if (currentFocusIndex < userInputs.length - 1) {
+            currentFocusIndex++;
+          } else {
+            currentFocusIndex = 0; // 循環到底回到第一格
+          }
+        } else {
+          userInputs[currentFocusIndex] += val;
+        }
+        renderInput();
+      }
+
+      // ✨ 核心大腦：智慧等比例與數值驗證
+      function checkAnswer() {
+        let u = userInputs.map((str) => {
+          if (!str) return NaN;
+          if (str.includes("/")) {
+            let p = str.split("/");
+            if (p.length === 2 && p[1] !== "0")
+              return Number(p[0]) / Number(p[1]);
+            return NaN;
+          }
+          return Number(str);
+        });
+        if (u.some(isNaN)) return false;
+
+        let t = targetAnsObj.data;
+
+        if (currentQType === "single") {
+          return Math.abs(u[0] - t[0]) < 1e-5;
+        }
+        if (currentQType === "coord") {
+          for (let i = 0; i < 3; i++) {
+            if (Math.abs(u[i] - t[i]) > 1e-5) return false;
+          }
+          return true;
+        }
+        if (currentQType === "plane" || currentQType === "vector") {
+          // 檢查全部 0
+          if (u.every((val) => Math.abs(val) < 1e-5)) return false;
+          // 交叉相乘檢查比例
+          for (let i = 0; i < t.length; i++) {
+            for (let j = i + 1; j < t.length; j++) {
+              if (Math.abs(u[i] * t[j] - u[j] * t[i]) > 1e-5) return false;
+            }
+          }
+          return true;
+        }
+        return false;
+      }
+
+      function generateErrorLogHTML() {
+        if (errorLogMap.size === 0)
+          return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
+        let html =
+          "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:15px; color:#444; margin:0; padding-left:20px;'>";
+        errorLogMap.forEach((data, qStr) => {
+          let countBadge =
+            data.count > 1
+              ? `<span style="background:#e74c3c; color:white; padding:2px 6px; border-radius:10px; font-size:11px; margin-left:5px; font-weight:bold; box-shadow: 0 2px 4px rgba(231,76,60,0.3);">錯了 ${data.count} 次</span>`
+              : "";
+          html += `<li style="margin-bottom:10px; line-height:1.4;">${qStr} ${countBadge} <br><span style="color:#e67e22; font-weight:bold;">➡ 正解: ${data.ans}</span><br><span style="color:#7f8c8d; font-size:13px;">💡 提示: ${data.hint}</span></li>`;
+        });
+        return html + "</ul>";
+      }
+
+      function checkDeath() {
+        if (BattleEngine.isBattleMode) return;
+        if (score < -20) {
+          if (window.isGameOver) return;
+
+          if (
+            currentQuestionStr &&
+            !correctQuestionsSet.has(currentQuestionStr)
+          ) {
+            if (!errorLogMap.has(currentQuestionStr)) {
+              errorLogMap.set(currentQuestionStr, {
+                ans: currentDisplayTarget,
+                hint: currentHint + " (💀 陣亡前最後一題)",
+                count: 1,
+              });
+            }
+          }
+
+          window.isGameOver = true;
+          clearInterval(window.timer);
+          if (document.getElementById("death-error-log"))
+            document.getElementById("death-error-log").innerHTML =
+              generateErrorLogHTML();
+          if (document.getElementById("death-screen"))
+            document.getElementById("death-screen").classList.add("show");
+          if (document.getElementById("keypad-container"))
+            document.getElementById("keypad-container").style.display = "none";
+          uploadGameRecord(
+            "dead",
+            score,
+            errorLogMap,
+            isHellMode,
+            correctCount,
+            wrongCount
+          ).catch((err) => console.log(err));
+        }
+      }
+
+      function triggerErrorEffect(isSkip = false) {
+        if (typeof playWrong === "function") playWrong();
+        combo = 0;
+        consecutiveWrong++;
+
+        if (!errorLogMap.has(currentQuestionStr)) {
+          errorLogMap.set(currentQuestionStr, {
+            ans: currentDisplayTarget,
+            hint: currentHint,
+            count: 1,
+          });
+        } else {
+          errorLogMap.get(currentQuestionStr).count++;
+        }
+
+        if (!activeWrongPool.some((item) => item.q === currentQuestionStr)) {
+          activeWrongPool.push({
+            q: currentQuestionStr,
+            type: currentQType,
+            target: targetAnsObj.data,
+            displayAns: currentDisplayTarget,
+            hint: currentHint,
+          });
+        }
+
+        const area = document.getElementById("display-area");
+        if (area) {
+          area.classList.remove("shake-animation");
+          void area.offsetWidth;
+          area.classList.add("shake-animation");
+        }
+
+        currentQuestionErrors++;
+        score -= currentQuestionErrors * 5 * currentMultiplier;
+        const inputBox = document.getElementById("input-box");
+        if (inputBox) inputBox.classList.add("error-text");
+        if (typeof flashScoreRed === "function") flashScoreRed();
+        updateUI();
+
+        if (isSkip) showToast(`⏭️ 跳過！正解為：${currentDisplayTarget}`, 2500);
+        else showToast(`❌ 答錯囉！再試一次！`, 1200);
+
+        if (window.isGameOver) {
+          const endLog = document.getElementById("end-error-log");
+          if (endLog && !endLog.classList.contains("hidden"))
+            endLog.innerHTML = generateErrorLogHTML();
+          const deathLog = document.getElementById("death-error-log");
+          if (
+            deathLog &&
+            document.getElementById("death-screen").classList.contains("show")
+          )
+            deathLog.innerHTML = generateErrorLogHTML();
+        }
+
+        checkDeath();
+      }
+
+      window.submitAnswer = function () {
+        if (userInputs.some((v) => v === "") || isProcessing) return;
+        const box = document.getElementById("input-box");
+        if (
+          box &&
+          (box.classList.contains("correct-flash") ||
+            box.classList.contains("error-text"))
+        )
+          return;
+
+        isProcessing = true;
+
+        if (checkAnswer()) {
+          correctCount++;
+          if (currentQuestionErrors === 0)
+            correctQuestionsSet.add(currentQuestionStr);
+          activeWrongPool = activeWrongPool.filter(
+            (item) => item.q !== currentQuestionStr
+          );
+
+          if (typeof spawnComboParticle === "function") spawnComboParticle();
+          consecutiveWrong = 0;
+          if (combo >= 9 && typeof playFeverCorrect === "function")
+            playFeverCorrect();
+          else if (typeof playCorrect === "function") playCorrect();
+
+          if (box) box.classList.add("correct-flash");
+          score += (10 + combo * 2) * currentMultiplier;
+          combo++;
+
+          if (combo > 5) {
+            const body = document.body;
+            body.classList.remove("strong-shake-effect");
+            void body.offsetWidth;
+            body.classList.add("strong-shake-effect");
+          }
+          updateUI();
+          setTimeout(() => {
+            getNewQuestion();
+            isProcessing = false;
+          }, 150);
+        } else {
+          wrongCount++;
+          triggerErrorEffect();
+          setTimeout(() => {
+            userInputs = userInputs.map(() => "");
+            currentFocusIndex = 0;
+            renderInput();
+            isProcessing = false;
+          }, 400);
+        }
+      };
+
+      window.skipQuestion = function () {
+        if (
+          !document.getElementById("overlay").classList.contains("hidden") ||
+          isProcessing
+        )
+          return;
+        isProcessing = true;
+        wrongCount++;
+        triggerErrorEffect(true);
+        score -=
+          20 * currentMultiplier -
+          currentQuestionErrors * 5 * currentMultiplier;
+        updateUI();
+        checkDeath();
+        setTimeout(() => {
+          getNewQuestion();
+          isProcessing = false;
+        }, 450);
+      };
+
+      function updateUI() {
+        document.getElementById("ui-score").innerText = score;
+        const comboFill = document.getElementById("combo-gauge-fill"),
+          comboText = document.getElementById("combo-gauge-text"),
+          inputBox = document.getElementById("input-box");
+        let fillPercent = Math.min((combo / 10) * 100, 100);
+        comboFill.style.width = fillPercent + "%";
+        comboText.classList.remove("bump-anim");
+        void comboText.offsetWidth;
+        if (combo > 0) comboText.classList.add("bump-anim");
+        if (combo === 0) {
+          comboText.innerHTML = "0";
+          comboText.style.color = "var(--text-gray)";
+          comboFill.classList.remove("fever-fill");
+          inputBox.classList.remove("fever-box");
+        } else if (combo < 10) {
+          comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`;
+          comboText.style.color = "#e67e22";
+          comboFill.classList.remove("fever-fill");
+          inputBox.classList.remove("fever-box");
+        } else {
+          comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`;
+          comboFill.classList.add("fever-fill");
+          inputBox.classList.add("fever-box");
+        }
+        if (
+          typeof updateBattleScore === "function" &&
+          BattleEngine.isBattleMode
+        )
+          updateBattleScore(score, combo);
+      }
+
+      function showExpAnimation(finalScore, containerId) {
+        // [為了版面簡潔，與 space.html 同樣維持經驗值動畫，程式碼相容]
+      }
+
+      window.startGame = async function () {
+        const nameInput = document.getElementById("player-name");
+        const desiredName = nameInput
+          ? nameInput.value.trim() || "Guest"
+          : localStorage.getItem("mathGamePlayerName") || "Guest";
+        const startBtn = document.querySelector("#start-ui-group button");
+        let originalText = startBtn ? startBtn.innerText : "START GAME";
+
+        if (startBtn && desiredName.toUpperCase() !== "GUEST") {
+          startBtn.disabled = true;
+          startBtn.innerText = "🔍 驗證名稱中...";
+          const nameCheck = await validateAndClaimName(desiredName);
+          if (!nameCheck.valid) {
+            alert(nameCheck.msg);
+            startBtn.disabled = false;
+            startBtn.innerText = originalText;
+            return;
+          }
+        }
+        if (startBtn) {
+          startBtn.disabled = false;
+          startBtn.innerText = originalText;
+        }
+
+        window.isGameOver = false;
+        if (nameInput) nameInput.blur();
+        window.scrollTo(0, 0);
+        if (typeof initAudio === "function") initAudio();
+
+        window.initialPlayerExp = 0;
+        const pUid = localStorage.getItem("mathGamePlayerUid");
+        if (pUid && pUid !== "guest") {
+          fetchPlayerStatsFromHistory(pUid).then((stats) => {
+            window.initialPlayerExp = stats.totalExp;
+          });
+        }
+
+        document.getElementById("ui-name").innerText = desiredName;
+        localStorage.setItem("mathGamePlayerName", desiredName);
+
+        document.getElementById("overlay").classList.add("hidden");
+        document.getElementById("death-screen").classList.remove("show");
+        document.getElementById("keypad-container").style.display = "block";
+        document
+          .getElementById("ui-time")
+          .classList.remove("timer-danger-extreme");
+        document.body.classList.remove("body-danger-flash");
+
+        correctQuestionsSet.clear();
+        errorLogMap.clear();
+        activeWrongPool = [];
+        score = 0;
+        combo = 0;
+        consecutiveWrong = 0;
+        currentQuestionErrors = 0;
+        correctCount = 0;
+        wrongCount = 0;
+
+        updateUI();
+        window.startTime = Date.now();
+        getNewQuestion();
+
+        window.timer = setInterval(() => {
+          let passed = (Date.now() - window.startTime) / 1000;
+          let remain = TIME_LIMIT - passed;
+          let progressBar = document.getElementById("progress-bar");
+          if (progressBar)
+            progressBar.style.width = (remain / TIME_LIMIT) * 100 + "%";
+          let sec = Math.ceil(Math.max(0, remain));
+          const timeEl = document.getElementById("ui-time");
+          if (timeEl) timeEl.innerText = sec;
+
+          if (sec <= 10 && sec > 0) {
+            timeEl.classList.add("timer-danger-extreme");
+            document.body.classList.add("body-danger-flash");
+          } else {
+            timeEl.classList.remove("timer-danger-extreme");
+            document.body.classList.remove("body-danger-flash");
+          }
+          if (sec <= 10 && sec > 0 && sec !== lastTickSec) {
+            if (typeof playTick === "function") playTick();
+            lastTickSec = sec;
+          }
+
+          if (remain <= 0) {
+            timeEl.classList.remove("timer-danger-extreme");
+            document.body.classList.remove("body-danger-flash");
+            clearInterval(window.timer);
+            window.endGame();
+          }
+        }, 50);
+      };
+
+      window.endGame = async function () {
+        if (window.isGameOver) return;
+
+        if (
+          currentQuestionStr &&
+          !correctQuestionsSet.has(currentQuestionStr)
+        ) {
+          if (!errorLogMap.has(currentQuestionStr)) {
+            errorLogMap.set(currentQuestionStr, {
+              ans: currentDisplayTarget,
+              hint: currentHint + " (⏳ 時間到未及時作答)",
+              count: 1,
+            });
+          }
+        }
+
+        window.isGameOver = true;
+
+        document.getElementById("start-ui-group").classList.add("hidden");
+        document.getElementById("end-ui-group").classList.remove("hidden");
+        document.getElementById("overlay").classList.remove("hidden");
+        document.getElementById("rules-box").classList.add("hidden");
+
+        let finalMmrChange = 0;
+        if (BattleEngine.isBattleMode)
+          finalMmrChange = await BattleEngine.calculateEloAndRender(score);
+        else {
+          document
+            .getElementById("final-score-text")
+            .classList.remove("hidden");
+          document.getElementById(
+            "final-score-text"
+          ).innerText = `最終得分: ${score}`;
+        }
+
+        const endLog = document.getElementById("end-error-log");
+        endLog.innerHTML = generateErrorLogHTML();
+        endLog.classList.remove("hidden");
+        window.scrollTo(0, 0);
+
+        document.getElementById("player-name").value = "成績光速傳送中...";
+        const restartBtn = document.querySelector("#end-ui-group button");
+        if (restartBtn) {
+          restartBtn.disabled = true;
+          restartBtn.innerText = "⏳ 成績上傳中...";
+        }
+
+        uploadGameRecord(
+          "clear",
+          score,
+          errorLogMap,
+          isHellMode,
+          correctCount,
+          wrongCount,
+          null,
+          BattleEngine.isBattleMode ? finalMmrChange : 0
+        )
+          .then(() => {
+            document.getElementById("player-name").value =
+              "成績已存入雲端戰績室！";
+            if (restartBtn) {
+              restartBtn.disabled = false;
+              restartBtn.innerText = "再玩一局 (重新開始)";
+              restartBtn.style.opacity = "1";
+              restartBtn.style.cursor = "pointer";
+            }
+            let finalName = document.getElementById("ui-name").innerText;
+            if (finalName === "---" || !finalName) finalName = "Guest";
+            loadGlobalLeaderboard(isHellMode ? null : CSV_URL, {
+              n: finalName,
+              s: score,
+            });
+            setTimeout(
+              () => (document.getElementById("player-name").value = ""),
+              2000
+            );
+          })
+          .catch((err) => {
+            document.getElementById("player-name").value = "雲端存檔失敗";
+            if (restartBtn) {
+              restartBtn.disabled = false;
+              restartBtn.innerText = "上傳失敗，點此重試";
+              restartBtn.style.opacity = "1";
+              restartBtn.style.cursor = "pointer";
+            }
+          });
+      };
+    </script>
+  </body>
+</html>
