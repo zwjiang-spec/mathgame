@@ -249,6 +249,10 @@
         background-color: #16a085;
         box-shadow: 0 4px 10px rgba(22, 160, 133, 0.3);
       }
+      .btn-prob {
+        background-color: #d35400;
+        box-shadow: 0 4px 10px rgba(211, 84, 0, 0.3);
+      }
       .btn-practice {
         background-color: #e67e22;
         box-shadow: 0 4px 10px rgba(230, 126, 34, 0.3);
@@ -1468,6 +1472,69 @@
                 </div>
                 <div class="btn-arrow">▶</div>
               </div>
+              <div
+                onclick="window.location.href='prob.html?mode=normal'"
+                class="menu-btn btn-prob"
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon"></span> 命中注定的機率
+                  </div>
+                  <div
+                    id="top-prob"
+                    style="
+                      font-size: 13px;
+                      font-weight: normal;
+                      color: rgba(255, 255, 255, 0.9);
+                    "
+                  >
+                    👑 最高紀錄：讀取中...
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+              <div
+                onclick="window.location.href='plane.html?mode=normal'"
+                class="menu-btn"
+                style="
+                  background-color: #2980b9;
+                  box-shadow: 0 4px 10px rgba(41, 128, 185, 0.3);
+                  margin-bottom: 10px;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon"></span> 夢幻平面與直線
+                  </div>
+                  <div
+                    id="top-plane"
+                    style="
+                      font-size: 13px;
+                      font-weight: normal;
+                      color: rgba(255, 255, 255, 0.9);
+                    "
+                  >
+                    👑 最高紀錄：讀取中...
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
               <div class="menu-btn btn-locked">
                 <div class="btn-text">
                   <span class="level-icon">🔒</span> 敬請期待...
@@ -1577,7 +1644,72 @@
                 </div>
                 <div class="btn-arrow">▶</div>
               </div>
-
+              <div
+                onclick="window.location.href='prob.html?mode=battle'"
+                class="menu-btn"
+                style="
+                  background: linear-gradient(135deg, #d35400, #e67e22);
+                  box-shadow: 0 4px 15px rgba(211, 84, 0, 0.4);
+                  margin-bottom: 10px;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon">🎰</span> 雙人拔河：機率與期望值
+                  </div>
+                  <div
+                    style="
+                      font-size: 13px;
+                      font-weight: normal;
+                      color: rgba(255, 255, 255, 0.9);
+                    "
+                  >
+                    🔥 選擇指定單元開戰
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+              <div
+                onclick="window.location.href='plane.html?mode=battle'"
+                class="menu-btn"
+                style="
+                  background: linear-gradient(135deg, #2980b9, #3498db);
+                  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+                  margin-bottom: 10px;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon">🧩</span> 雙人拔河：平面與直線
+                  </div>
+                  <div
+                    style="
+                      font-size: 13px;
+                      font-weight: normal;
+                      color: rgba(255, 255, 255, 0.9);
+                    "
+                  >
+                    🔥 選擇指定單元開戰
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
               <div
                 onclick="quickMatch()"
                 class="menu-btn"
@@ -1738,6 +1870,56 @@
                 </div>
                 <div class="btn-arrow">▶</div>
               </div>
+              <div
+                onclick="window.location.href='prob.html?mode=hell'"
+                class="menu-btn btn-hell-theme"
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon">💀</span> 死亡機率與期望值
+                  </div>
+                  <div
+                    id="top-hell-prob"
+                    style="font-size: 13px; font-weight: normal; color: #e74c3c"
+                  >
+                    👑 地獄霸主：讀取中...
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
+              <div
+                onclick="window.location.href='plane.html?mode=hell'"
+                class="menu-btn btn-hell-theme"
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    text-align: left;
+                    gap: 4px;
+                    width: 100%;
+                  "
+                >
+                  <div class="btn-text">
+                    <span class="level-icon">💀</span> 死亡平面與空間直線
+                  </div>
+                  <div
+                    id="top-hell-plane"
+                    style="font-size: 13px; font-weight: normal; color: #e74c3c"
+                  >
+                    👑 地獄霸主：讀取中...
+                  </div>
+                </div>
+                <div class="btn-arrow">▶</div>
+              </div>
             </div>
 
             <div id="content-practice" class="content-section">
@@ -1765,6 +1947,20 @@
                     id="chk-perm"
                     checked
                   />神奇的排列組合</label
+                >
+                <label class="check-item"
+                  ><input
+                    type="checkbox"
+                    id="chk-prob"
+                    checked
+                  />命中注定的機率</label
+                >
+                <label class="check-item"
+                  ><input
+                    type="checkbox"
+                    id="chk-plane"
+                    checked
+                  />夢幻平面與直線</label
                 >
               </div>
               <button class="menu-btn btn-practice" onclick="startPractice()">
@@ -1829,6 +2025,10 @@
           selectedModes.push("space");
         if (document.getElementById("chk-perm").checked)
           selectedModes.push("perm");
+        if (document.getElementById("chk-prob").checked)
+          selectedModes.push("prob");
+        if (document.getElementById("chk-plane").checked)
+          selectedModes.push("plane");
         if (selectedModes.length === 0) {
           alert("⚠️ 請至少勾選一個單元才能開始練習喔！");
           return;
@@ -2519,10 +2719,14 @@
         loadTopScore("trig", "normal", "top-trig", 3, TRIG_CSV);
         loadTopScore("space", "normal", "top-space", 3, SPACE_CSV);
         loadTopScore("perm", "normal", "top-perm", 3, PERM_CSV);
+        loadTopScore("prob", "normal", "top-prob", 3);
+        loadTopScore("plane", "normal", "top-plane", 3);
 
         loadTopScore("trig", "hell", "top-hell-trig", 1);
         loadTopScore("space", "hell", "top-hell-space", 1);
         loadTopScore("perm", "hell", "top-hell-perm", 1);
+        loadTopScore("prob", "hell", "top-hell-prob", 1);
+        loadTopScore("plane", "hell", "top-hell-plane", 1);
 
         loadBossData();
         loadBattleLeaderboard();
