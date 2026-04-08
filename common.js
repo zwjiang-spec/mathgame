@@ -98,6 +98,7 @@ async function uploadGameRecord(
 
   const urlParams = new URLSearchParams(window.location.search);
   const isBattleMode = urlParams.get("mode") === "battle";
+  const isRandomOrigin = urlParams.get("isRandom") === "true"; // ✨ 追加讀取是否為隨機玩家
 
   let user = null;
   if (firebase.auth && typeof firebase.auth === "function")
@@ -119,6 +120,7 @@ async function uploadGameRecord(
         question: String(qStr),
         answer: data.ans,
         hint: data.hint || "無提示",
+        count: data.count || 1, // ✨ 記錄同一題錯了幾次
       });
     });
   }
@@ -135,6 +137,8 @@ async function uploadGameRecord(
   if (path.includes("trig")) unit = "trig";
   else if (path.includes("space")) unit = "space";
   else if (path.includes("perm")) unit = "perm";
+  else if (path.includes("prob")) unit = "prob";
+  else if (path.includes("plane")) unit = "plane";
   else if (path.includes("practice")) unit = "practice";
   else if (path.includes("review")) unit = "review";
 
@@ -149,6 +153,8 @@ async function uploadGameRecord(
       : unit === "practice"
       ? "mixed"
       : "normal",
+    isRandom: isRandomOrigin, // ✨ 把隨機標籤存入戰績！
+    mmrChange: Number(mmrChange), // ✨ 把獎盃變化存入戰績！
     score: Number(score),
     status: status,
     wrongLog: wrongLog,
@@ -190,7 +196,6 @@ async function uploadGameRecord(
           [`${unit}_score`]: firebase.firestore.FieldValue.increment(
             Number(score) || 0
           ),
-          // ✨ 將傳進來的 mmrChange 寫入！贏了就加勝場！
           battle_mmr: firebase.firestore.FieldValue.increment(
             Number(mmrChange) || 0
           ),
@@ -200,103 +205,118 @@ async function uploadGameRecord(
               : firebase.firestore.FieldValue.increment(0),
           battle_plays: isBattleMode
             ? firebase.firestore.FieldValue.increment(1)
-            : firebase.firestore.FieldValue.increment(0), // ✨ 新增：只要是對戰就+1場次
+            : firebase.firestore.FieldValue.increment(0),
         };
 
+        // 更新個人資料庫
         db.collection("users")
           .doc(playerUid)
           .set(userUpdates, { merge: true })
           .catch((e) => console.warn("玩家數據更新失敗", e));
 
-        // 💀 世界 Boss 傷害存錢筒
-        const bossRef = db.collection("global").doc("boss_state");
-        try {
-          await db.runTransaction(async (t) => {
-            const doc = await t.get(bossRef);
-            let bData = doc.exists
-              ? doc.data()
-              : {
-                  level: 1,
-                  totalDamage: 0,
-                  playerMap: {},
-                  pastMVPs: {},
-                  cooldownUntil: 0,
+        // 💀 世界 Boss 傷害結算 (防塞車省錢架構)
+        let day = new Date().getDay();
+        let isBonus = false;
+        if ((day === 1 || day === 4) && unit === "trig") isBonus = true;
+        if ((day === 2 || day === 5) && unit === "space") isBonus = true;
+        if ((day === 3 || day === 6) && unit === "perm") isBonus = true;
+        if (day === 0) isBonus = true;
+
+        let dmg = Math.max(0, Number(score));
+        if (isBonus) dmg = Math.floor(dmg * 1.25);
+        if (isHellMode) dmg *= 2;
+        if (isBattleMode) dmg = Math.floor(dmg * 1.5);
+
+        if (dmg > 0) {
+          const bossRef = db.collection("global").doc("boss_state");
+
+          try {
+            await db.runTransaction(async (t) => {
+              const doc = await t.get(bossRef);
+              let bData = doc.exists
+                ? doc.data()
+                : {
+                    level: 1,
+                    totalDamage: 0,
+                    playerMap: {},
+                    pastMVPs: {},
+                    cooldownUntil: 0,
+                  };
+
+              // 如果在慶祝冷卻期內，傷害就「偷偷加在」總傷害裡，等時間到直接扣除下一階血量，不去算排行榜！
+              let cooldownUntil = bData.cooldownUntil || 0;
+              if (cooldownUntil && Date.now() < cooldownUntil) {
+                t.set(
+                  bossRef,
+                  { totalDamage: firebase.firestore.FieldValue.increment(dmg) },
+                  { merge: true }
+                );
+                return;
+              }
+
+              let level = bData.level || 1;
+              let totalDmg = bData.totalDamage || 0;
+              let pMap = bData.playerMap || {};
+              let pastMVPs = bData.pastMVPs || {};
+
+              let newTotalDmg = totalDmg + dmg;
+              let maxHp = 500000 + (level - 1) * 200000;
+              let updates = {};
+
+              // 魔王被打死了！
+              if (newTotalDmg >= maxHp) {
+                let excessDamage = newTotalDmg - maxHp;
+                pMap[playerUid] = pMap[playerUid] || { name: name, damage: 0 };
+                pMap[playerUid].damage += dmg - excessDamage;
+                pMap[playerUid].name = name;
+
+                let sortedPlayers = Object.keys(pMap)
+                  .map((k) => ({
+                    uid: k,
+                    name: pMap[k].name,
+                    damage: pMap[k].damage,
+                  }))
+                  .sort((a, b) => b.damage - a.damage);
+                let top3 = sortedPlayers.slice(0, 3);
+                let mvp = sortedPlayers[0];
+
+                const titles = [
+                  "🗡️ 死神終結者",
+                  "⚔️ 混沌斬裂者",
+                  "🌌 虛空粉碎者",
+                  "🌀 維度主宰",
+                  "📐 幾何救世主",
+                  "👁️ 真理超越者",
+                  "👑 傳說弒神者",
+                ];
+                let tIdx = Math.min(level - 1, titles.length - 1);
+                if (mvp)
+                  pastMVPs[mvp.uid] = { title: titles[tIdx], level: level };
+
+                updates.level = level + 1;
+                updates.cooldownUntil = Date.now() + 3 * 24 * 60 * 60 * 1000;
+                updates.lastTop3 = top3;
+                updates.totalDamage = excessDamage;
+                updates.pastMVPs = pastMVPs;
+                updates.playerMap = {
+                  [playerUid]: { name: name, damage: excessDamage },
                 };
 
-            let day = new Date().getDay();
-            let isBonus = false;
-            if ((day === 1 || day === 4) && unit === "trig") isBonus = true;
-            if ((day === 2 || day === 5) && unit === "space") isBonus = true;
-            if ((day === 3 || day === 6) && unit === "perm") isBonus = true;
-            if (day === 0) isBonus = true;
-
-            // 傷害加成計算
-            let dmg = Math.max(0, Number(score));
-            if (isBonus) dmg = Math.floor(dmg * 1.25);
-            if (isHellMode) dmg *= 2;
-            if (isBattleMode) dmg = Math.floor(dmg * 1.5);
-
-            let level = bData.level || 1;
-            let totalDmg = bData.totalDamage || 0;
-            let pMap = bData.playerMap || {};
-            let pastMVPs = bData.pastMVPs || {};
-            let cooldownUntil = bData.cooldownUntil || 0;
-
-            let newTotalDmg = totalDmg + dmg;
-            let maxHp = 500000 + (level - 1) * 200000;
-            let updates = {};
-
-            if (
-              newTotalDmg >= maxHp &&
-              (!cooldownUntil || Date.now() > cooldownUntil)
-            ) {
-              let excessDamage = newTotalDmg - maxHp;
-              pMap[playerUid] = pMap[playerUid] || { name: name, damage: 0 };
-              pMap[playerUid].damage += dmg - excessDamage;
-              pMap[playerUid].name = name;
-
-              let sortedPlayers = Object.keys(pMap)
-                .map((k) => ({
-                  uid: k,
-                  name: pMap[k].name,
-                  damage: pMap[k].damage,
-                }))
-                .sort((a, b) => b.damage - a.damage);
-              let top3 = sortedPlayers.slice(0, 3);
-              let mvp = sortedPlayers[0];
-
-              const titles = [
-                "🗡️ 死神終結者",
-                "⚔️ 混沌斬裂者",
-                "🌌 虛空粉碎者",
-                "🌀 維度主宰",
-                "📐 幾何救世主",
-                "👁️ 真理超越者",
-                "👑 傳說中的弒神者",
-              ];
-              let tIdx = Math.min(level - 1, titles.length - 1);
-              if (mvp)
-                pastMVPs[mvp.uid] = { title: titles[tIdx], level: level };
-
-              updates.level = level + 1;
-              updates.cooldownUntil = Date.now() + 3 * 24 * 60 * 60 * 1000;
-              updates.lastTop3 = top3;
-              updates.totalDamage = excessDamage;
-              updates.pastMVPs = pastMVPs;
-              updates.playerMap = {
-                [playerUid]: { name: name, damage: excessDamage },
-              };
-            } else {
-              pMap[playerUid] = pMap[playerUid] || { name: name, damage: 0 };
-              pMap[playerUid].damage += dmg;
-              pMap[playerUid].name = name;
-              updates.totalDamage = newTotalDmg;
-              updates.playerMap = pMap;
-            }
-            t.set(bossRef, updates, { merge: true });
-          });
-        } catch (e) {
-          console.warn("更新世界Boss資料失敗", e);
+                t.update(bossRef, updates);
+              } else {
+                // 魔王還沒死，使用最高效的「屬性路徑增量」語法，避免覆蓋別人剛打出的傷害！
+                let safePlayerPath = `playerMap.${playerUid}`;
+                t.update(bossRef, {
+                  totalDamage: firebase.firestore.FieldValue.increment(dmg),
+                  [`${safePlayerPath}.damage`]:
+                    firebase.firestore.FieldValue.increment(dmg),
+                  [`${safePlayerPath}.name`]: name,
+                });
+              }
+            });
+          } catch (e) {
+            console.warn("更新世界Boss資料失敗", e);
+          }
         }
       }
     });
@@ -343,7 +363,8 @@ async function loadGlobalLeaderboard(csvUrl, newRecord = null) {
   let unit = "trig";
   if (window.location.pathname.toLowerCase().includes("space")) unit = "space";
   if (window.location.pathname.toLowerCase().includes("perm")) unit = "perm";
-
+  if (window.location.pathname.toLowerCase().includes("prob")) unit = "prob";
+  if (window.location.pathname.toLowerCase().includes("plane")) unit = "plane";
   try {
     if (typeof firebase !== "undefined") {
       const db = firebase.firestore();
@@ -571,6 +592,8 @@ async function loadUnitAverageLeaderboard() {
   if (path.includes("trig")) currentUnit = "trig";
   else if (path.includes("space")) currentUnit = "space";
   else if (path.includes("perm")) currentUnit = "perm";
+  else if (path.includes("prob")) currentUnit = "prob";
+  else if (path.includes("plane")) currentUnit = "plane";
 
   const urlParams = new URLSearchParams(window.location.search);
   let currentMode = urlParams.get("mode") || "normal";
@@ -878,11 +901,13 @@ async function showPlayerStats(uid, playerName) {
       let trigAcc = calcAcc(d.trig_correct, d.trig_wrong);
       let spaceAcc = calcAcc(d.space_correct, d.space_wrong);
       let permAcc = calcAcc(d.perm_correct, d.perm_wrong);
-
+      let probAcc = calcAcc(d.prob_correct, d.prob_wrong);
+      let planeAcc = calcAcc(d.plane_correct, d.plane_wrong);
       let trigAvg = calcAvg(d.trig_score, d.trig_plays);
       let spaceAvg = calcAvg(d.space_score, d.space_plays);
       let permAvg = calcAvg(d.perm_score, d.perm_plays);
-
+      let probAvg = calcAvg(d.prob_score, d.prob_plays);
+      let planeAvg = calcAvg(d.plane_score, d.plane_plays);
       // ✨ 對戰天梯牌位資訊
       let battleMMR = d.battle_mmr !== undefined ? d.battle_mmr : 0;
       let battleWins = d.battle_wins || 0;
@@ -951,6 +976,27 @@ async function showPlayerStats(uid, playerName) {
           <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 13px;">
             <span style="color: rgba(255,255,255,0.6);">⚡ 場均得分</span>
             <span style="color: #f1c40f; font-weight: bold;">${permAvg}</span>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; background: rgba(230, 126, 34, 0.15); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #e67e22;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #e67e22; font-weight: bold;">🎲 機率與期望值答對率</span>
+            <span style="color: #fff; font-weight: bold;">${probAcc}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 13px;">
+            <span style="color: rgba(255,255,255,0.6);">⚡ 場均得分</span>
+            <span style="color: #f1c40f; font-weight: bold;">${probAvg}</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; background: rgba(41, 128, 185, 0.15); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid #2980b9;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #2980b9; font-weight: bold;">🧩 平面與直線答對率</span>
+            <span style="color: #fff; font-weight: bold;">${planeAcc}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 13px;">
+            <span style="color: rgba(255,255,255,0.6);">⚡ 場均得分</span>
+            <span style="color: #f1c40f; font-weight: bold;">${planeAvg}</span>
           </div>
         </div>
       `;
@@ -1096,7 +1142,7 @@ async function startRandomMatch(unit, existingRoomId = null) {
       // 決定雙方最終要玩的單元
       let finalUnit = roomToJoin.data().unit;
       if (finalUnit === "any" && unit === "any") {
-        const units = ["trig", "space", "perm"];
+        const units = ["trig", "space", "perm", "prob", "plane"];
         finalUnit = units[Math.floor(Math.random() * units.length)]; // 兩個都隨機，系統抽籤
       } else if (finalUnit === "any" && unit !== "any") {
         finalUnit = unit; // 房主隨機，我選了特定單元，聽我的
