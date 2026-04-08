@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>好玩的數學 - 機率與期望值</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      :root {
+        --bg-main: #f8f9fa;
+        --text-dark: #1c2833;
+        --text-gray: #95a5a6;
+        --color-gold: #d4ac73;
+        --btn-white: #ffffff;
+        --btn-blue-bg: #eaf2f8;
+        --btn-blue-text: #2980b9;
+        --btn-del-bg: #fae5e5;
+        --btn-del-text: #c0392b;
+        --btn-sqrt-bg: #fdf2e3;
+        --btn-sqrt-text: #d68910;
+        --btn-enter-bg: #2ecc71;
+        --btn-enter-text: #ffffff;
+      }
+      /* ✨ 💀 專屬地獄模式的變色與鍵盤擴充 */
+      body.hell-theme {
+        background-color: #050000;
+        background-image: linear-gradient(
+            rgba(192, 57, 43, 0.08) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(192, 57, 43, 0.08) 1px, transparent 1px);
+        color: #e0e0e0;
+      }
+      body.hell-theme #overlay {
+        background: rgba(10, 2, 2, 0.95);
+        border: 1px solid #c0392b;
+        box-shadow: 0 0 30px rgba(192, 57, 43, 0.3);
+      }
+      body.hell-theme h1 {
+        color: #ff4d4d;
+        text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+      }
+      body.hell-theme #question-text {
+        color: #ff6b6b !important;
+      }
+      
+    
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+    <script src="common.js"></script>
+  </head>
+  <body>
+    <div id="toast">答案提示區</div>
+    <div id="death-screen">
+      <h1>💀 你已經死了</h1>
+      <p>分數過低 (-20分)，失去挑戰資格</p>
+      <div
+        id="death-error-log"
+        style="
+          background: rgba(255, 255, 255, 0.9);
+          padding: 15px;
+          border-radius: 10px;
+          color: black;
+          max-width: 90%;
+          margin-top: 15px;
+        "
+      ></div>
+      <button
+        class="action-btn"
+        onclick="location.reload()"
+        style="margin-top: 20px; background: #555"
+      >
+        重新開始
+      </button>
+      <a href="index.html" style="color: #ccc; margin-top: 15px"
+        >🏠 回到數學天地主選單</a
+      >
+    </div>
+
+    <div id="overlay">
+      <a
+        href="index.html"
+        class="home-btn"
+        style="position: absolute; top: 15px; left: 15px"
+        >🏠 回主選單</a
+      >
+      <h1 style="color: #1c2833; margin-bottom: 20px; margin-top: 40px">
+         超級神奇又有趣的機率
+      </h1>
+      <h2
+        id="final-score-text"
+        class="hidden"
+        style="color: var(--color-gold); margin-top: -10px; margin-bottom: 10px"
+      ></h2>
+      <div id="battle-result-box" class="hidden" style="background: #1a1a2e; border: 2px solid #f1c40f; border-radius: 15px; padding: 20px; margin: 10px auto 20px auto; width: 90%; max-width: 350px; color: white; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+        <h2 id="battle-result-title" style="margin-top: 0; font-size: 28px; text-shadow: 0 0 15px #f1c40f; color: #f1c40f;">🏆 勝利！</h2>
+        <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 15px;">
+          <div style="text-align: center; flex: 1;">
+            <div style="color: #2ecc71; font-weight: bold; font-size: 14px; margin-bottom: 5px;">我方</div>
+            <div id="battle-result-my-score" style="color: #2ecc71; font-size: 28px; font-weight: 900;">0</div>
+          </div>
+          <div style="font-size: 24px; font-weight: 900; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); padding: 0 15px;">VS</div>
+          <div style="text-align: center; flex: 1;">
+            <div id="battle-result-enemy-name" style="color: #e74c3c; font-weight: bold; font-size: 14px; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">敵方</div>
+            <div id="battle-result-enemy-score" style="color: #e74c3c; font-size: 28px; font-weight: 900;">0</div>
+          </div>
+        </div>
+      </div>
+      <div
+        id="end-error-log"
+        class="hidden"
+        style="
+          background: #fffdf5;
+          border: 2px dashed #e74c3c;
+          padding: 15px;
+          border-radius: 10px;
+          max-width: 90%;
+          margin: 0 auto 20px;
+        "
+      ></div>
+
+      <div id="rules-box">
+        <h3>📜 遊戲規則與計分方式</h3>
+        <ul>
+          <li><b>挑戰時間：</b>總共 <b>90 秒</b>，最後 10 秒極限狂熱！</li>
+          <li>
+            <b style="color: #27ae60">分數免約分：</b>答案如為分數，可直接打 <code>3/8</code> 甚至 <code>6/16</code>，系統皆判定正確！
+          </li>
+          <li>
+            <b style="color: #c0392b">倒扣懲罰：</b
+            >按錯或跳過會<b>漸進式扣分</b>，低於 <b>-20分</b> 出局！
+          </li>
+          <li>
+            <b style="color: #2980b9">地獄特訓：</b
+            >答對的題目不重出；答錯的題目<b>高機率再次出現</b>，直到你算對！
+          </li>
+        </ul>
+      </div>
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+        "
+      >
+        <div
+          id="unit-avg-board"
+          style="
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            border-radius: 12px;
+            padding: 10px 15px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 460px;
+            margin: 0 auto 20px auto;
+            box-sizing: border-box;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 8px;
+            "
+          >
+            <div style="display: flex; align-items: baseline; gap: 6px">
+              <h3
+                id="unit-avg-title"
+                style="margin: 0; color: #f1c40f; font-size: 15px"
+              >
+                👑 本單元平均 Top 3
+              </h3>
+              <span style="font-size: 10px; color: #bdc3c7">(滿3場)</span>
+            </div>
+            <span
+              id="my-unit-avg"
+              style="
+                font-size: 12px;
+                background: rgba(255, 255, 255, 0.2);
+                padding: 2px 8px;
+                border-radius: 10px;
+                display: none;
+                font-weight: bold;
+              "
+            ></span>
+          </div>
+          <div
+            id="unit-avg-list"
+            style="display: flex; justify-content: space-between; gap: 8px"
+          >
+            <span style="color: #ccc; font-size: 12px; margin: 0 auto"
+              >數據計算中...</span
+            >
+          </div>
+        </div>
+        <div
+          id="leaderboards"
+          class="boards-container"
+          style="
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 25px;
+          "
+        >
+          <div class="board" id="daily-board" style="min-width: 250px">
+            <div class="board-row" style="justify-content: center">
+              成績連線中...
+            </div>
+          </div>
+          <div class="board" id="alltime-board" style="min-width: 250px">
+            <div class="board-row" style="justify-content: center">
+              成績連線中...
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="start-ui-group"
+          style="
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            width: 100%;
+          "
+        >
+          <input
+            type="text"
+            id="player-name"
+            class="name-input"
+            placeholder="請輸入姓名或學號"
+            maxlength="10"
+            style="text-align: center; margin-bottom: 15px"
+          />
+          <button class="action-btn" onclick="startGame()">START GAME</button>
+        </div>
+
+        <div id="battle-lobby-ui" class="hidden" style="width: 100%; text-align: center; max-width: 350px">
+          <h3 style="color: #e74c3c; margin-top: 0; margin-bottom: 15px">⚔️ 雙人連線對戰</h3>
+          <div style="background: #fdf2f2; border: 2px solid #e74c3c; border-radius: 12px; padding: 25px 15px;">
+            <button id="find-match-btn" class="action-btn" onclick="startRandomMatch('prob')" style="background: #e74c3c; padding: 15px 30px; font-size: 18px; margin-bottom: 0;">
+              ⚔️ 尋找對手
+            </button>
+            
+            <div id="match-wait-msg" style="display: none; width: 100%; text-align: center; margin-top: 15px;">
+              <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #9b59b6; font-weight: bold; font-size: 16px;">
+                <svg style="width: 1.2em; height: 1.2em; animation: pulseBg 1.5s infinite;" viewBox="0 0 100 100">
+                  <path fill="#9b59b6" d="M83.4 83.4L64.8 64.8c-2.4-2.4-2.4-6.3 0-8.7c2.4-2.4 6.3-2.4 8.7 0l18.6 18.6c2.4 2.4 2.4 6.3 0 8.7c-2.4 2.4-6.3 2.4-8.7 0z"></path>
+                  <circle fill="#3498db" cx="45" cy="45" r="30" stroke="#fff" stroke-width="5"></circle>
+                </svg>
+                驗證與配對中...
+              </div>
+            
+              <div style="font-size: 13px; color: #e67e22; font-weight: bold; margin-bottom: 15px; line-height: 1.5;">
+                ⏳ 掃描戰場中...<br>正在尋找實力相近的勇者...
+              </div>
+              
+              <button onclick="cancelMatch()" style="background: #95a5a6; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: 0.2s;" onmouseover="this.style.background='#7f8c8d'" onmouseout="this.style.background='#95a5a6'">
+                ❌ 取消配對
+              </button>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div
+          id="end-ui-group"
+          class="hidden"
+          style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-top: 10px;
+          "
+        >
+          <button
+            class="action-btn"
+            onclick="location.reload()"
+            style="background: #555; margin-bottom: 15px"
+          >
+            再玩一局 (重新開始)
+          </button>
+          <a
+            href="index.html"
+            style="
+              color: #666;
+              text-decoration: none;
+              font-weight: bold;
+              margin-top: 5px;
+            "
+          >
+            🏠 回到數學天地主選單
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div id="progress-container"><div id="progress-bar"></div></div>
+    <div id="header">
+      <div class="stat-group">
+        <div class="stat-label">STUDENT</div>
+        <div id="ui-name" class="stat-value">---</div>
+      </div>
+      <div class="stat-group">
+        <div class="stat-label">TIME</div>
+        <div id="ui-time" class="stat-value" style="color: #e74c3c">90</div>
+      </div>
+      <div
+        class="stat-group"
+        style="
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+        "
+      >
+        <button
+        id="abandon-btn"
+          onclick="abandonGame()"
+          style="
+            background: #fae5e5;
+            color: #c0392b;
+            border: 1px solid #e74c3c;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2);
+            white-space: nowrap;
+          "
+        >
+          🚪 退出
+        </button>
+
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <div class="stat-label">SCORE</div>
+          <div id="ui-score" class="stat-value">0</div>
+        </div>
+      </div>
+    </div>
+    <div id="battle-hp-container" class="hidden" style="width: 100%; max-width: 350px; margin: 15px auto 15px auto; padding: 0 5px; display: flex; flex-direction: column; gap: 12px; z-index: 10;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 13px; font-weight: bold; color: #27ae60; width: 35px; text-align: right; text-shadow: 0 0 5px rgba(39, 174, 96, 0.3);">我方</span>
+        <div style="flex: 1; height: 16px; background: #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+           <div id="my-hp-bar" style="width: 50%; height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); box-shadow: 0 0 10px rgba(39, 174, 96, 0.8); transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);"></div>
+        </div>
+        <span id="my-score-display" style="font-size: 14px; font-weight: 900; color: #27ae60; width: 35px;">0</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 13px; font-weight: bold; color: #c0392b; width: 35px; text-align: right; text-shadow: 0 0 5px rgba(192, 57, 43, 0.3);">敵方</span>
+        <div style="flex: 1; height: 16px; background: #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+           <div id="enemy-hp-bar" style="width: 50%; height: 100%; background: linear-gradient(90deg, #c0392b, #e74c3c); box-shadow: 0 0 10px rgba(192, 57, 43, 0.8); transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);"></div>
+        </div>
+        <span id="enemy-score-display" style="font-size: 14px; font-weight: 900; color: #c0392b; width: 35px;">0</span>
+      </div>
+    </div>
+    <div id="combo-gauge-wrapper">
+      <div class="combo-label">COMBO</div>
+      <div id="combo-gauge-bg"><div id="combo-gauge-fill"></div></div>
+      <div id="combo-gauge-text">0</div>
+    </div>
+    <div id="phase-indicator">🌱 基礎階段 (熱身)</div>
+
+    <div id="display-area">
+      <div id="question-text" style="font-size: 18px; color: var(--text-gray); line-height: 1.5; padding: 0 10px;">
+        題目讀取中...
+      </div>
+      <div
+        style="
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 12px;
+          margin-top: 15px;
+          margin-bottom: 5px;
+        "
+      >
+        <div id="input-box" style="margin-top: 0; min-width: 120px"></div>
+        <button
+          onclick="skipQuestion()"
+          style="
+            background: #ffefd5;
+            color: #d35400;
+            border: 2px solid #f39c12;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 6px 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(243, 156, 18, 0.2);
+            white-space: nowrap;
+            transition: 0.1s;
+          "
+        >
+          PASS<br /><span style="font-size: 11px">(-20分)</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="keypad-container">
+      <div id="keypad"></div>
+    </div>
+
+    <script>
+      window.isGameOver = false; 
+      window.timer = null;
+      window.startTime = null;
+
+      const CSV_URL = null;
+
+      window.onload = () => {
+        const savedName = localStorage.getItem("mathGamePlayerName");
+        const nameInput = document.getElementById("player-name");
+        if (savedName && nameInput) {
+          nameInput.value = savedName;
+          nameInput.readOnly = true;
+          nameInput.style.backgroundColor = "#eaf2f8";
+          nameInput.style.color = "#2980b9";
+        }
+
+        window.renderKeypad("keypad");
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const isHell = urlParams.get("mode") === "hell";
+
+        loadGlobalLeaderboard(isHell ? null : CSV_URL);
+        loadUnitAverageLeaderboard();
+
+        // ✨ 啟動對戰引擎！
+        BattleEngine.init();
+        BattleEngine.setupAntiQuit(() => {
+          return { score: score, errorLogMap: errorLogMap, correctCount: correctCount, wrongCount: wrongCount };
+        });
+      };
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const isHellMode = urlParams.get("mode") === "hell";
+
+      if (isHellMode) {
+        document.body.classList.add("hell-theme");
+        const overlayTitle = document.querySelector("#overlay h1");
+        if (overlayTitle) overlayTitle.innerHTML = `💀 死亡機率與期望值`;
+
+        const rulesBox = document.getElementById("rules-box");
+        if (rulesBox) {
+          rulesBox.innerHTML = `
+            <h3 style="color: #ff4d4d; border-bottom: 1px solid #ff4d4d; padding-bottom: 5px;">💀 遊戲規則與計分方式</h3>
+            <p style="color: #e0e0e0; font-size: 16px; line-height: 1.6; font-weight: bold; margin-top: 15px;">
+              歡迎來到地獄，所有規則都跟一般模式一樣，但你會遇到極致燒腦的機率問題，算錯一次時間照扣！
+            </p>
+          `;
+          rulesBox.style.background = "rgba(40, 0, 0, 0.6)";
+          rulesBox.style.border = "1px solid #c0392b";
+        }
+      }
+
+      // ==========================================
+      // ✨ 核心大腦：機率與期望值動態題庫工廠
+      // ==========================================
+      function C(n, k) {
+        if(k<0 || k>n) return 0;
+        if(k===0 || k===n) return 1;
+        k = Math.min(k, n-k);
+        let res = 1;
+        for(let i=1; i<=k; i++) res = res * (n-i+1)/i;
+        return res;
+      }
+
+      function generateProbQuestion(phase, isHell) {
+        let q = "", a = "", h = "";
+        
+        // 💀 地獄模式專屬題庫 (混合進階動態題)
+        if (isHell) {
+            // 強制鎖定在最難的題庫池，拒絕簡單題
+            phase = Math.max(2, phase); 
+            
+            // 地獄專屬靜態題出現機率：剛開局 40%，中期 60%，領域展開 80%
+            let hellProb = phase === 3 ? 0.8 : (window.startTime && (Date.now() - window.startTime)/1000 >= 30 ? 0.6 : 0.4);
+            
+            if (Math.random() < hellProb) {
+                let type = Math.floor(Math.random() * 4); // 擴增為 4 種魔王題
+                if (type === 0) {
+                    let n = Math.random() < 0.5 ? 4 : 5;
+                    q = `${n}人交換禮物，皆沒抽到自己禮物的機率？`;
+                    a = n === 4 ? "9/24" : "44/120";
+                    h = `錯排公式：${n}人錯排數為 ${n===4?9:44}，總樣本 ${n}!`;
+                } else if (type === 1) {
+                    let isMax = Math.random() < 0.5;
+                    q = `擲兩顆公正骰子，其「${isMax?'最大':'最小'}點數」的期望值？`;
+                    a = isMax ? "161/36" : "91/36";
+                    h = isMax ? "最大點k機率 = (k² - (k-1)²)/36" : "最小點k機率 = ((7-k)² - (6-k)²)/36";
+                } else if (type === 2) {
+                    q = `擲三顆公正骰子，點數和為10的機率？`;
+                    a = "27/216"; 
+                    h = "求 x+y+z=10 的正整數解: H(3,7) - C(3,1)H(3,1) = 27";
+                } else {
+                    let targetSum = Math.random() < 0.5 ? 9 : 11;
+                    q = `擲三顆公正骰子，點數和為 ${targetSum} 的機率？`;
+                    a = targetSum === 9 ? "25/216" : "27/216";
+                    h = targetSum === 9 ? "H(3,6) - C(3,1)H(3,0) = 25" : "和為11與和為10機率對稱，皆為27/216";
+                }
+                return {q, a, h};
+            }
+        }
+
+        // 定義難度池 (0:直覺, 1:輕度, 2:組合)
+        // 地獄模式下 phase 至少是 2，所以一定會從 [7, 8, 9, 4, 5] 裡面抽
+        let pool = [];
+        if (phase === 0) pool = [0, 1, 2, 3];
+        else if (phase === 1) pool = [4, 5, 6, 0, 1]; 
+        else pool = [7, 8, 9, 4, 5]; 
+
+        let p = pool[Math.floor(Math.random() * pool.length)];
+
+        // === 🚀 基礎暖身 (Phase 0) ===
+        if (p === 0) { 
+            let type = Math.floor(Math.random() * 4);
+            if (type === 0) { q = "擲一顆公正骰子，出現偶數的機率？"; a = "3/6"; h = "偶數有 2, 4, 6"; }
+            else if (type === 1) { q = "擲一顆公正骰子，出現質數的機率？"; a = "3/6"; h = "質數有 2, 3, 5 (不含1)"; }
+            else if (type === 2) { q = "擲一顆公正骰子，出現大於 4 的機率？"; a = "2/6"; h = "大於 4 的只有 5, 6"; }
+            else { q = "擲一顆公正骰子，出現 3 的倍數的機率？"; a = "2/6"; h = "3的倍數有 3, 6"; }
+        } 
+        else if (p === 1) { 
+            let r = 2 + Math.floor(Math.random()*4); 
+            let w = 2 + Math.floor(Math.random()*4); 
+            let isRed = Math.random() < 0.5;
+            q = `袋有 ${r} 紅球 ${w} 白球，任取 1 顆是${isRed?'紅':'白'}球的機率？`;
+            let target = isRed ? r : w;
+            a = `${target}/${r+w}`;
+            h = `總球數 ${r+w}，目標球數 ${target}`;
+        } 
+        else if (p === 2) { 
+            let n = 2 + Math.floor(Math.random()*3); 
+            let isHead = Math.random() < 0.5;
+            q = `投擲 ${n} 枚公正硬幣，全部都是${isHead?'正':'反'}面的機率？`;
+            a = `1/${Math.pow(2,n)}`;
+            h = `每次機率都是 1/2，連續 ${n} 次相乘`;
+        } 
+        else if (p === 3) { 
+            let prize = (1 + Math.floor(Math.random()*9)) * 10; 
+            q = `投擲一枚硬幣，出現正面得 ${prize*2} 元，反面得 0 元，期望值為？`;
+            a = `${prize}`;
+            h = `(${prize*2} × 1/2) + (0 × 1/2)`;
+        } 
+        
+        // === ✍️ 輕度推演 (Phase 1) ===
+        else if (p === 4) { 
+            if (Math.random() < 0.5) {
+                q = `擲兩顆公正骰子，點數和為 7 的機率？`;
+                a = "6/36";
+                h = "(1,6),(2,5),(3,4)及其反轉，共 6 種";
+            } else {
+                q = `擲兩顆公正骰子，出現相同點數(豹子)的機率？`;
+                a = "6/36";
+                h = "(1,1) 到 (6,6) 共 6 種";
+            }
+        } 
+        else if (p === 5) { 
+            let ns = [10, 20, 50, 100];
+            let n = ns[Math.floor(Math.random()*ns.length)];
+            let ps = [1000, 2000, 5000];
+            let prize = ps[Math.floor(Math.random()*ps.length)];
+            q = `發行 ${n} 張彩券，1張有 ${prize} 元其餘無。買 1 張的期望值？`;
+            a = `${prize/n}`;
+            h = `總獎金 ${prize} ÷ 總張數 ${n}`;
+        } 
+        else if (p === 6) { 
+            q = `投擲 2 枚公正硬幣，恰好出現 1 正 1 反的機率？`;
+            a = "2/4";
+            h = "正反、反正，共 2 種組合";
+        } 
+        
+        // === 🧠 進階組合 (Phase 2 & 地獄基底) ===
+        else if (p === 7) { 
+            let r = 3 + Math.floor(Math.random()*3); 
+            let w = 3 + Math.floor(Math.random()*3); 
+            let isRed = Math.random() < 0.5;
+            q = `袋有 ${r} 紅 ${w} 白，任取 2 顆皆為${isRed?'紅':'白'}球的機率？`;
+            let target = isRed ? r : w;
+            a = `${C(target,2)}/${C(r+w, 2)}`;
+            h = `分母 C(${r+w},2)，分子 C(${target},2)`;
+        } 
+        else if (p === 8) { 
+            let n = 3 + Math.floor(Math.random()*2); 
+            let k = 1 + Math.floor(Math.random()*(n-1));
+            q = `投擲 ${n} 枚公正硬幣，恰出現 ${k} 次正面的機率？`;
+            a = `${C(n,k)}/${Math.pow(2,n)}`;
+            h = `分母 2^${n}，分子 C(${n},${k})`;
+        } 
+        else { 
+            let n = 4 + Math.floor(Math.random()*3); 
+            let isAdj = Math.random() < 0.5;
+            q = `${n} 人排成一列，甲乙兩人${isAdj?'相鄰':'不相鄰'}的機率？`;
+            a = isAdj ? `2/${n}` : `${n-2}/${n}`;
+            h = isAdj ? "相鄰機率 = 2/n" : "不相鄰機率 = (n-2)/n";
+        }
+        
+        return {q, a, h};
+      }
+
+      // ==========================================
+      // 無痛分數計算大腦 (可接受 3/8 或 6/16 自動轉換)
+      // ==========================================
+      function evalFraction(str) {
+          if (!str) return NaN;
+          str = str.toString().trim().replace(/ /g, '');
+          if (str.includes('/')) {
+              let parts = str.split('/');
+              if (parts.length === 2 && parts[1] !== '0') {
+                  return Number(parts[0]) / Number(parts[1]);
+              }
+              return NaN;
+          }
+          return Number(str);
+      }
+
+      let score = 0, combo = 0, consecutiveWrong = 0, targetAns = "", userInput = "", currentQuestionStr = "";
+      let currentHint = "";
+      let currentQuestionErrors = 0, currentMultiplier = 1;
+      let lastTickSec = -1;
+      const TIME_LIMIT = 90;
+      let correctCount = 0, wrongCount = 0;
+
+      let correctQuestionsSet = new Set();
+      let errorLogMap = new Map();
+      let activeWrongPool = [];
+
+      function getNewQuestion() {
+        let remain = window.startTime ? TIME_LIMIT - (Date.now() - window.startTime) / 1000 : TIME_LIMIT;
+        let phaseStr = "", phaseLevel = 0;
+
+        if (isHellMode) {
+          if (remain <= 30) {
+            currentMultiplier = 3; phaseStr = "🔥 領域展開 (極致錯排與期望值)"; phaseLevel = 3;
+            document.getElementById("phase-indicator").style.color = "#c0392b";
+          } else if (score >= 60 || remain <= 60) {
+            currentMultiplier = 2; phaseStr = "💀 夢魘階段 (三骰與極值)"; phaseLevel = 2;
+            document.getElementById("phase-indicator").style.color = "#8e44ad";
+          } else {
+            // ✨ 移除了地獄模式的「暖身期」，一開局就強制進入進階難度！
+            currentMultiplier = 1.5; phaseStr = "🌪️ 暴風前夕 (進階組合推演)"; phaseLevel = 2; 
+            document.getElementById("phase-indicator").style.color = "#d68910";
+          }
+        } else {
+          if (remain <= 30) {
+            currentMultiplier = 2; phaseStr = "🔥 狂熱時間 (分數 x2, 進階題型)"; phaseLevel = 2;
+            document.getElementById("phase-indicator").style.color = "#c0392b";
+          } else if (consecutiveWrong >= 2) {
+            currentMultiplier = 1; phaseStr = "🌱 基礎保底 (連續失誤，幫你找回手感)"; phaseLevel = 0;
+            document.getElementById("phase-indicator").style.color = "#27ae60";
+          } else if (combo >= 3) {
+            currentMultiplier = 1; phaseStr = "⚡ 乘勝追擊 (挑戰組合推演)"; phaseLevel = 1;
+            document.getElementById("phase-indicator").style.color = "#d68910";
+          } else if (score >= 100) {
+            currentMultiplier = 1; phaseStr = "⚡ 進階階段 (分數達標，解鎖新題型)"; phaseLevel = 1;
+            document.getElementById("phase-indicator").style.color = "#d68910";
+          } else {
+            currentMultiplier = 1; phaseStr = `🌱 基礎階段 (連對3題解鎖進階)`; phaseLevel = 0;
+            document.getElementById("phase-indicator").style.color = "#27ae60";
+          }
+        }
+
+        let lastQ = currentQuestionStr;
+        let availableWrong = activeWrongPool.filter((item) => item.q !== lastQ);
+        if (availableWrong.length > 0 && Math.random() < 0.4) {
+          let idx = Math.floor(Math.random() * availableWrong.length);
+          currentQuestionStr = availableWrong[idx].q;
+          targetAns = availableWrong[idx].a;
+          currentHint = availableWrong[idx].hint;
+          document.getElementById("phase-indicator").innerText = phaseStr;
+          document.getElementById("question-text").innerText = currentQuestionStr;
+          userInput = "";
+          currentQuestionErrors = 0;
+          renderInput();
+          return;
+        }
+
+        let valid = false, attempts = 0;
+        while (!valid && attempts < 100) {
+          let qObj = generateProbQuestion(phaseLevel, isHellMode);
+          if (!correctQuestionsSet.has(qObj.q) && qObj.q !== lastQ) {
+            valid = true; 
+            currentQuestionStr = qObj.q;
+            targetAns = qObj.a;
+            currentHint = qObj.h;
+          }
+          attempts++;
+        }
+
+        document.getElementById("phase-indicator").innerText = phaseStr;
+        document.getElementById("question-text").innerText = currentQuestionStr;
+        userInput = ""; currentQuestionErrors = 0; renderInput();
+      }
+
+      function renderInput() {
+        const box = document.getElementById("input-box");
+        box.innerHTML = formatMathHTML(userInput);
+        box.classList.remove("error-text", "correct-flash");
+      }
+      function input(val) {
+        if (val === "DEL") userInput = userInput.slice(0, -1);
+        else userInput += val;
+        renderInput();
+      }
+
+      function generateErrorLogHTML() {
+        if (errorLogMap.size === 0) return "<h3 style='color:#27ae60; margin:0;'>🌟 太完美了！無錯題通關！</h3>";
+        let html = "<h3 style='color:#c0392b; margin: 0 0 10px 0;'>📝 你的專屬錯題本：</h3><ul style='text-align:left; font-size:15px; color:#444; margin:0; padding-left:20px;'>";
+        errorLogMap.forEach((data, qStr) => {
+          html += `<li style="margin-bottom:10px; line-height:1.4;">${qStr} <span style="color:#e67e22; font-weight:bold; margin-left:5px;">➡ 正解: ${data.ans}</span><br><span style="color:#7f8c8d; font-size:13px;">💡 提示: ${data.hint}</span></li>`;
+        });
+        return html + "</ul>";
+      }
+
+      function checkDeath() {
+        if (BattleEngine.isBattleMode) return;
+        if (score < -20) {
+          if (window.isGameOver) return;
+          window.isGameOver = true;
+          clearInterval(window.timer);
+
+          if (document.getElementById("death-error-log")) document.getElementById("death-error-log").innerHTML = generateErrorLogHTML();
+          if (document.getElementById("death-screen")) document.getElementById("death-screen").classList.add("show");
+          showExpAnimation(score, "death-screen");
+          if (document.getElementById("keypad-container")) document.getElementById("keypad-container").style.display = "none";
+
+          const deathBtn = document.querySelector("#death-screen button");
+          if (deathBtn) { deathBtn.disabled = true; deathBtn.innerText = "💀 遺言傳送中..."; }
+
+          uploadGameRecord("dead", score, errorLogMap, isHellMode, correctCount, wrongCount)
+            .then(() => { if (deathBtn) { deathBtn.disabled = false; deathBtn.innerText = "重新開始 (投胎)"; } })
+            .catch((err) => { if (deathBtn) { deathBtn.disabled = false; deathBtn.innerText = "上傳失敗，點此重試"; } });
+        }
+      }
+
+      let isProcessing = false;
+      function triggerErrorEffect(isSkip = false) {
+        if (typeof playWrong === "function") playWrong();
+        combo = 0; consecutiveWrong++;
+        
+        if (!errorLogMap.has(currentQuestionStr)) {
+          errorLogMap.set(currentQuestionStr, { ans: targetAns, hint: currentHint, count: 1 });
+        } else { errorLogMap.get(currentQuestionStr).count++; }
+
+        if (!activeWrongPool.some((item) => item.q === currentQuestionStr)) {
+          activeWrongPool.push({ q: currentQuestionStr, a: targetAns, hint: currentHint });
+        }
+
+        const area = document.getElementById("display-area");
+        if (area) {
+            area.classList.remove("shake-animation");
+            void area.offsetWidth;
+            area.classList.add("shake-animation");
+        }
+        
+        currentQuestionErrors++;
+        score -= currentQuestionErrors * 5 * currentMultiplier;
+        
+        const inputBox = document.getElementById("input-box");
+        if (inputBox) inputBox.classList.add("error-text");
+        
+        if (typeof flashScoreRed === "function") flashScoreRed();
+        updateUI();
+        
+        if (isSkip) showToast(`⏭️ 跳過！正解為：${targetAns}`, 2500);
+        else showToast(`❌ 答錯囉！再試一次！`, 1200);
+        checkDeath();
+      }
+
+      window.submitAnswer = function() {
+        if (userInput === "" || isProcessing) return;
+        const box = document.getElementById("input-box");
+        if (box && (box.classList.contains("correct-flash") || box.classList.contains("error-text"))) return;
+
+        isProcessing = true;
+        // ✨ 神級比對：讓系統把學生的分數與正解的分數轉換成小數後比對
+        let userVal = evalFraction(userInput);
+        let targetVal = evalFraction(targetAns);
+        let isCorrect = !isNaN(userVal) && !isNaN(targetVal) && Math.abs(userVal - targetVal) < 1e-5;
+
+        if (isCorrect) {
+          correctCount++;
+          correctQuestionsSet.add(currentQuestionStr);
+          activeWrongPool = activeWrongPool.filter((item) => item.q !== currentQuestionStr);
+          
+          if (typeof spawnComboParticle === "function") spawnComboParticle();
+          consecutiveWrong = 0;
+          if (combo >= 9 && typeof playFeverCorrect === "function") playFeverCorrect();
+          else if (typeof playCorrect === "function") playCorrect();
+          
+          if (box) box.classList.add("correct-flash");
+          score += (10 + combo * 2) * currentMultiplier;
+          combo++;
+          
+          if (combo > 5) {
+            const body = document.body;
+            body.classList.remove("strong-shake-effect");
+            void body.offsetWidth;
+            body.classList.add("strong-shake-effect");
+          }
+          updateUI();
+          setTimeout(() => { getNewQuestion(); isProcessing = false; }, 150);
+        } else {
+          wrongCount++;
+          triggerErrorEffect();
+          setTimeout(() => { userInput = ""; renderInput(); isProcessing = false; }, 400); 
+        }
+      }
+
+      window.skipQuestion = function() {
+        if (!document.getElementById("overlay").classList.contains("hidden") || isProcessing) return;
+        isProcessing = true;
+        wrongCount++;
+        triggerErrorEffect(true);
+        score -= 20 * currentMultiplier - currentQuestionErrors * 5 * currentMultiplier;
+        updateUI(); checkDeath();
+        setTimeout(() => { getNewQuestion(); isProcessing = false; }, 450);
+      }
+
+      function updateUI() {
+        document.getElementById("ui-score").innerText = score;
+        const comboFill = document.getElementById("combo-gauge-fill");
+        const comboText = document.getElementById("combo-gauge-text");
+        const inputBox = document.getElementById("input-box");
+        let fillPercent = Math.min((combo / 10) * 100, 100);
+        comboFill.style.width = fillPercent + "%";
+        comboText.classList.remove("bump-anim");
+        void comboText.offsetWidth;
+        if (combo > 0) comboText.classList.add("bump-anim");
+        if (combo === 0) {
+          comboText.innerHTML = "0"; comboText.style.color = "var(--text-gray)";
+          comboFill.classList.remove("fever-fill"); inputBox.classList.remove("fever-box");
+        } else if (combo < 10) {
+          comboText.innerHTML = `${combo} <span style="font-size:14px">🔥</span>`;
+          comboText.style.color = "#e67e22";
+          comboFill.classList.remove("fever-fill"); inputBox.classList.remove("fever-box");
+        } else {
+          comboText.innerHTML = `<span class="fever-text">${combo} FEVER</span>`;
+          comboFill.classList.add("fever-fill"); inputBox.classList.add("fever-box");
+        }
+        
+        // ✨ 把分數送到對戰引擎
+        if (typeof updateBattleScore === "function" && BattleEngine.isBattleMode) {
+          updateBattleScore(score, combo);
+        }
+      }
+
+      function showExpAnimation(finalScore, containerId) {
+        const uid = localStorage.getItem("mathGamePlayerUid");
+        if (!uid || uid === "guest") return; 
+
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const oldUi = document.getElementById("dynamic-exp-ui");
+        if (oldUi) oldUi.remove();
+
+        let multiplier = BattleEngine.isBattleMode ? 1.5 : 1;
+        let gainedExp = Math.floor(Math.max(0, finalScore) * multiplier); 
+
+        let oldExp = window.initialPlayerExp || 0;
+        let newExp = oldExp + gainedExp;
+        let oldLevel = Math.floor(Math.sqrt(oldExp / 100)) + 1;
+        let newLevel = Math.floor(Math.sqrt(newExp / 100)) + 1;
+        let oldTierBase = Math.pow(oldLevel - 1, 2) * 100;
+        let oldNextTier = Math.pow(oldLevel, 2) * 100;
+        let oldPercent = ((oldExp - oldTierBase) / (oldNextTier - oldTierBase)) * 100;
+
+        const uiDiv = document.createElement("div");
+        uiDiv.id = "dynamic-exp-ui";
+        uiDiv.style.cssText = "width: 100%; max-width: 320px; margin: 15px auto; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);";
+        
+        let bonusText = multiplier > 1 ? `<span style="color: #e74c3c; font-size: 11px; margin-left: 5px;">(對戰加成 1.5x)</span>` : "";
+        
+        uiDiv.innerHTML = `
+          <div style="font-size: 15px; font-weight: bold; color: #f1c40f; margin-bottom: 8px;">
+            戰鬥結算 ${bonusText} <span style="color: #2ecc71; margin-left: 10px;">+${gainedExp} EXP</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: #bdc3c7; margin-bottom: 5px;">
+            <span id="exp-lvl-current">Lv.${oldLevel}</span>
+            <span id="exp-lvl-next">Lv.${oldLevel + 1}</span>
+          </div>
+          <div style="width: 100%; height: 12px; background: rgba(0,0,0,0.4); border-radius: 6px; overflow: hidden; position: relative;">
+            <div id="exp-bar-base" style="position: absolute; top: 0; left: 0; height: 100%; width: ${oldPercent}%; background: #7f8c8d;"></div>
+            <div id="exp-bar-gained" style="position: absolute; top: 0; left: 0; height: 100%; width: ${oldPercent}%; background: linear-gradient(90deg, #f1c40f, #f39c12); transition: width 1.5s cubic-bezier(0.25, 1, 0.5, 1);"></div>
+          </div>
+          <div id="exp-text-details" style="font-size: 12px; color: #95a5a6; margin-top: 8px;">${oldExp} / ${oldNextTier}</div>
+          <div id="exp-levelup-toast" style="display:none; color: #f1c40f; font-weight: 900; font-size: 16px; margin-top: 8px; text-shadow: 0 0 10px rgba(241,196,15,0.5); transform: scale(0.5); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">🎉 LEVEL UP! 🎉</div>
+        `;
+
+        const firstBtn = container.querySelector("button");
+        if (firstBtn) container.insertBefore(uiDiv, firstBtn);
+        else container.appendChild(uiDiv);
+
+        setTimeout(() => {
+          const barGained = uiDiv.querySelector("#exp-bar-gained");
+          const txtDetails = uiDiv.querySelector("#exp-text-details");
+          const toast = uiDiv.querySelector("#exp-levelup-toast");
+
+          if (newLevel > oldLevel) {
+            barGained.style.width = "100%";
+            setTimeout(() => {
+              toast.style.display = "block";
+              setTimeout(() => { toast.style.transform = "scale(1)"; }, 10);
+              
+              let newTierBase = Math.pow(newLevel - 1, 2) * 100;
+              let newNextTier = Math.pow(newLevel, 2) * 100;
+              let newPercent = ((newExp - newTierBase) / (newNextTier - newTierBase)) * 100;
+
+              uiDiv.querySelector("#exp-lvl-current").innerText = `Lv.${newLevel}`;
+              uiDiv.querySelector("#exp-lvl-next").innerText = `Lv.${newLevel + 1}`;
+              uiDiv.querySelector("#exp-bar-base").style.width = "0%";
+              barGained.style.transition = "none";
+              barGained.style.width = "0%";
+              txtDetails.innerText = `${newExp} / ${newNextTier}`;
+              
+              setTimeout(() => {
+                barGained.style.transition = "width 1s cubic-bezier(0.25, 1, 0.5, 1)";
+                barGained.style.width = newPercent + "%";
+                localStorage.setItem("mathGamePlayerLevel", newLevel); 
+              }, 50);
+            }, 1500); 
+          } else {
+            let newPercent = ((newExp - oldTierBase) / (oldNextTier - oldTierBase)) * 100;
+            barGained.style.width = newPercent + "%";
+            txtDetails.innerText = `${newExp} / ${oldNextTier}`;
+          }
+        }, 500);
+      }
+
+      window.startGame = async function() {
+        const nameInput = document.getElementById("player-name");
+        const desiredName = nameInput ? nameInput.value.trim() || "Guest" : (localStorage.getItem("mathGamePlayerName") || "Guest");
+        const startBtn = document.querySelector("#start-ui-group button");
+        let originalText = startBtn ? startBtn.innerText : "START GAME";
+        
+        if (startBtn && desiredName.toUpperCase() !== "GUEST") {
+            startBtn.disabled = true; startBtn.innerText = "🔍 驗證名稱中...";
+            const nameCheck = await validateAndClaimName(desiredName);
+            if (!nameCheck.valid) {
+                alert(nameCheck.msg); 
+                startBtn.disabled = false; startBtn.innerText = originalText;
+                return; 
+            }
+        }
+        if (startBtn) { startBtn.disabled = false; startBtn.innerText = originalText; }
+
+        window.isGameOver = false; 
+        if (nameInput) nameInput.blur();
+        window.scrollTo(0, 0);
+        if (typeof initAudio === "function") initAudio();
+        
+        window.initialPlayerExp = 0;
+        const pUid = localStorage.getItem("mathGamePlayerUid");
+        if (pUid && pUid !== "guest") {
+          fetchPlayerStatsFromHistory(pUid).then(stats => { window.initialPlayerExp = stats.totalExp; });
+        }
+        
+        document.getElementById("ui-name").innerText = desiredName;
+        localStorage.setItem("mathGamePlayerName", desiredName);
+        
+        document.getElementById("overlay").classList.add("hidden");
+        document.getElementById("death-screen").classList.remove("show");
+        document.getElementById("keypad-container").style.display = "block";
+        document.getElementById("ui-time").classList.remove("timer-danger-extreme");
+        document.body.classList.remove("body-danger-flash");
+
+        correctQuestionsSet.clear(); errorLogMap.clear(); activeWrongPool = [];
+        score = 0; combo = 0; consecutiveWrong = 0; currentQuestionErrors = 0; correctCount = 0; wrongCount = 0;
+        
+        updateUI();
+        window.startTime = Date.now();
+        getNewQuestion();
+
+        window.timer = setInterval(() => {
+          let passed = (Date.now() - window.startTime) / 1000;
+          let remain = TIME_LIMIT - passed;
+          document.getElementById("progress-bar").style.width = (remain / TIME_LIMIT) * 100 + "%";
+          let sec = Math.ceil(Math.max(0, remain));
+          const timeEl = document.getElementById("ui-time");
+          timeEl.innerText = sec;
+          
+          if (sec <= 10 && sec > 0) {
+            timeEl.classList.add("timer-danger-extreme"); document.body.classList.add("body-danger-flash");
+          } else {
+            timeEl.classList.remove("timer-danger-extreme"); document.body.classList.remove("body-danger-flash");
+          }
+          if (sec <= 10 && sec > 0 && sec !== lastTickSec) { playTick(); lastTickSec = sec; }
+          
+          if (remain <= 0) {
+            timeEl.classList.remove("timer-danger-extreme"); document.body.classList.remove("body-danger-flash");
+            clearInterval(window.timer);
+            window.endGame();
+          }
+        }, 50);
+      }
+
+      window.endGame = async function() {
+        if (window.isGameOver) return;
+        window.isGameOver = true;
+        
+        document.getElementById("start-ui-group").classList.add("hidden");
+        document.getElementById("end-ui-group").classList.remove("hidden");
+        document.getElementById("overlay").classList.remove("hidden");
+        document.getElementById("rules-box").classList.add("hidden");
+
+        let finalMmrChange = 0; 
+
+        // ✨ 呼叫對戰引擎進行結算
+        if (BattleEngine.isBattleMode) {
+          finalMmrChange = await BattleEngine.calculateEloAndRender(score);
+        } else {
+          document.getElementById("final-score-text").classList.remove("hidden");
+          document.getElementById("final-score-text").innerText = `最終得分: ${score}`;
+        }
+
+        showExpAnimation(score, "end-ui-group");
+        
+        const endLog = document.getElementById("end-error-log");
+        endLog.innerHTML = generateErrorLogHTML();
+        endLog.classList.remove("hidden");
+        window.scrollTo(0, 0);
+
+        document.getElementById("player-name").value = "成績光速傳送中...";
+        const restartBtn = document.querySelector("#end-ui-group button");
+        if (restartBtn) { restartBtn.disabled = true; restartBtn.innerText = "⏳ 成績上傳中..."; }
+
+        uploadGameRecord(
+          "clear", score, errorLogMap, isHellMode, correctCount, wrongCount, null, 
+          BattleEngine.isBattleMode ? finalMmrChange : 0 
+        )
+          .then(() => {
+            document.getElementById("player-name").value = "成績已存入雲端戰績室！";
+            if (restartBtn) {
+              restartBtn.disabled = false; restartBtn.innerText = "再玩一局 (重新開始)";
+              restartBtn.style.opacity = "1"; restartBtn.style.cursor = "pointer";
+            }
+            let finalName = document.getElementById("ui-name").innerText;
+            if (finalName === "---" || !finalName) finalName = "Guest";
+            loadGlobalLeaderboard(isHellMode ? null : CSV_URL, { n: finalName, s: score });
+            setTimeout(() => (document.getElementById("player-name").value = ""), 2000);
+          })
+          .catch((err) => {
+            console.error("雲端存檔失敗:", err);
+            document.getElementById("player-name").value = "雲端存檔失敗";
+            if (restartBtn) { restartBtn.disabled = false; restartBtn.innerText = "上傳失敗，點此重試"; restartBtn.style.opacity = "1"; restartBtn.style.cursor = "pointer"; }
+          });
+      }
+    </script>
+  </body>
+</html>
