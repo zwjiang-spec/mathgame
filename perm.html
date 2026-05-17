@@ -994,16 +994,37 @@
             level: 3,
           });
 
-          let person = rand(2, 3);
-          let apple = rand(2, 4);
-          let ansH = calcC(person + apple - 1, apple);
+          // ✨ 方案 B：2人的基礎題 (降級為 Level 2 暖身送分題)
+          let app1 = rand(4, 7);
           addUnique({
-            q: `${apple} 個相同蘋果，分給 ${person} 人 (可有人拿0個)，有幾種分法？`,
-            a: ansH.toString(),
-            hint: `重複組合 H(${person},${apple}) = C(${
-              person + apple - 1
-            },${apple}) = ${ansH}`,
+            q: `${app1} 個相同蘋果，分給 2 人 (可有人拿0個)，有幾種分法？`,
+            a: (app1 + 1).toString(),
+            hint: `分給2人直接加1 ➡ H(2,${app1}) = ${app1 + 1}`,
+            level: 2,
+          });
+
+          // ✨ 方案 B：3人的標準題 (維持 Level 4 進階難度)
+          let app2 = rand(3, 6);
+          let ansH3 = calcC(3 + app2 - 1, app2);
+          addUnique({
+            q: `${app2} 個相同蘋果，分給 3 人 (可有人拿0個)，有幾種分法？`,
+            a: ansH3.toString(),
+            hint: `H(3,${app2}) = C(${app2 + 2},${app2}) = ${ansH3}`,
             level: 4,
+          });
+
+          // ✨ 方案 C：帶有「限制條件」的陷阱題 (升級為 Level 5 狂熱/地獄專屬)
+          let p3 = rand(2, 3);
+          let totalApp = rand(6, 9);
+          let minA = rand(2, 4);
+          let effApp = totalApp - minA;
+          let ansHC = calcC(p3 + effApp - 1, effApp);
+          let pNames = p3 === 2 ? "甲、乙" : "甲、乙、丙";
+          addUnique({
+            q: `${totalApp} 顆蘋果分給${pNames}，甲至少拿 ${minA} 顆(可有0)，有幾種分法？`,
+            a: ansHC.toString(),
+            hint: `甲先拿${minA}顆，剩${effApp}顆分${p3}人 ➡ H(${p3},${effApp}) = ${ansHC}`,
+            level: 5,
           });
         }
       }
@@ -1111,13 +1132,13 @@
             q: "x + y = 5 的 非負整數解",
             a: "6",
             hint: "等於分5個蘋果給2人 ➡ H(2,5) = C(6,5) = 6",
-            level: 4,
+            level: 2, // ✨ 降級為階段一暖身
           },
           {
             q: "x + y = 5 的 正整數解",
             a: "4",
             hint: "先各發1個，剩3個分給2人 ➡ H(2,3) = C(4,3) = 4",
-            level: 4,
+            level: 3, // ✨ 降級為階段二銜接
           },
           {
             q: "x + y + z = 4 的 非負整數解",
